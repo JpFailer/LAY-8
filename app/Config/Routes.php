@@ -14,5 +14,6 @@ service('auth')->routes($routes);
 $routes->get('upload', 'AuthController::index'); 
 $routes->post('upload', 'AuthController::procesarConstancia'); 
 
-// Ruta para cuando la constancia es válida (El siguiente paso en tu diagrama)
+// Ruta para cuando la constancia es válida
 $routes->get('registro', 'AuthController::pantallaRegistro');
+$routes->get('horario', 'MapaController::python_horarios');
