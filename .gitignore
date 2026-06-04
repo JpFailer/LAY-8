@@ -124,3 +124,8 @@ _modules/*
 
 /results/
 /phpunit.xml
+
+
+# Entornos virtuales de Python
+venv/
+scripts_python/venv/
