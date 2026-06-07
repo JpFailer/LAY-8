@@ -16,3 +16,9 @@ $routes->post('upload', 'AuthController::procesarConstancia');
 
 // Ruta para cuando la constancia es válida (El siguiente paso en tu diagrama)
 $routes->get('registro', 'AuthController::pantallaRegistro');
+
+// Ruta para entrar a ver el formulario
+$routes->get('biblioteca', 'BibliotecaController::index');
+
+// Ruta que procesa el formulario al presionar el botón "Subir Aporte"
+$routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
