@@ -16,4 +16,9 @@ $routes->post('upload', 'AuthController::procesarConstancia');
 
 // Ruta para cuando la constancia es válida
 $routes->get('registro', 'AuthController::pantallaRegistro');
-$routes->get('horario', 'MapaController::python_horarios');
+
+// Ruta para entrar a ver el formulario
+$routes->get('biblioteca', 'BibliotecaController::index');
+
+// Ruta que procesa el formulario al presionar el botón "Subir Aporte"
+$routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
