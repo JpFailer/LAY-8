@@ -9,7 +9,7 @@ class AuthController extends BaseController
     // Muestra la vista del formulario para subir el PDF
     public function index()
     {
-        return view('formulario');
+        return view('Registro/formulario');
     }
 
     // Procesa el PDF cuando el usuario le da al botón "Enviar"
@@ -67,6 +67,6 @@ class AuthController extends BaseController
     public function pantallaRegistro()
     {
         
-    return view('registro_completar'); 
+    return view('Registro/registro_completar'); 
     }
 }
