@@ -22,8 +22,7 @@ $routes->get('biblioteca', 'BibliotecaController::index');
 
 // Ruta que procesa el formulario al presionar el botón "Subir Aporte"
 $routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
-
-//Ruta de prueba para visualizar las vistas
-$routes->get('Registro/nuevoUsuario', function() {
-    return view('Registro/nuevoUsuario');
-});
+$routes->get('htest', 'MapaController::python_horarios');
+$routes->get('aula', 'AulasController::importar_json');
+$routes->get('mapa', 'MapaController::mostrar_mapa');
+$routes->get('mapa/info_aula/(:segment)', 'MapaController::info_aula/$1');
