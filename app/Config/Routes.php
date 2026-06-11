@@ -22,3 +22,8 @@ $routes->get('biblioteca', 'BibliotecaController::index');
 
 // Ruta que procesa el formulario al presionar el botón "Subir Aporte"
 $routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
+
+//Ruta de prueba para visualizar las vistas
+$routes->get('Registro/nuevoUsuario', function() {
+    return view('Registro/nuevoUsuario');
+});

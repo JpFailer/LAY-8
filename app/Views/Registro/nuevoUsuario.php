@@ -13,14 +13,8 @@
         <h1>LAY-8 MAP</h1>
         <h2>Empieza Ahora!</h2>
 
-        <form action="registro" method="post">
-          <label for="username">Nombre de Usuario:</label>
-          <br>
-          <input type="text" id="username" name="username" required /><br><br>
-          <label for="email">Correo Electrónico:</label>
-          <br>
-          <input type="email" id="email" name="email" required /><br><br>
-          <input type="submit" value="Registrarse" >
+       <button type="submit">Crea tu cuenta</button>
+       <br><br>
           <a href="/inicioSesion">¿Ya tienes una cuenta? Inicia sesión</a>
         </form>
       <main>
