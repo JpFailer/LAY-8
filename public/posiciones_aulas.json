@@ -1,0 +1,567 @@
+[
+    {
+        "aula": "Aula Magna (Planta Baja)",
+        "coord_x": 84.99,
+        "coord_y": 70.61
+    },
+    {
+        "aula": "Patio de Honor (Planta Baja)",
+        "coord_x": 55.19,
+        "coord_y": 70.78
+    },
+    {
+        "aula": "Aula 56 (Primer piso)",
+        "coord_x": 30.09,
+        "coord_y": 75.5
+    },
+    {
+        "aula": "Aula 57 (Primer piso)",
+        "coord_x": 27.69,
+        "coord_y": 75.5
+    },
+    {
+        "aula": "Aula 58 (Primer piso)",
+        "coord_x": 25.39,
+        "coord_y": 75.61
+    },
+    {
+        "aula": "Aula CA (Primer piso)",
+        "coord_x": 22.89,
+        "coord_y": 75.61
+    },
+    {
+        "aula": "Aula 59 (Primer piso)",
+        "coord_x": 17.09,
+        "coord_y": 75.5
+    },
+    {
+        "aula": "Aula 60 (Primer piso)",
+        "coord_x": 14.39,
+        "coord_y": 75.56
+    },
+    {
+        "aula": "Aula sM (Primer piso)",
+        "coord_x": 6.89,
+        "coord_y": 75.56
+    },
+    {
+        "aula": "Aula C.SC (Planta Baja)",
+        "coord_x": 29.99,
+        "coord_y": 74.38
+    },
+    {
+        "aula": "Aula EIN (Planta Baja)",
+        "coord_x": 26.39,
+        "coord_y": 74.38
+    },
+    {
+        "aula": "Aula LIM (Planta Baja)",
+        "coord_x": 23.09,
+        "coord_y": 74.38
+    },
+    {
+        "aula": "Aula C y D (Planta Baja)",
+        "coord_x": 14.49,
+        "coord_y": 74.38
+    },
+    {
+        "aula": "Aula OMI (Planta Baja)",
+        "coord_x": 10.19,
+        "coord_y": 74.43
+    },
+    {
+        "aula": "Aula 28 (Primer piso)",
+        "coord_x": 33.39,
+        "coord_y": 68.48
+    },
+    {
+        "aula": "Aula 29 (Primer piso)",
+        "coord_x": 30.49,
+        "coord_y": 68.59
+    },
+    {
+        "aula": "Aula 30 (Primer piso)",
+        "coord_x": 27.49,
+        "coord_y": 68.42
+    },
+    {
+        "aula": "Aula OMI 2 (Planta Baja)",
+        "coord_x": 25.39,
+        "coord_y": 68.65
+    },
+    {
+        "aula": "Baño 1 (Planta Baja)",
+        "coord_x": 23.29,
+        "coord_y": 68.31
+    },
+    {
+        "aula": "Laboratorio de Física (Planta Baja)",
+        "coord_x": 10.69,
+        "coord_y": 68.03
+    },
+    {
+        "aula": "Cantina (Planta Baja)",
+        "coord_x": 7.69,
+        "coord_y": 69.61
+    },
+    {
+        "aula": "Pañol Banda (Planta Baja)",
+        "coord_x": 33.42,
+        "coord_y": 63.64
+    },
+    {
+        "aula": "Aula 36 (Primer piso)",
+        "coord_x": 32.92,
+        "coord_y": 62.06
+    },
+    {
+        "aula": "Aula 37 (Primer piso)",
+        "coord_x": 29.72,
+        "coord_y": 62.01
+    },
+    {
+        "aula": "Aula 38 (Primer piso)",
+        "coord_x": 27.12,
+        "coord_y": 61.84
+    },
+    {
+        "aula": "Aula SIM (Planta Baja)",
+        "coord_x": 25.42,
+        "coord_y": 63.36
+    },
+    {
+        "aula": "Radar (Planta Baja)",
+        "coord_x": 23.02,
+        "coord_y": 63.47
+    },
+    {
+        "aula": "Lab Est (Primer piso)",
+        "coord_x": 15.82,
+        "coord_y": 62.46
+    },
+    {
+        "aula": "Aula Fantasma (Primer piso)",
+        "coord_x": 10.32,
+        "coord_y": 62.4
+    },
+    {
+        "aula": "Aula 32 (Planta Baja)",
+        "coord_x": 33.52,
+        "coord_y": 60.66
+    },
+    {
+        "aula": "Aula 33 (Planta Baja)",
+        "coord_x": 29.92,
+        "coord_y": 60.71
+    },
+    {
+        "aula": "Aula 34 (Planta Baja)",
+        "coord_x": 27.12,
+        "coord_y": 60.6
+    },
+    {
+        "aula": "Aula 70 (Planta Baja)",
+        "coord_x": 16.72,
+        "coord_y": 60.83
+    },
+    {
+        "aula": "Aula 71 (Planta Baja)",
+        "coord_x": 12.62,
+        "coord_y": 60.77
+    },
+    {
+        "aula": "Aula 72 (Planta Baja)",
+        "coord_x": 8.72,
+        "coord_y": 60.83
+    },
+    {
+        "aula": "Comedor (Planta Baja)",
+        "coord_x": 27.42,
+        "coord_y": 58.02
+    },
+    {
+        "aula": "Cocina (Planta Baja)",
+        "coord_x": 24.32,
+        "coord_y": 55.32
+    },
+    {
+        "aula": "Comedor de Oficiales (Planta Baja)",
+        "coord_x": 30.12,
+        "coord_y": 55.49
+    },
+    {
+        "aula": "Aula 40 (Planta Baja)",
+        "coord_x": 17.19,
+        "coord_y": 56.39
+    },
+    {
+        "aula": "Aula 41 (Planta Baja)",
+        "coord_x": 19.78,
+        "coord_y": 56.39
+    },
+    {
+        "aula": "Aula 42 (Primer piso)",
+        "coord_x": 19.37,
+        "coord_y": 55.46
+    },
+    {
+        "aula": "Aula 43 (Primer piso)",
+        "coord_x": 16.87,
+        "coord_y": 55.4
+    },
+    {
+        "aula": "Ozono (Planta Baja)",
+        "coord_x": 23.42,
+        "coord_y": 51.89
+    },
+    {
+        "aula": "LAQ (Planta Baja)",
+        "coord_x": 8.77,
+        "coord_y": 54.87
+    },
+    {
+        "aula": "Sala de Calderas (Planta Baja)",
+        "coord_x": 6.9,
+        "coord_y": 53.06
+    },
+    {
+        "aula": "Aula 44 (Planta Baja)",
+        "coord_x": 7.83,
+        "coord_y": 50.55
+    },
+    {
+        "aula": "Ajedrez (Planta Baja)",
+        "coord_x": 15.42,
+        "coord_y": 48.85
+    },
+    {
+        "aula": "Gimnasio (Planta Baja)",
+        "coord_x": 25.19,
+        "coord_y": 44.58
+    },
+    {
+        "aula": "Residencias Estudiantiles (Planta Baja)",
+        "coord_x": 12.72,
+        "coord_y": 42.89
+    },
+    {
+        "aula": "Oficina (Planta Baja)",
+        "coord_x": 31.42,
+        "coord_y": 48.09
+    },
+    {
+        "aula": "Baño 2 (Planta Baja)",
+        "coord_x": 29.97,
+        "coord_y": 44.76
+    },
+    {
+        "aula": "N (Planta Baja)",
+        "coord_x": 29.76,
+        "coord_y": 43.47
+    },
+    {
+        "aula": "La Gruta (Planta Baja)",
+        "coord_x": 33.19,
+        "coord_y": 42.36
+    },
+    {
+        "aula": "Fútbol (Planta Baja)",
+        "coord_x": 19.06,
+        "coord_y": 30.53
+    },
+    {
+        "aula": "Canchas (Planta Baja)",
+        "coord_x": 29.45,
+        "coord_y": 12.3
+    },
+    {
+        "aula": "Aula 46 (Planta Baja)",
+        "coord_x": 9.39,
+        "coord_y": 15.1
+    },
+    {
+        "aula": "Aula 47 (Planta Baja)",
+        "coord_x": 9.7,
+        "coord_y": 13.93
+    },
+    {
+        "aula": "Aula 45 (Planta Baja)",
+        "coord_x": 5.13,
+        "coord_y": 15.16
+    },
+    {
+        "aula": "Aula 48 (Planta Baja)",
+        "coord_x": 8.46,
+        "coord_y": 12.59
+    },
+    {
+        "aula": "Aula 49 (Planta Baja)",
+        "coord_x": 8.46,
+        "coord_y": 11.36
+    },
+    {
+        "aula": "Aula 50 (Planta Baja)",
+        "coord_x": 8.67,
+        "coord_y": 9.96
+    },
+    {
+        "aula": "Aula 51 (Planta Baja)",
+        "coord_x": 8.56,
+        "coord_y": 8.32
+    },
+    {
+        "aula": "Aula 52 (Planta Baja)",
+        "coord_x": 8.35,
+        "coord_y": 7.1
+    },
+    {
+        "aula": "Canchas 2 (Planta Baja)",
+        "coord_x": 29.76,
+        "coord_y": 11.95
+    },
+    {
+        "aula": "Sala de Consejo (Planta Baja)",
+        "coord_x": 45.45,
+        "coord_y": 65.49
+    },
+    {
+        "aula": "Rectorado (Planta Baja)",
+        "coord_x": 65.5,
+        "coord_y": 65.72
+    },
+    {
+        "aula": "Cadetódromo (Planta Baja)",
+        "coord_x": 55.53,
+        "coord_y": 56.48
+    },
+    {
+        "aula": "Taquilla (Planta Baja)",
+        "coord_x": 65.3,
+        "coord_y": 48.71
+    },
+    {
+        "aula": "C_estudios (Planta Baja)",
+        "coord_x": 47.63,
+        "coord_y": 48.54
+    },
+    {
+        "aula": "Biblioteca (Primer piso)",
+        "coord_x": 47.11,
+        "coord_y": 46.55
+    },
+    {
+        "aula": "Biblioteca 2 (Primer piso)",
+        "coord_x": 56.36,
+        "coord_y": 46.43
+    },
+    {
+        "aula": "Vicerrectorado Administrativo (Segundo piso)",
+        "coord_x": 47.11,
+        "coord_y": 44.56
+    },
+    {
+        "aula": "Laboratorio de Inglés (Segundo piso)",
+        "coord_x": 56.36,
+        "coord_y": 44.5
+    },
+    {
+        "aula": "Vicerrectorado Académico (Tercer piso)",
+        "coord_x": 51.37,
+        "coord_y": 42.28
+    },
+    {
+        "aula": "Béisbol (Planta Baja)",
+        "coord_x": 64.57,
+        "coord_y": 26.32
+    },
+    {
+        "aula": "Talleres (Planta Baja)",
+        "coord_x": 67.17,
+        "coord_y": 12.24
+    },
+    {
+        "aula": "Aula 53 (Planta Baja)",
+        "coord_x": 52.2,
+        "coord_y": 10.25
+    },
+    {
+        "aula": "Aula 54 (Planta Baja)",
+        "coord_x": 49.71,
+        "coord_y": 10.25
+    },
+    {
+        "aula": "Aula 55 (Primer piso)",
+        "coord_x": 52.72,
+        "coord_y": 9.26
+    },
+    {
+        "aula": "Aula 56_t (Primer piso)",
+        "coord_x": 50.02,
+        "coord_y": 9.38
+    },
+    {
+        "aula": "RRII (Planta Baja)",
+        "coord_x": 81.92,
+        "coord_y": 64.43
+    },
+    {
+        "aula": "Aula 1 (Planta Baja)",
+        "coord_x": 77.66,
+        "coord_y": 59.58
+    },
+    {
+        "aula": "Aula 2 (Planta Baja)",
+        "coord_x": 83.17,
+        "coord_y": 59.41
+    },
+    {
+        "aula": "Aula 3 (Planta Baja)",
+        "coord_x": 87.95,
+        "coord_y": 59.41
+    },
+    {
+        "aula": "Baño 3 (Planta Baja)",
+        "coord_x": 91.79,
+        "coord_y": 59.52
+    },
+    {
+        "aula": "Aula 4 (Primer piso)",
+        "coord_x": 77.97,
+        "coord_y": 61.92
+    },
+    {
+        "aula": "Aula 5 (Primer piso)",
+        "coord_x": 82.86,
+        "coord_y": 61.86
+    },
+    {
+        "aula": "Aula 6 (Primer piso)",
+        "coord_x": 87.53,
+        "coord_y": 61.86
+    },
+    {
+        "aula": "Baño 4 (Primer piso)",
+        "coord_x": 91.58,
+        "coord_y": 61.74
+    },
+    {
+        "aula": "Aula 7 (Planta Baja)",
+        "coord_x": 79.22,
+        "coord_y": 54.61
+    },
+    {
+        "aula": "Aula 8 (Planta Baja)",
+        "coord_x": 83.48,
+        "coord_y": 54.56
+    },
+    {
+        "aula": "Aula 9 (Planta Baja)",
+        "coord_x": 87.95,
+        "coord_y": 54.61
+    },
+    {
+        "aula": "Baño 5 (Planta Baja)",
+        "coord_x": 92.41,
+        "coord_y": 54.38
+    },
+    {
+        "aula": "Aula 10 (Primer piso)",
+        "coord_x": 77.97,
+        "coord_y": 56.95
+    },
+    {
+        "aula": "Aula 11 (Primer piso)",
+        "coord_x": 82.86,
+        "coord_y": 57.01
+    },
+    {
+        "aula": "Aula 12 (Primer piso)",
+        "coord_x": 86.7,
+        "coord_y": 57.07
+    },
+    {
+        "aula": "Baño 6 (Primer piso)",
+        "coord_x": 91.48,
+        "coord_y": 56.95
+    },
+    {
+        "aula": "Multimedia 14 (Planta Baja)",
+        "coord_x": 90.44,
+        "coord_y": 49.35
+    },
+    {
+        "aula": "Multimedia 15 (Planta Baja)",
+        "coord_x": 80.26,
+        "coord_y": 49.29
+    },
+    {
+        "aula": "Baño 7 (Planta Baja)",
+        "coord_x": 94.6,
+        "coord_y": 45.32
+    },
+    {
+        "aula": "SG (Planta Baja)",
+        "coord_x": 92.52,
+        "coord_y": 41.64
+    },
+    {
+        "aula": "OPSU (Planta Baja)",
+        "coord_x": 88.15,
+        "coord_y": 41.76
+    },
+    {
+        "aula": "OPSU 2 (Planta Baja)",
+        "coord_x": 83.58,
+        "coord_y": 41.99
+    },
+    {
+        "aula": "OPSU 3 (Planta Baja)",
+        "coord_x": 79.22,
+        "coord_y": 41.99
+    },
+    {
+        "aula": "Usos Múltiples (Planta Baja)",
+        "coord_x": 92.41,
+        "coord_y": 36.26
+    },
+    {
+        "aula": "Aula 16 (Planta Baja)",
+        "coord_x": 79.53,
+        "coord_y": 36.61
+    },
+    {
+        "aula": "Baño 8 (Planta Baja)",
+        "coord_x": 94.7,
+        "coord_y": 33.46
+    },
+    {
+        "aula": "Baño 9 (Planta Baja)",
+        "coord_x": 80.05,
+        "coord_y": 32.64
+    },
+    {
+        "aula": "Carnet (Planta Baja)",
+        "coord_x": 80.47,
+        "coord_y": 31.64
+    },
+    {
+        "aula": "Baño 10 (Planta Baja)",
+        "coord_x": 80.36,
+        "coord_y": 30.65
+    },
+    {
+        "aula": "Sala de Profesores (Planta Baja)",
+        "coord_x": 81.5,
+        "coord_y": 29.13
+    },
+    {
+        "aula": "Electro (Planta Baja)",
+        "coord_x": 87.22,
+        "coord_y": 29.36
+    },
+    {
+        "aula": "Laboratorio de Ambiental (Planta Baja)",
+        "coord_x": 93.77,
+        "coord_y": 29.42
+    }
+]
