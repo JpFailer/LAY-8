@@ -40,6 +40,16 @@
         "coord_y": 75.56
     },
     {
+        "aula": "Aula 61 (Planta Baja)",
+        "coord_x": 12.12,
+        "coord_y": 75.56
+    },
+    {
+        "aula": "Aula 62_2 (Planta Baja)",
+        "coord_x": 9.59,
+        "coord_y": 75.56
+    },
+    {
         "aula": "Aula sM (Primer piso)",
         "coord_x": 6.89,
         "coord_y": 75.56
@@ -316,8 +326,8 @@
     },
     {
         "aula": "Canchas 2 (Planta Baja)",
-        "coord_x": 29.76,
-        "coord_y": 11.95
+        "coord_x": 57.27,
+        "coord_y": 33.98
     },
     {
         "aula": "Sala de Consejo (Planta Baja)",
@@ -353,6 +363,11 @@
         "aula": "Biblioteca 2 (Primer piso)",
         "coord_x": 56.36,
         "coord_y": 46.43
+    },
+    {
+        "aula": "C. Estudios (Planta Baja)",
+        "coord_x": 56.36,
+        "coord_y": 48.54
     },
     {
         "aula": "Vicerrectorado Administrativo (Segundo piso)",
