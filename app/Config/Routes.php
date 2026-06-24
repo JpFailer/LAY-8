@@ -26,3 +26,4 @@ $routes->get('htest', 'MapaController::python_horarios');
 $routes->get('aula', 'AulasController::importar_json');
 $routes->get('mapa', 'MapaController::mostrar_mapa');
 $routes->get('mapa/info_aula/(:segment)', 'MapaController::info_aula/$1');
+$routes->get('mapa/estado_en_vivo', 'MapaController::estado_aulas_en_vivo');
