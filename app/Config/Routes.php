@@ -26,3 +26,10 @@ $routes->get('htest', 'MapaController::python_horarios');
 $routes->get('aula', 'AulasController::importar_json');
 $routes->get('mapa', 'MapaController::mostrar_mapa');
 $routes->get('mapa/info_aula/(:segment)', 'MapaController::info_aula/$1');
+
+// Ruta para probar vistas (temporal)
+$routes->get('dashboard/menuPrincipal', function(){
+    $data['css_extra']='dashboard.css';
+    return view('templates/header', $data).view('dashboard/menuPrincipal').view('templates/footer');
+});
+        
