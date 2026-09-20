@@ -6,9 +6,11 @@ use CodeIgniter\Controller;
 use App\Models\MateriaModel;
 use App\Models\SeccionModel;
 use App\Models\ClaseProgramadaModel;
+use App\Models\AulasModel; // Añadido para mantener el código limpio
 
 class MapaController extends Controller {
 
+    // 1. PROCESAMIENTO DEL PDF A LA BASE DE DATOS
     public function python_horarios(){
         
         $carpeta_scripts = ROOTPATH . 'scripts_python';
@@ -62,10 +64,10 @@ class MapaController extends Controller {
                             $lineas_utiles = [];
                             foreach ($lineas_limpias as $linea) {
                                 
-                                // 1. NORMALIZADOR DE GUIONES (Transforma guiones raros de Word a normales)
+                                // 1. NORMALIZADOR DE GUIONES
                                 $linea = preg_replace('/[–—−‐‑‒―]/u', '-', $linea);
 
-                                //  2. FILTRO ANTI-BASURA: Ignorar letras de turno y los errores de "SECCION" en las celdas
+                                //  2. FILTRO ANTI-BASURA
                                 if (preg_match('/^(T|A|R|D|E|N|C|H|0)$/i', $linea)) continue;
                                 if (preg_match('/^SECCI[OÓ]N/i', $linea)) continue;
                                 
@@ -145,7 +147,7 @@ class MapaController extends Controller {
                                         if (!empty($nombre_materia) && $materia_db) {
                                             $nombre_actual = $materia_db['nombre'];
                                             
-                                            //  3. MOTOR DE SIMILITUD (Evita duplicados por errores de tipeo como "Sofware I" vs "Sofware 1")
+                                            //  3. MOTOR DE SIMILITUD
                                             similar_text(strtolower(trim($nombre_actual)), strtolower(trim($nombre_materia)), $similitud);
                                             
                                             if ($similitud < 75 && stripos($nombre_actual, $nombre_materia) === false) {
@@ -190,9 +192,9 @@ class MapaController extends Controller {
                                 $periodo_academico = isset($fila['Periodo']) ? trim($fila['Periodo']) : 'Desconocido';
 
                                 $seccion_db = $seccionModel->where('materia_id', $materia_id)
-                                                        ->where('codigo_seccion', $codigo_seccion)
-                                                        ->where('periodo_academico', $periodo_academico)
-                                                        ->first();
+                                                           ->where('codigo_seccion', $codigo_seccion)
+                                                           ->where('periodo_academico', $periodo_academico)
+                                                           ->first();
 
                                 if (!$seccion_db) {
                                     $seccion_id = $seccionModel->insert([
@@ -224,8 +226,7 @@ class MapaController extends Controller {
                     }
                 }
 
-                return "¡Proceso Completado con éxito!
-                 Se procesaron e insertaron un total de {$clases_insertadas} bloques de clases en el mapa.";
+                return "¡Proceso Completado con éxito! Se procesaron e insertaron un total de {$clases_insertadas} bloques de clases en el mapa.";
                 
             }
         } else {
@@ -234,44 +235,118 @@ class MapaController extends Controller {
     }
 
 
+    // 2. VISTA PRINCIPAL DEL MAPA (CARGA INICIAL)
+    public function mostrar_mapa() {
+        $aulasModel = new AulasModel();
+        $clasesModel = new ClaseProgramadaModel();
+        
+        $lista_aulas = $aulasModel->findAll();
+        
+        // Sincronización horaria y de idioma
+        date_default_timezone_set('America/Caracas');
+        $hora_actual = date('H:i:s');
+        
+        $dias_ingles_a_espanol = [
+            'Monday'    => 'Lunes', 
+            'Tuesday'   => 'Martes', 
+            'Wednesday' => 'Miercoles', 
+            'Thursday'  => 'Jueves', 
+            'Friday'    => 'Viernes', 
+            'Saturday'  => 'Sabado', 
+            'Sunday'    => 'Domingo'
+        ];
+        $dia_actual = $dias_ingles_a_espanol[date('l')];
 
+        // Agregamos la lógica inicial de "Ocupado"
+        foreach ($lista_aulas as &$aula) {
+            $clase_activa = $clasesModel
+                ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
+                ->where('aula', $aula['alias_pdf'])
+                ->where('dia_semana', $dia_actual)
+                ->where('hora_inicio <=', $hora_actual)
+                ->where('hora_fin >=', $hora_actual)
+                ->first();
 
-public function mostrar_mapa() {
-    $aulasModel = new \App\Models\AulasModel();
-    $clasesModel = new \App\Models\ClaseProgramadaModel();
-    
-    $lista_aulas = $aulasModel->findAll();
-    $hora_actual = date('H:i:s');
-    $dia_actual = date('l'); // 'Monday', 'Tuesday', etc. (Asegúrate de que coincida con tu BD)
+            $aula['esta_ocupado'] = ($clase_activa !== null);
+        }
 
-    // Agregamos la lógica de "Ocupado"
-    foreach ($lista_aulas as &$aula) {
-        $clase_activa = $clasesModel
-            ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
-            ->where('aula', $aula['alias_pdf'])
-            ->where('dia_semana', $dia_actual)
-            ->where('hora_inicio <=', $hora_actual)
-            ->where('hora_fin >=', $hora_actual)
-            ->first();
-
-        $aula['esta_ocupado'] = ($clase_activa !== null);
+        return view('mapa', ['aulas' => $lista_aulas]);
     }
 
-    return view('mapa', ['aulas' => $lista_aulas]);
-}
+    // 3. INFORMACIÓN DETALLADA DE UN AULA AL HACER CLIC
+    public function info_aula($nombre_aula) {
+        $clasesModel = new ClaseProgramadaModel();
+        
+        $horarios = $clasesModel
+            ->select('clases_programadas.*, materias.nombre as materia')
+            ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('aula', $nombre_aula)
+            ->orderBy('dia_semana', 'ASC')
+            ->orderBy('hora_inicio', 'ASC')
+            ->findAll();
 
-public function info_aula($nombre_aula) {
-    $clasesModel = new \App\Models\ClaseProgramadaModel();
-    
-    $horarios = $clasesModel
-        ->select('clases_programadas.*, materias.nombre as materia')
-        ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
-        ->join('materias', 'materias.id = secciones.materia_id')
-        ->where('aula', $nombre_aula)
-        ->orderBy('dia_semana', 'ASC')
-        ->orderBy('hora_inicio', 'ASC')
-        ->findAll();
+        return json_encode($horarios);
+    }
 
-    return json_encode($horarios);
-}
+    // 4. API PARA ACTUALIZAR LUCES EN TIEMPO REAL
+    public function estado_aulas_en_vivo() {
+        date_default_timezone_set('America/Caracas');
+        $hora_actual = date('H:i:s');
+        
+        $dias_ingles_a_espanol = [
+            'Monday'    => 'Lunes', 
+            'Tuesday'   => 'Martes', 
+            'Wednesday' => 'Miercoles', 
+            'Thursday'  => 'Jueves', 
+            'Friday'    => 'Viernes', 
+            'Saturday'  => 'Sabado', 
+            'Sunday'    => 'Domingo'
+        ];
+        $dia_actual = $dias_ingles_a_espanol[date('l')];
+        
+        $hora_mas_15_min = date('H:i:s', strtotime('+15 minutes'));
+
+        $aulasModel = new AulasModel();
+        $clasesModel = new ClaseProgramadaModel();
+        
+        $lista_aulas = $aulasModel->findAll();
+        $estadoMapa = [];
+
+        foreach ($lista_aulas as $aula) {
+            $alias = $aula['alias_pdf'];
+
+            if (isset($aula['condicion']) && $aula['condicion'] == 'fuera_de_servicio') {
+                $estadoMapa[$alias] = 'azul';
+                continue;
+            }
+
+            $clase_activa = $clasesModel
+                ->where('aula', $alias)
+                ->where('dia_semana', $dia_actual)
+                ->where('hora_inicio <=', $hora_actual)
+                ->where('hora_fin >=', $hora_actual)
+                ->first();
+
+            if ($clase_activa) {
+                $estadoMapa[$alias] = 'roja';
+                continue;
+            }
+
+            $clase_proxima = $clasesModel
+                ->where('aula', $alias)
+                ->where('dia_semana', $dia_actual)
+                ->where('hora_inicio >', $hora_actual)
+                ->where('hora_inicio <=', $hora_mas_15_min)
+                ->first();
+
+            if ($clase_proxima) {
+                $estadoMapa[$alias] = 'amarilla';
+            } else {
+                $estadoMapa[$alias] = 'verde';
+            }
+        }
+
+        return $this->response->setJSON($estadoMapa);
+    }
 }
