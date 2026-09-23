@@ -2,15 +2,15 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>LAY-8 MAP - Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAY-8 MAP - Inicio</title>
     <!-- precarga de fuentes-->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-		<!-- stylesheets-->
+    <!-- stylesheets-->
     <link rel="stylesheet" href="<?= base_url('css/global.css')?>">
-		<link rel="stylesheet" href="<?= base_url('css/landing.css')?>">
+    <link rel="stylesheet" href="<?= base_url('css/landing.css')?>">
   </head>
 
   <body>
@@ -25,7 +25,7 @@
           </div>
           
           <div class="login">
-            <span class="login-text">Ya tienes cuenta?</span>
+            <span class="login-text">¿Ya tienes cuenta?</span>
             <button id="btn-login" class="btn-login-text">Ingresar</button>
           </div>
         
@@ -60,7 +60,7 @@
               <p>Crea y accede a entornos virtuales de aprendizaje. Gestiona tus asignaciones, consulta el material de estudio y manten comunicacion directa con tus alumnos o profesores!</p>
             </div>
 
-            <dic class="tarjeta-icon">
+            <div class="tarjeta-icon">
               <img src="<?= base_url('img/comu_icono.png')?>" alt="Ilustracion Comunidad">
             </div>
 
@@ -109,6 +109,12 @@
             </div>
 
             <button type="submit" class="btn-ingresar">Ingresar</button>
+            
+            <!-- ENLACE DE REGISTRO AÑADIDO AQUÍ -->
+            <div style="text-align: center; margin-top: 20px; font-size: 14px; color: #444;">
+                ¿No tienes cuenta? <a href="<?= base_url('registro') ?>" style="color: #1a56db; font-weight: bold; text-decoration: none;">Regístrate</a>
+            </div>
+
           </form>
 
         </div>
@@ -124,3 +130,4 @@
     <script src="<?= base_url('js/landing.js') ?>"></script>
 
   </body>
+</html>
