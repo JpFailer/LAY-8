@@ -31,12 +31,10 @@ class CrearTablaUsuarios extends Migration
             'nombre_usuario' => [
                 'type'       => 'VARCHAR',
                 'constraint' => '50',
-                'unique'     => true,
             ],
             'correo' => [
                 'type'       => 'VARCHAR',
                 'constraint' => '100',
-                'unique'     => true,
             ],
             'telefono' => [
                 'type'       => 'VARCHAR',
@@ -48,20 +46,23 @@ class CrearTablaUsuarios extends Migration
                 'constraint' => '255',
             ],
             'rol' => [
-                'type'       => 'VARCHAR',
-                'constraint' => '20',
+                'type'       => 'ENUM',
+                'constraint' => ['estudiante', 'profesor'],
                 'default'    => 'estudiante',
             ],
             'estado_verificacion' => [
-                'type'       => 'VARCHAR',
-                'constraint' => '20',
-                'default'    => 'pendiente',
+                'type'       => 'ENUM',
+                'constraint' => ['no_aplica', 'pendiente', 'aprobado', 'rechazado'],
+                'default'    => 'no_aplica',
             ],
             'ruta_carnet' => [
                 'type'       => 'VARCHAR',
                 'constraint' => '255',
                 'null'       => true,
-            ]
+            ],
+            'fecha_registro' => [
+                'type' => 'TIMESTAMP',
+            ],
         ]);
         
         $this->forge->addKey('id', true);
