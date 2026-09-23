@@ -33,6 +33,7 @@ $routes->post('/login/autenticar', 'Login::autenticar');
 $routes->get('/registro', 'Registro::index');
 $routes->post('/registro/procesar', 'Registro::procesar');
 $routes->get('/logout', 'Login::salir');
+$routes->view('/landing', 'home/landing');
 
 // Rutas Protegidas (Solo usuarios logueados)
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
