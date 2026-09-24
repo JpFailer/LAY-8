@@ -1,0 +1,61 @@
+.dashboard-contenedor {
+    padding: 80px 30px;
+}
+
+.dashboard-header h2{
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #0d0716;
+    margin-bottom: 0px;
+    line-height: 1;
+}
+
+.dashboard-header p {
+    color: #6d6a73;
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-top: 4px;
+}
+
+.tarjetas-contenedor {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+    margin-top: 150px;
+}
+
+.tarjeta-opcion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #1f487e;
+    font-family: var(--fuente-titulos);
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 30px;
+    border-radius: 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarjeta-opcion img {
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    margin-top: -50px;
+    transition: transform 0.3s ease;
+}
+
+.tarjeta-opcion.activa, .tarjeta-opcion:hover {
+    background-color: #fff;
+    box-shadow: 0 15px 35px rgba(59, 130, 246, 0.15);
+}
+
+.tarjeta-opcion:hover {
+    transform: translateY(-8px);
+}
+
+.tarjeta-opcion:hover img {
+    transform: scale(1.15) translateY(-10px)
+}

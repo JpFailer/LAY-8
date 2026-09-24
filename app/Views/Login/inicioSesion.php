@@ -9,7 +9,7 @@
   
     <body>
       <main>
-        <h1>Bienvenido de vuelta!</h1>
+        <h1>Bienvenido de vuelta a LAY-8 MAP!</h1>
         <h4>Inicia sesion para continuar<h4>
       
         <form action="" method="post">

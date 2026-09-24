@@ -9,7 +9,7 @@ class AuthController extends BaseController
     // Muestra la vista del formulario para subir el PDF
     public function index()
     {
-        return view('Registro/formulario');
+        return view('Registro/validacionConstancia');
     }
 
     // Procesa el PDF cuando el usuario le da al botón "Enviar"
