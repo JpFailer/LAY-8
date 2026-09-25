@@ -400,6 +400,7 @@ body {
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease; 
 }
 
 .tarjeta-info.activa {
@@ -407,6 +408,11 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 30px;
+}
+
+.tarjeta-info.tarjeta-hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 15px rgba(37,99,235,0.25);
 }
 
 .tarjeta-content {

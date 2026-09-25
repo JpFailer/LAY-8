@@ -41,9 +41,8 @@
         </section>
 
          <nav class="nav-services">
-          <button class="btn-service activo" data-target="aulas">Aulas Virtuales</button>
+          <button class="btn-service activo" data-target="aula">Aulas Virtuales</button>
           <button class="btn-service" data-target="mapa">Mapa UMC</button>
-          <button class="btn-service" data-target="comunidad">Comunidad</button>
           <button class="btn-service" data-target="biblioteca">Biblioteca</button>
         </nav>
 
@@ -60,12 +59,40 @@
               <p>Crea y accede a entornos virtuales de aprendizaje. Gestiona tus asignaciones, consulta el material de estudio y manten comunicacion directa con tus alumnos o profesores!</p>
             </div>
 
-            <dic class="tarjeta-icon">
-              <img src="<?= base_url('img/comu_icono.png')?>" alt="Ilustracion Comunidad">
+            <div class="tarjeta-icon">
+              <img src="<?= base_url('img/aula_icono.png')?>" alt="Ilustracion Aulas Virtuales">
             </div>
 
           </article>
-          <!--resto d tarjetas-->
+          <!--tarjeta biblio-->
+          <article id="tarjeta-biblioteca" class="tarjeta-info">
+            <div class="tarjeta-content">
+              <h2>Biblioteca</h2>
+              <hr class="tarjeta-divisor">
+              <p>Accede a una amplia colección de recursos digitales, libros, revistas y más. Busca, reserva y descarga materiales para tu investigación y estudio.</p>
+            </div>
+
+            <div class="tarjeta-icon">
+              <img src="<?= base_url('img/biblio_icono.png')?>" alt="Ilustracion Biblioteca">
+            </div>
+
+          </article>
+
+          <!--tarjeta mapa-->
+
+          <article id="tarjeta-mapa" class="tarjeta-info">
+            <div class="tarjeta-content">
+              <h2>Mapa UMC</h2>
+              <hr class="tarjeta-divisor">
+              <p>Explora el campus universitario con nuestro mapa interactivo. Encuentra aulas, servicios, instalaciones y más.</p>
+            </div>
+
+            <div class="tarjeta-icon">
+              <img src="<?= base_url('img/mapa_icono.png')?>" alt="Ilustracion Mapa UMC">
+            </div>
+
+          </article>
+
         </div>
       
       </section>
@@ -120,6 +147,36 @@
         
       </div>
     </div>
+
+    <footer class="footer-global">
+
+      <div class="footer-columna">
+    <img src="<? base_url('img/lay8_logo.png')?>" alt="LAY-8 MAP Logo" class="decoracion-logo">
+    <p style="margin-top: 15px;">Prototipo funcional desarrollado exclusivamente con fines académicos para la Unidad Marítima del Caribe.</p>
+  </div>
+
+  <div class="footer-columna">
+    <h4>ESTUDIANTES</h4>
+    <p>Eric Mendez</p>
+    <p>Abraham Angulo</p>
+    <p>Juan Morles</p>
+    <p>Haryerit Larez</p>
+  </div>
+
+  <div class="footer-columna">
+    <h4>LABORES</h4>
+    <p>Lider de Equipo, BDD</p>
+    <p>Backend</p>
+    <p>Backend</p>
+    <p>Fronted</p>
+  </div>
+
+  <div class="footer-columna">
+    <h4>CONTACTO</h4>
+    <p>info@lay8map.com</p>
+    
+  </div>
+    </footer>
 
     <script src="<?= base_url('js/landing.js') ?>"></script>
 
