@@ -184,6 +184,164 @@ h1, h2, h3, h4, h5, h6 {
     color: #1d4ed8;
 }
 
+/*====COMPONENTES UI====*/
+
+/*----CONTAINER----*/
+
+.card-global {
+    background-color: #f8fafc;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    padding:35px;
+    width:90%;
+    max-width:750px;
+    box-sizing: border-box;
+
+    margin: 0 auto 50px auto;
+    align-self: center;
+
+    height: fit-content;
+}
+
+/*----PASSWORD TOGGLE----*/
+
+.input-pass-group {
+    position: relative;
+    width: 100%;
+}
+
+.btn-toggle-pass {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #64748b;
+    padding: 0;
+}
+
+.btn-toggle-pass img {
+    width: 20px;
+    height: auto;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.btn-toggle-pass:hover img {
+    opacity: 1;
+}
+
+
+/*----SEPARADORES----*/
+
+.divisor-global {
+    width: 100%;
+    max-width: 350px;
+    height: 2px;
+    background-color: #1c53b0;
+    border: none;
+    margin-top: 8px;
+    margin-bottom: 5px;
+    margin-left: 0;
+}
+
+/*----INPUT BOXES----*/
+
+.input-global {
+    padding:12px 15px;
+    border: none;
+    border-radius: 12px;
+    background-color: #e2e8f0;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-global:focus {
+    box-shadow: 0 0 0 2px #4278d3;
+}
+
+/*----BOTONES----*/
+
+.btn-primary {
+    background: linear-gradient(to bottom, #4278d3, #1c53b0);
+    color: #fff;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    box-shadow: 0 5px 15px rgba(28, 83, 176, 0.4);
+}
+
+/*----LINKS----*/
+
+.link-global {
+    color: #1c53b0;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.link-global:hover {
+    color: #4278d3;
+    text-decoration: underline;
+}
+
+/*----RECURSOS FORMS----*/
+
+.form-titulo {
+    color: #0f172a;
+    font-size: 1.8rem;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.form-subtitulo {
+    color: #475569;
+    font-size: 0.95rem;
+    margin-top: 2px;
+    margin-bottom: 25px;
+}
+
+.form-footer {
+    width: 100%;
+    margin-top: 30px;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+/*----MENSAJES DE ERROR----*/
+
+.error-msg {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    border: 1px solid #f87171;
+    margin-bottom: 5px;
+}
+
+
+/*----FOOTER----*/
+
 .footer-global {
     margin-top: 140px;
     width: 100%;

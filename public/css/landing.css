@@ -1,4 +1,4 @@
-/*contenedor principal*/
+/*----CONTENEDOR PRINCIPAL----*/
 
 body {
     background-color: #f8fafc;
@@ -148,7 +148,7 @@ body {
     flex-direction: column;
 }
 
-/*barrita de navegacion*/
+/*----NAVEGACION----*/
 
 .nav-services {
     background-color: #1c53b0;
@@ -188,7 +188,7 @@ body {
     color: #0f172a;
 }
 
-/*modal del login*/
+/*----LOGIN MODAL----*/
 
 .modal-overlay{
     position: fixed;
@@ -289,35 +289,6 @@ body {
     margin-top: 5px;
 }
 
-.input-pass-group {
-    position: relative;
-    width: 100%;
-}
-
-.btn-toggle-pass {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    color: #64748b;
-    padding: 0;
-}
-
-.btn-toggle-pass img {
-    width: 20px;
-    height: auto;
-    opacity: 0.5;
-    transition: opacity 0.3s ease;
-}
-
-.btn-toggle-pass:hover img {
-    opacity: 1;
-}
-
 .link-olvido {
     font-size: 0.8rem;
     color: #4278d3;
@@ -385,7 +356,7 @@ body {
 }
 
 
-/*tarjetas*/
+/*----TARJETAS INFORMATIVAS----*/
 
 .cards-container {
     width: 100%;
@@ -452,6 +423,8 @@ body {
     max-width: 100%;
     height: auto;
 }
+
+/*----MENSAJES DE ERROR----*/
 
 .error-msg {
     background-color: #fee2e2;
