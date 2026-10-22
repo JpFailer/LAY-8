@@ -140,6 +140,7 @@ la clase error-msg para que se impriman con el estilo que diseñe ^u^ -->
     </div>
   </div>
 
-  <script src="<?= base_url('js/registro.js?v=4')?>"></script>
+  <script src="<?= base_url('js/main.js?v=5')?>"></script>
+  <script src="<?= base_url('js/registro.js?v=5')?>"></script>
 </body>
 </html>
