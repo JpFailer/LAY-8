@@ -40,9 +40,52 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     
     $routes->get('/perfil', 'Usuario::perfil');
     $routes->post('/perfil/solicitar-profesor', 'Usuario::solicitarProfesor');
+
+    // Sistema de Notificaciones para Alumnos
+    $routes->get('/api/notificaciones', 'NotificacionController::misNotificaciones');
+    $routes->get('/api/notificaciones/conteo', 'NotificacionController::conteoNoLeidas');
+    $routes->post('/api/notificaciones/marcar-leida/(:num)', 'NotificacionController::marcarLeida/$1');
     
-    // Rutas exclusivas para Profesores Aprobados
+    // Rutas exclusivas para Profesores Aprobados (Filtro Profesor)
     $routes->group('', ['filter' => 'profesor'], static function ($routes) {
         $routes->get('/crear-sala', 'Sala::crear');
+        
+        // Panel de profesor & estados rápidos
+        $routes->get('/api/profesor/clases', 'ProfesorController::misClases');
+        $routes->post('/api/profesor/actualizar-estado', 'ProfesorController::actualizarEstadoClase');
+        $routes->post('/api/profesor/aviso-tarea', 'ProfesorController::enviarAvisoTarea');
+    });
+
+    // Rutas exclusivas para el Administrador (Filtro Admin)
+    $routes->group('', ['filter' => 'admin'], static function ($routes) {
+        // Dashboard y Métricas
+        $routes->get('/api/admin/metricas', 'AdminController::metricas');
+
+        // Gestión de Profesores (Aprobación, Denegación y Revocación)
+        $routes->get('/api/admin/solicitudes-profesores', 'AdminController::solicitudesProfesores');
+        $routes->post('/api/admin/aprobar-profesor/(:num)', 'AdminController::aprobarProfesor/$1');
+        $routes->post('/api/admin/denegar-profesor/(:num)', 'AdminController::denegarProfesor/$1');
+        $routes->post('/api/admin/rechazar-profesor/(:num)', 'AdminController::denegarProfesor/$1'); // compatibilidad
+        $routes->post('/api/admin/revocar-profesor/(:num)', 'AdminController::revocarProfesor/$1');
+
+        // Gestión de Usuarios (Listar, Detalle, Banear, Desbanear, Eliminar y Roles)
+        $routes->get('/api/admin/usuarios', 'AdminController::listarUsuarios');
+        $routes->get('/api/admin/usuarios/(:num)', 'AdminController::detalleUsuario/$1');
+        $routes->post('/api/admin/usuarios/banear/(:num)', 'AdminController::banearUsuario/$1');
+        $routes->post('/api/admin/usuarios/desbanear/(:num)', 'AdminController::desbanearUsuario/$1');
+        $routes->post('/api/admin/usuarios/eliminar/(:num)', 'AdminController::eliminarUsuario/$1');
+        $routes->delete('/api/admin/usuarios/(:num)', 'AdminController::eliminarUsuario/$1');
+        $routes->post('/api/admin/usuarios/cambiar-rol/(:num)', 'AdminController::cambiarRolUsuario/$1');
+
+        // Gestión de la Biblioteca (Listar, Borrar Aportes y Archivos Físicos Huérfanos)
+        $routes->get('/api/admin/biblioteca/aportes', 'AdminController::listarAportesBiblioteca');
+        $routes->post('/api/admin/biblioteca/eliminar/(:num)', 'AdminController::eliminarAporteBiblioteca/$1');
+        $routes->delete('/api/admin/biblioteca/(:num)', 'AdminController::eliminarAporteBiblioteca/$1');
+        $routes->post('/api/admin/biblioteca/eliminar-archivo-huerfano', 'AdminController::eliminarArchivoHuerfano');
+
+        // Funciones Esenciales Adicionales
+        $routes->get('/api/admin/auditoria', 'AdminController::historialAuditoria');
+        $routes->post('/api/admin/aulas/toggle-estado/(:num)', 'AdminController::toggleEstadoAula/$1');
+        $routes->post('/api/admin/comunicado-global', 'AdminController::emitirComunicadoGlobal');
     });
 });

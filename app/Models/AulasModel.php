@@ -14,7 +14,7 @@ class AulasModel extends Model
     protected $protectFields    = true;
     
     // 🛡️ ESCUDO OBLIGATORIO: Campos que CodeIgniter tiene permitido registrar
-    protected $allowedFields    = ['nombre_json', 'alias_pdf', 'coord_x', 'coord_y'];
+    protected $allowedFields    = ['nombre_json', 'alias_pdf', 'coord_x', 'coord_y', 'estado', 'nota_estado'];
 
     protected $useTimestamps    = false;
 }

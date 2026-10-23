@@ -326,21 +326,137 @@ class MapaController extends BaseController {
     public function info_aula($nombre_aula) {
         $clasesModel = new ClaseProgramadaModel();
         
-        // Si no hay clases aún, intentamos auto-cargar
         if ($clasesModel->countAllResults() === 0) {
             $this->importar_horarios_automaticamente();
         }
 
         $horarios = $clasesModel
-            ->select('clases_programadas.*, materias.nombre as materia')
-            ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('aula', $nombre_aula)
-            ->orderBy('dia_semana', 'ASC')
-            ->orderBy('hora_inicio', 'ASC')
+            ->select("clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion, secciones.profesor_id")
+            ->join("secciones", "secciones.id = clases_programadas.seccion_id")
+            ->join("materias", "materias.id = secciones.materia_id")
+            ->where("aula", $nombre_aula)
+            ->orderBy("dia_semana", "ASC")
+            ->orderBy("hora_inicio", "ASC")
             ->findAll();
 
-        return json_encode($horarios);
+        date_default_timezone_set("America/Caracas");
+        $horaActual = date("H:i:s");
+        $diasInglesAEspanol = [
+            "Monday" => "Lunes", "Tuesday" => "Martes", "Wednesday" => "Miercoles",
+            "Thursday" => "Jueves", "Friday" => "Viernes", "Saturday" => "Sabado", "Sunday" => "Domingo"
+        ];
+        $diaActual = $diasInglesAEspanol[date("l")];
+
+        $porDia = [];
+        foreach ($horarios as $bloque) {
+            $dia = $bloque["dia_semana"];
+            $porDia[$dia][] = $bloque;
+        }
+
+        $ordenDias = ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"];
+        $horariosFormateados = [];
+        $claseActivaAhora  = null;
+        $proximaClaseHoy   = null;
+
+        foreach ($ordenDias as $dia) {
+            if (empty($porDia[$dia])) continue;
+
+            $bloquesDia = $porDia[$dia];
+            $sesionesDia = [];
+            $sesionActual = null;
+
+            foreach ($bloquesDia as $b) {
+                if ($sesionActual === null) {
+                    $sesionActual = [
+                        "materia"        => $b["materia"],
+                        "codigo_materia" => $b["codigo_materia"],
+                        "seccion"        => $b["codigo_seccion"],
+                        "seccion_id"     => $b["seccion_id"],
+                        "dia_semana"     => $dia,
+                        "hora_inicio"    => $b["hora_inicio"],
+                        "hora_fin"       => $b["hora_fin"],
+                    ];
+                } else {
+                    if ($sesionActual["materia"] === $b["materia"] &&
+                        $sesionActual["seccion"] === $b["codigo_seccion"] &&
+                        $sesionActual["hora_fin"] === $b["hora_inicio"]) {
+                        $sesionActual["hora_fin"] = $b["hora_fin"];
+                    } else {
+                        $sesionesDia[] = $sesionActual;
+                        $sesionActual = [
+                            "materia"        => $b["materia"],
+                            "codigo_materia" => $b["codigo_materia"],
+                            "seccion"        => $b["codigo_seccion"],
+                            "seccion_id"     => $b["seccion_id"],
+                            "dia_semana"     => $dia,
+                            "hora_inicio"    => $b["hora_inicio"],
+                            "hora_fin"       => $b["hora_fin"],
+                        ];
+                    }
+                }
+            }
+            if ($sesionActual !== null) {
+                $sesionesDia[] = $sesionActual;
+            }
+
+            foreach ($sesionesDia as &$sesion) {
+                $inicioTimestamp = strtotime($sesion["hora_inicio"]);
+                $finTimestamp    = strtotime($sesion["hora_fin"]);
+                $duracionMinutos = max(1, round(($finTimestamp - $inicioTimestamp) / 60));
+
+                $horas = floor($duracionMinutos / 60);
+                $minutos = $duracionMinutos % 60;
+                $duracionTexto = ($horas > 0 ? "{$horas}h " : "") . ($minutos > 0 ? "{$minutos}m" : "");
+
+                $horaInicioCorta = substr($sesion["hora_inicio"], 0, 5);
+                $horaFinCorta    = substr($sesion["hora_fin"], 0, 5);
+                $sesion["intervalo"] = "{$horaInicioCorta} - {$horaFinCorta}";
+                $sesion["duracion_minutos"] = $duracionMinutos;
+                $sesion["duracion_texto"]   = $duracionTexto;
+
+                $esHoy = ($dia === $diaActual);
+                $esActiva = ($esHoy && $horaActual >= $sesion["hora_inicio"] && $horaActual <= $sesion["hora_fin"]);
+                $sesion["es_activa_ahora"] = $esActiva;
+
+                if ($esActiva) {
+                    $minutosRestantes = max(0, round((strtotime($sesion["hora_fin"]) - strtotime($horaActual)) / 60));
+                    $minutosPasados   = max(0, round((strtotime($horaActual) - strtotime($sesion["hora_inicio"])) / 60));
+                    $progreso = min(100, max(0, round(($minutosPasados / $duracionMinutos) * 100)));
+
+                    $claseActivaAhora = [
+                        "materia"            => $sesion["materia"],
+                        "seccion"            => $sesion["seccion"],
+                        "intervalo"          => $sesion["intervalo"],
+                        "duracion"           => $duracionTexto,
+                        "minutos_restantes"  => $minutosRestantes,
+                        "porcentaje_avance"  => $progreso,
+                    ];
+                }
+
+                if ($esHoy && $sesion["hora_inicio"] > $horaActual && $proximaClaseHoy === null) {
+                    $minutosParaInicio = max(0, round((strtotime($sesion["hora_inicio"]) - strtotime($horaActual)) / 60));
+                    $proximaClaseHoy = [
+                        "materia"            => $sesion["materia"],
+                        "seccion"            => $sesion["seccion"],
+                        "intervalo"          => $sesion["intervalo"],
+                        "inicia_en_minutos"  => $minutosParaInicio,
+                    ];
+                }
+            }
+
+            $horariosFormateados[$dia] = $sesionesDia;
+        }
+
+        return $this->response->setJSON([
+            "aula"              => $nombre_aula,
+            "hora_servidor"     => $horaActual,
+            "dia_servidor"      => $diaActual,
+            "hay_clase_activa"  => ($claseActivaAhora !== null),
+            "clase_activa"      => $claseActivaAhora,
+            "proxima_clase_hoy" => $proximaClaseHoy,
+            "horarios_por_dia"  => $horariosFormateados,
+            "total_bloques"     => count($horarios)
+        ]);
     }
 
     // 4. API PARA ACTUALIZAR LUCES EN TIEMPO REAL
@@ -413,3 +529,4 @@ class MapaController extends BaseController {
         return $this->response->setJSON($estadoMapa);
     }
 }
+

@@ -154,21 +154,53 @@
         document.getElementById('cuerpoHorario').innerHTML = '<p>Cargando informaciÃ³n...</p>';
         document.getElementById('modalAula').style.display = 'block';
 
-        fetch(BASE_URL + 'mapa/info_aula/' + encodeURIComponent(nombreAula))
+        fetch(BASE_URL + "mapa/info_aula/" + encodeURIComponent(nombreAula))
             .then(res => res.json())
             .then(data => {
-                let html = '<ul style="list-style: none; padding: 0;">';
-                if(data.length > 0) {
-                    data.forEach(c => {
-                        html += `<li style="padding: 10px; border-bottom: 1px solid #eee;">
-                                    <strong>${c.dia_semana}</strong>: ${c.hora_inicio} - ${c.hora_fin} | <b>${c.materia}</b>
-                                 </li>`;
-                    });
-                } else {
-                    html += '<li style="padding: 10px; color: #666;">No hay clases programadas para esta aula.</li>';
+                let html = "";
+
+                // 1. Banner de clase activa en este momento
+                if (data.hay_clase_activa && data.clase_activa) {
+                    const c = data.clase_activa;
+                    html += `<div style="background:#fee2e2; border-left:4px solid #ef4444; padding:12px; border-radius:6px; margin-bottom:15px;">
+                                <strong style="color:#991b1b; display:block; font-size:14px;">?? CLASE ACTIVA EN ESTE MOMENTO</strong>
+                                <span style="font-weight:700; color:#1e293b; font-size:15px;">${c.materia} (Secc. ${c.seccion})</span><br>
+                                <span style="color:#475569; font-size:13px;">Intervalo: <b>${c.intervalo}</b> (${c.duracion}) &bull; Quedan ~${c.minutos_restantes} min</span>
+                             </div>`;
+                } else if (data.proxima_clase_hoy) {
+                    const p = data.proxima_clase_hoy;
+                    html += `<div style="background:#fef9c3; border-left:4px solid #eab308; padding:10px; border-radius:6px; margin-bottom:15px; font-size:13px; color:#854d0e;">
+                                ?? <b>Próxima clase hoy:</b> ${p.materia} (${p.intervalo}) &bull; Inicia en ~${p.inicia_en_minutos} min
+                             </div>`;
                 }
-                html += '</ul>';
-                document.getElementById('cuerpoHorario').innerHTML = html;
+
+                // 2. Horarios agrupados por día en intervalos
+                const dias = data.horarios_por_dia || {};
+                let tieneHorarios = false;
+
+                for (const [dia, sesiones] of Object.entries(dias)) {
+                    if (sesiones && sesiones.length > 0) {
+                        tieneHorarios = true;
+                        html += `<div style="margin-bottom:12px;">
+                                    <h4 style="margin:0 0 5px 0; color:#1e3a8a; font-size:14px; border-bottom:1px solid #e2e8f0; padding-bottom:3px;">${dia}</h4>
+                                    <ul style="list-style:none; padding:0; margin:0;">`;
+                        sesiones.forEach(s => {
+                            const badge = s.es_activa_ahora ? ' <span style="background:#ef4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px;">EN CURSO</span>' : "";
+                            html += `<li style="padding:6px 0; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span><b>${s.intervalo}</b> (${s.duracion_texto}) &bull; ${s.materia} <span style="color:#64748b;">[${s.seccion}]</span></span>
+                                        ${badge}
+                                     </li>`;
+                        });
+                        html += `   </ul>
+                                 </div>`;
+                    }
+                }
+
+                if (!tieneHorarios) {
+                    html += '<p style="color:#64748b; font-size:13px;">No hay clases programadas para esta aula.</p>';
+                }
+
+                document.getElementById("cuerpoHorario").innerHTML = html;
             })
             .catch(err => {
                 document.getElementById('cuerpoHorario').innerHTML = '<p style="color:red;">Error al cargar el horario.</p>';
@@ -209,3 +241,4 @@
 
 </body>
 </html>
+

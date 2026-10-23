@@ -1,0 +1,9 @@
+# Desactivar ejecución de scripts en la carpeta de uploads
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|phar|inc|cgi|pl|sh)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Prevenir ejecución de scripts de servidor
+Options -ExecCGI -Indexes
+php_flag engine off
