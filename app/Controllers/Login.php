@@ -6,7 +6,7 @@ class Login extends BaseController
 {
     public function index()
     {
-        return view('auth/login_view');
+        return view('Auth/login_view');
     }
 
 public function autenticar()

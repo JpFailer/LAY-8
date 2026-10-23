@@ -1,16 +1,20 @@
-document.addEventListener('DOMContentLoaded', () => {
+// MOSTRAR CONTRASENA 
 
-    const btnAvatar = document.getElementById('btn-avatar');
-    const menuPopout = document.getElementById('menu-popout');
+ const btnTogglePass = document.getElementById('btn-toggle-pass');
+    const inputContrasena = document.getElementById('contrasena');
+    const imgOjo = document.getElementById('eye-icon');
 
-    btnAvatar.addEventListener('click', (evento)=>{
-        evento.stopPropagation();
-        menuPopout.classList.toggle('oculto');
-    });
+    if (btnTogglePass && inputContrasena) {
+        btnTogglePass.addEventListener('click', () => {
+            const tipoActual = inputContrasena.getAttribute('type');
+            const nuevoTipo = tipoActual === 'password' ? 'text' : 'password';
 
-    document.addEventListener('click',(evento)=>{
-        if(!menuPopout.classList.contains('oculto')&&!menuPopout.contains(evento.target)){
-            menuPopout.classList.add('oculto');
-        }
-    });
-})
+            inputContrasena.setAttribute('type', nuevoTipo);
+
+            if (nuevoTipo === 'text') {
+                imgOjo.style.opacity = '1'
+            } else {
+                imgOjo.style.opacity = '0.5'
+            }
+        });
+}
