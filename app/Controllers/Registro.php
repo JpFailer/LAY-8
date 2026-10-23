@@ -6,7 +6,7 @@ class Registro extends BaseController
 {
     public function index()
     {
-        return view('auth/registro_view');
+        return view('Auth/registro_view');
     }
 
     public function procesar()
@@ -21,7 +21,7 @@ class Registro extends BaseController
         ];
 
         if (!$this->validate($reglas)) {
-            return view('auth/registro_view', ['errores' => $this->validator]);
+            return view('Auth/registro_view', ['errores' => $this->validator]);
         }
 
         $datos = [
