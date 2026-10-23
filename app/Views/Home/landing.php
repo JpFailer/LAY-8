@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- stylesheets-->
-    <link rel="stylesheet" href="<?= base_url('css/global.css')?>">
-    <link rel="stylesheet" href="<?= base_url('css/landing.css')?>">
+    <link rel="stylesheet" href="<?= base_url('css/global.css?v=6')?>">
+    <link rel="stylesheet" href="<?= base_url('css/landing.css?v=6')?>">
   </head>
 
   <body>
@@ -189,3 +189,4 @@
 
   </body>
 </html>
+
