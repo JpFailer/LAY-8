@@ -8,13 +8,14 @@ use App\Models\SeccionModel;
 use App\Models\ClaseProgramadaModel;
 use App\Models\AulasModel; // Añadido para mantener el código limpio
 
-class MapaController extends Controller {
+class MapaController extends BaseController {
 
     // 1. PROCESAMIENTO DEL PDF A LA BASE DE DATOS
     public function python_horarios(){
         
         $carpeta_scripts = ROOTPATH . 'scripts_python';
-        $comando = 'cd "' . $carpeta_scripts . '" && "venv\Scripts\python.exe" leer_horario.py 2>&1';
+        $pythonExec = file_exists($carpeta_scripts . DIRECTORY_SEPARATOR . "venv\\Scripts\\python.exe") ? "\"venv\\Scripts\\python.exe\"" : "python";
+        $comando = 'cd "' . $carpeta_scripts . '" && ' . $pythonExec . ' leer_horario.py 2>&1';
         
         $json_crudo = shell_exec($comando);
 
@@ -350,3 +351,4 @@ class MapaController extends Controller {
         return $this->response->setJSON($estadoMapa);
     }
 }
+

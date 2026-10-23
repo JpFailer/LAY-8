@@ -6,7 +6,7 @@ class Registro extends BaseController
 {
     public function index()
     {
-        return view('Auth/registro_view');
+        return view('auth/registro_view');
     }
 
     public function procesar()
@@ -21,7 +21,7 @@ class Registro extends BaseController
         ];
 
         if (!$this->validate($reglas)) {
-            return view('Auth/registro_view', ['errores' => $this->validator]);
+            return view('auth/registro_view', ['errores' => $this->validator]);
         }
 
         $datos = [
@@ -34,15 +34,20 @@ class Registro extends BaseController
             'contrasena'          => password_hash($this->request->getPost('contrasena'), PASSWORD_DEFAULT),
             'rol'                 => 'estudiante',
             'estado_verificacion' => 'no_aplica',
-            'ruta_carnet'         => null
+            'ruta_carnet'         => null,
+            'fecha_registro'      => date('Y-m-d H:i:s')
         ];
 
         if ($this->request->getPost('es_profesor') === 'si') {
             $archivo = $this->request->getFile('carnet');
-            if ($archivo->isValid() && !$archivo->hasMoved()) {
+            if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
                 if (in_array($archivo->getMimeType(), ['image/jpeg', 'image/png', 'application/pdf'])) {
+                    $carpetaCarnets = ROOTPATH . 'public/uploads/carnets';
+                    if (!is_dir($carpetaCarnets)) {
+                        mkdir($carpetaCarnets, 0777, true);
+                    }
                     $nombre_nuevo = $archivo->getRandomName();
-                    $archivo->move(ROOTPATH . 'public/uploads/carnets', $nombre_nuevo);
+                    $archivo->move($carpetaCarnets, $nombre_nuevo);
                     $datos['ruta_carnet'] = 'uploads/carnets/' . $nombre_nuevo;
                     $datos['estado_verificacion'] = 'pendiente';
                     $datos['rol'] = 'profesor';
@@ -53,6 +58,6 @@ class Registro extends BaseController
         $usuarioModel = new UsuarioModel();
         $usuarioModel->insert($datos);
 
-        return redirect()->to('/login')->with('mensaje', 'Cuenta creada. Si enviaste un carnet, está pendiente de revisión.');
+        return redirect()->to('/login')->with('mensaje', 'Cuenta creada exitosamente. ' . ($datos['rol'] === 'profesor' ? 'Tu carnet está pendiente de revisión.' : 'Ya puedes iniciar sesión.'));
     }
 }

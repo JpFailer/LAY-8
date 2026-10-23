@@ -61,7 +61,7 @@ class CrearTablaUsuarios extends Migration
                 'null'       => true,
             ],
             'fecha_registro' => [
-                'type' => 'TIMESTAMP',
+                'type' => 'DATETIME', 'null' => true,
             ],
         ]);
         

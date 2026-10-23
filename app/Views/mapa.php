@@ -1,30 +1,144 @@
-<?php 
-/** @var float $coord_x 
- * @var float $coord_y 
- */ 
-?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa UMC - LAY-8 MAP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="<?= base_url('css/global.css') ?>">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+        .barra-mapa {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .barra-mapa a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .barra-mapa a:hover {
+            opacity: 0.85;
+        }
+        .contenedor-mapa {
+            position: relative; 
+            width: 100%;
+            max-width: 900px; 
+            margin: 30px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+        }
+        .imagen-mapa {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .pin-contenedor {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            transform: translate(-50%, -50%); 
+            cursor: pointer;
+            z-index: 10;
+        }
+        .luz-estado {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: latido 1.5s infinite ease-in-out;
+        }
+        @keyframes latido {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        .modal-info { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); z-index: 1000; 
+        }
+        .modal-contenido { 
+            background: white; margin: 10% auto; padding: 25px; 
+            width: 90%; max-width: 500px; border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .leyenda-mapa {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+        .item-leyenda {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .punto-luz {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="barra-mapa">
+    <a href="<?= base_url('dashboard') ?>">
+        <i class="fa-solid fa-arrow-left"></i> Volver al Dashboard
+    </a>
+    <span style="font-weight: 700; font-size: 18px;">MAPA INTERACTIVO UMC</span>
+    <a href="<?= base_url('logout') ?>">
+        <i class="fa-solid fa-right-from-bracket"></i> Salir
+    </a>
+</div>
+
+<div class="leyenda-mapa">
+    <div class="item-leyenda"><span class="punto-luz" style="background: #22c55e;"></span> Disponible</div>
+    <div class="item-leyenda"><span class="punto-luz" style="background: #eab308;"></span> Clase próxima (15 min)</div>
+    <div class="item-leyenda"><span class="punto-luz" style="background: #ef4444;"></span> En clase (Ocupada)</div>
+    <div class="item-leyenda"><span class="punto-luz" style="background: #3b82f6;"></span> Fuera de servicio</div>
+</div>
 
 <div id="modalAula" class="modal-info" style="display:none;">
     <div class="modal-contenido">
         <span onclick="cerrarModal()" style="cursor:pointer; float:right; font-size: 24px;">&times;</span>
-        <h2 id="tituloAula" style="margin-top: 0; color: #333;">Horario</h2>
+        <h2 id="tituloAula" style="margin-top: 0; color: #1e3a8a;">Horario</h2>
         <div id="cuerpoHorario" style="margin-top: 15px;"></div>
     </div>
 </div>
 
 <div class="contenedor-mapa">
-    <img src="/img/mapa_umc.jpg" alt="Mapa Universidad" class="imagen-mapa">
+    <img src="<?= base_url('img/mapa_umc.jpg') ?>" alt="Mapa Universidad" class="imagen-mapa">
 
     <?php if (!empty($aulas)): ?>
         <?php foreach ($aulas as $aula): ?>
             
             <div class="pin-contenedor" 
                  style="left: <?= $aula['coord_x'] ?>%; top: <?= $aula['coord_y'] ?>%;"
-                 onclick="abrirModal('<?= $aula['alias_pdf'] ?>')">
+                 onclick="abrirModal('<?= esc($aula['alias_pdf']) ?>')">
                  
                  <img id="luz_aula_<?= str_replace(' ', '_', $aula['alias_pdf']) ?>" 
                       class="luz-estado" 
-                      src="/img/luz_verde.png" 
+                      src="<?= base_url('img/' . ($aula['esta_ocupado'] ? 'luz_roja.png' : 'luz_verde.png')) ?>" 
                       alt="Estado del Aula">
             </div>
 
@@ -33,25 +147,31 @@
 </div>
 
 <script>
-    // 1. Lógica del Modal (Lo que ya tenías)
+    const BASE_URL = '<?= base_url() ?>';
+
     function abrirModal(nombreAula) {
         document.getElementById('tituloAula').innerText = 'Horario: ' + nombreAula;
-        fetch('/mapa/info_aula/' + nombreAula)
+        document.getElementById('cuerpoHorario').innerHTML = '<p>Cargando información...</p>';
+        document.getElementById('modalAula').style.display = 'block';
+
+        fetch(BASE_URL + 'mapa/info_aula/' + encodeURIComponent(nombreAula))
             .then(res => res.json())
             .then(data => {
                 let html = '<ul style="list-style: none; padding: 0;">';
                 if(data.length > 0) {
                     data.forEach(c => {
-                        html += `<li style="padding: 8px; border-bottom: 1px solid #eee;">
+                        html += `<li style="padding: 10px; border-bottom: 1px solid #eee;">
                                     <strong>${c.dia_semana}</strong>: ${c.hora_inicio} - ${c.hora_fin} | <b>${c.materia}</b>
                                  </li>`;
                     });
                 } else {
-                    html += '<li>No hay clases programadas.</li>';
+                    html += '<li style="padding: 10px; color: #666;">No hay clases programadas para esta aula.</li>';
                 }
                 html += '</ul>';
                 document.getElementById('cuerpoHorario').innerHTML = html;
-                document.getElementById('modalAula').style.display = 'block';
+            })
+            .catch(err => {
+                document.getElementById('cuerpoHorario').innerHTML = '<p style="color:red;">Error al cargar el horario.</p>';
             });
     }
 
@@ -59,83 +179,33 @@
         document.getElementById('modalAula').style.display = 'none'; 
     }
 
-    // 2. NUEVO: Lógica de actualización de luces en tiempo real
+    window.onclick = function(event) {
+        const modal = document.getElementById('modalAula');
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    }
+
     function actualizarLucesEnVivo() {
-        // Consultamos la API que creamos en el controlador
-        fetch('/mapa/estado_en_vivo')
+        fetch(BASE_URL + 'mapa/estado_en_vivo')
             .then(response => response.json())
             .then(estados_aulas => {
-                
-                // estados_aulas es un objeto como: { "Aula 33": "roja", "Lab F": "verde" }
                 for (const [alias, color] of Object.entries(estados_aulas)) {
-                    
-                    // Reconstruimos el ID reemplazando espacios por guiones bajos (igual que en PHP)
                     let idSeguro = alias.replace(/\s+/g, '_');
                     let imagenLuz = document.getElementById(`luz_aula_${idSeguro}`);
-                    
-                    // Si encontramos la imagen en el mapa, le cambiamos la ruta a la foto correspondiente
                     if (imagenLuz) {
-                        imagenLuz.src = `/img/luz_${color}.png`;
+                        imagenLuz.src = `${BASE_URL}img/luz_${color}.png`;
                     }
                 }
             })
             .catch(error => console.error('Error sincronizando las luces:', error));
     }
 
-    // Ejecutamos la función inmediatamente al cargar la página para pintar las luces correctas
     document.addEventListener("DOMContentLoaded", function() {
         actualizarLucesEnVivo();
-        // Configuramos para que se repita automáticamente cada 60 segundos (60000 ms)
         setInterval(actualizarLucesEnVivo, 60000);
     });
 </script>
 
-<style>
-    .contenedor-mapa {
-        position: relative; 
-        width: 100%;
-        max-width: 800px; 
-        margin: auto;
-    }
-    
-    .imagen-mapa {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-
-    /* Contenedor invisible que se posiciona en las coordenadas exactas */
-    .pin-contenedor {
-        position: absolute;
-        width: 30px; /* Ajusta este tamaño dependiendo de qué tan grande quieras la luz */
-        height: 30px;
-        transform: translate(-50%, -50%); 
-        cursor: pointer;
-        z-index: 10;
-    }
-
-    /* La imagen PNG del brillo */
-    .luz-estado {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        animation: latido 1.5s infinite ease-in-out;
-    }
-
-    @keyframes latido {
-        0% { transform: scale(1); opacity: 0.8; }
-        50% { transform: scale(1.2); opacity: 1; }
-        100% { transform: scale(1); opacity: 0.8; }
-    }
-
-    /* Estilo del modal mejorado */
-    .modal-info { 
-        position:fixed; top:0; left:0; width:100%; height:100%; 
-        background:rgba(0,0,0,0.6); z-index:1000; 
-    }
-    .modal-contenido { 
-        background:white; margin:10% auto; padding:25px; 
-        width:90%; max-width: 500px; border-radius:8px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-</style>
+</body>
+</html>

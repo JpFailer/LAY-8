@@ -147,7 +147,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="<?= base_url('index.php/biblioteca/subirAporte') ?>" method="post" enctype="multipart/form-data">
+    <form action="<?= base_url('biblioteca/subirAporte') ?>" method="post" enctype="multipart/form-data">
         <?= csrf_field() ?>
 
         <div class="form-group">

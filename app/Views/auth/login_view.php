@@ -34,10 +34,7 @@
     </div>
   </div>
 
-  <div class=card-global style="max-width: 500px; margin-top: 50px;"> 
-
-<!--BACKEND: mensajes d error y asi. revisa o cambialo si es necesario pero manten 
-la clase error-msg para que se impriman con el estilo que diseñe ^u^ -->
+  <div class="card-global" style="max-width: 500px; margin-top: 50px;"> 
 
     <?php if(session()->getFlashdata('error')): ?>
       <div class="error-msg">
@@ -45,8 +42,15 @@ la clase error-msg para que se impriman con el estilo que diseñe ^u^ -->
       </div>
     <?php endif;?>
 
+    <?php if(session()->getFlashdata('mensaje')): ?>
+      <div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; text-align: center;">
+        <?= session()->getFlashdata('mensaje') ?>
+      </div>
+    <?php endif;?>
 
     <form id="registroForm" action="<?= base_url('login/autenticar')?>" method="POST">
+      <?= csrf_field() ?>
+
       <div style="max-width: 450px; margin: 0 auto;">
 
         <div class="form-col" style="margin-bottom: 20px;">
@@ -54,18 +58,19 @@ la clase error-msg para que se impriman con el estilo que diseñe ^u^ -->
           <input type="text" name="nombre_usuario" class="input-global" required>
         </div>
         
-          <div class="form-col">
-            <label class="form-label">Contraseña</label>
+        <div class="form-col">
+          <label class="form-label">Contraseña</label>
 
-            <div class="input-pass-group">
-              <input type="password" id="contrasena" name="contrasena" class="input-global" required minlength="8">
-              <button type="button" id="btn-toggle-pass" class="btn-toggle-pass">
-                <img src="<?= base_url('img/ojo.svg')?>" alt="Mostrar contraseña" id="eye-icon">
-              </button>
-            </div>
+          <div class="input-pass-group">
+            <input type="password" id="contrasena" name="contrasena" class="input-global" required minlength="8">
+            <button type="button" id="btn-toggle-pass" class="btn-toggle-pass">
+              <img src="<?= base_url('img/ojo.svg')?>" alt="Mostrar contraseña" id="eye-icon">
+            </button>
+          </div>
+        </div>
 
         <div class="botones-wizard" style="margin-top: 30px;">
-          <button type="submit" class="btn-primary btn-mitad" style="flex: 2;">Ingresar</button>
+          <button type="submit" class="btn-primary btn-mitad" style="flex: 2; width: 100%;">Ingresar</button>
         </div>
       </div>
     </form>

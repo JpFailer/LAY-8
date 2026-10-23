@@ -10,6 +10,7 @@ class UsuarioModel extends Model
     protected $allowedFields = [
         'primer_nombre', 'segundo_nombre', 'apellidos', 
         'nombre_usuario', 'correo', 'telefono', 
-        'contrasena', 'rol', 'estado_verificacion', 'ruta_carnet'
+        'contrasena', 'rol', 'estado_verificacion', 'ruta_carnet',
+        'fecha_registro'
     ];
 }

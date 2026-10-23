@@ -101,7 +101,7 @@
     <!--login-->
 
     <div id="modal-login-overlay" class="modal-overlay oculto" 
-    data-error="<?= session()->getFlashdata('error') ? 'true' : 'false' ?>">
+    data-error="<?= (session()->getFlashdata('error') || session()->getFlashdata('mensaje')) ? 'true' : 'false' ?>">
       <div class="modal-login">
         <button id="btn-close-login" class="btn-close">&times;</button>
 
@@ -117,8 +117,9 @@
                 <?= session()->getFlashdata('error')?>
               </div>
             <?php endif; ?>
+            <?php if(session()->getFlashdata('mensaje')): ?><div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px;"><?= session()->getFlashdata('mensaje') ?></div><?php endif; ?>
 
-          <form action=" <?= base_url('login/autenticar')?>" method="POST" class="form-login">
+          <form action="<?= base_url('login/autenticar') ?>" method="POST" class="form-login"> <?= csrf_field() ?>
 
             <label for="nombre_usuario">Usuario</label>
             <input type="text" id="nombre_usuario" name="nombre_usuario" class="input-login" required>

@@ -21,7 +21,7 @@
     </div>
 
     <div class="mapa-container" id="contenedorMapa">
-        <img src="/assets/img/mapa_umc.jpg" id="imagenMapa" class="mapa-img" alt="Mapa de la UMC">
+        <img src="<?= base_url('img/mapa_umc.jpg') ?>" id="imagenMapa" class="mapa-img" alt="Mapa de la UMC">
     </div>
 
     <script>

@@ -2,13 +2,11 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\Controller;
-
-class BibliotecaController extends Controller
+class BibliotecaController extends BaseController
 {
     public function index()
     {
-        return view('subir_aporte');
+        return view('Biblioteca/subirAporte');
     }
 
     public function subirAporte()
@@ -35,19 +33,20 @@ class BibliotecaController extends Controller
             
             $nuevoNombre = $archivo->getRandomName();
 
-            // --- AQUÍ ENTRA TU LÓGICA DE CATEGORÍAS ---
             // 1. Capturamos la categoría del formulario
             $categoria = $this->request->getPost('categoria');
 
             // 2. Filtramos para evitar inyecciones de rutas
             $carpetasPermitidas = ['guias', 'ejercicios', 'resumenes'];
             if (!in_array($categoria, $carpetasPermitidas)) {
-                $categoria = 'otros'; // Carpeta de seguridad
+                $categoria = 'otros';
             }
 
-            // 3. Armamos la ruta dinámica
+            // 3. Armamos la ruta dinámica asegurando que el directorio exista
             $rutaDestino = WRITEPATH . 'uploads/biblioteca/' . $categoria;
-            // ------------------------------------------
+            if (!is_dir($rutaDestino)) {
+                mkdir($rutaDestino, 0777, true);
+            }
 
             // Movemos el archivo a la subcarpeta seleccionada
             $archivo->move($rutaDestino, $nuevoNombre);

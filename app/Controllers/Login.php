@@ -6,21 +6,24 @@ class Login extends BaseController
 {
     public function index()
     {
-        // Como el login ahora vive en el modal de la landing page,
-        // si alguien intenta escribir "/login" en la URL, lo devolvemos al inicio.
-        return redirect()->to('/');
+        // Si ya está logueado, lo mandamos al dashboard
+        if (session()->get('isLoggedIn')) {
+            return redirect()->to('/dashboard');
+        }
+
+        // Mostramos la vista de inicio de sesión dedicada
+        return view('auth/login_view');
     }
 
     public function autenticar()
     {
         $session = session();
 
-        // 1. Recibimos específicamente el nombre de usuario y la contraseña del modal
+        // 1. Recibimos específicamente el nombre de usuario y la contraseña
         $nombre_usuario = trim($this->request->getPost('nombre_usuario'));
         $contrasena = $this->request->getPost('contrasena');
 
-        // 2. SOLUCIÓN ANTIBALAS: Usamos la conexión directa a la base de datos
-        // Esto ignora el archivo UsuarioModel.php y evita el error de mayúsculas/minúsculas de Git
+        // 2. Conexión a la base de datos
         $db = \Config\Database::connect();
         $usuario = $db->table('usuarios')->where('nombre_usuario', $nombre_usuario)->get()->getRowArray();
 
@@ -42,9 +45,8 @@ class Login extends BaseController
             return redirect()->to('/dashboard');
             
         } else {
-            
-            // REDIRECCIÓN DE ERROR: Vuelven a la landing page (raíz) con mensaje de error
-            return redirect()->to('/')->with('error', 'Usuario o contraseña incorrectos.');
+            // REDIRECCIÓN DE ERROR: Vuelven atrás con mensaje de error
+            return redirect()->back()->with('error', 'Usuario o contraseña incorrectos.');
         }
     }
 

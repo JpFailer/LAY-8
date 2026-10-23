@@ -17,43 +17,52 @@ class AuthController extends BaseController
     {
         $archivo = $this->request->getFile('constancia_pdf');
 
-        if (!$archivo->isValid() || $archivo->getExtension() !== 'pdf') {
+        if (!$archivo || !$archivo->isValid() || $archivo->getExtension() !== 'pdf') {
             return redirect()->back()->with('error', 'Por favor, sube un archivo PDF válido.');
         }
 
+        $carpetaUploads = WRITEPATH . 'uploads';
+        if (!is_dir($carpetaUploads)) {
+            mkdir($carpetaUploads, 0777, true);
+        }
+
         $nuevoNombre = $archivo->getRandomName();
-        $archivo->move(WRITEPATH . 'uploads', $nuevoNombre);
-        $rutaCompleta = WRITEPATH . 'uploads/' . $nuevoNombre;
+        $archivo->move($carpetaUploads, $nuevoNombre);
+        $rutaCompleta = $carpetaUploads . '/' . $nuevoNombre;
 
         try {
             $parser = new Parser();
             $pdf = $parser->parseFile($rutaCompleta);
             $texto = $pdf->getText();
-
-            
             $textoNormalizado = mb_strtolower($texto, 'UTF-8');
 
-            
-            // VALIDACIÓN 1: ¿Es de la mierditima?
+            // VALIDACIÓN 1: ¿Es de la universidad UMC?
             $esValido = preg_match('/universidad.*?caribe/is', $textoNormalizado);
 
             if (!$esValido) {
-                unlink($rutaCompleta); 
+                if (file_exists($rutaCompleta)) {
+                    unlink($rutaCompleta);
+                }
                 return redirect()->back()->with('error', 'Este documento no parece ser una constancia válida de la UMC.');
             }
+
             // VALIDACIÓN 2: Extraer la cédula
             if (preg_match('/[ve]-?\s*?(\d{7,8})/i', $texto, $coincidencias)) {
                 $cedulaEncontrada = $coincidencias[1];
             } else {
-                unlink($rutaCompleta); 
+                if (file_exists($rutaCompleta)) {
+                    unlink($rutaCompleta);
+                }
                 return redirect()->back()->with('error', 'No se pudo detectar un número de cédula en el documento.');
             }
 
-            // borrado de pdf
-            unlink($rutaCompleta);
+            // Borrado del PDF temporal
+            if (file_exists($rutaCompleta)) {
+                unlink($rutaCompleta);
+            }
 
-            // Redirigimos a la siguiente pantalla del flujograma (Registro) enviando un mensaje de éxito
-            return redirect()->to('registro')->with('exito', '¡Constancia Válida! Cédula detectada: V-' . $cedulaEncontrada);
+            // Redirigimos al registro enviando el mensaje de éxito
+            return redirect()->to('/registro')->with('exito', '¡Constancia Válida! Cédula detectada: V-' . $cedulaEncontrada);
 
         } catch (\Exception $e) {
             if (file_exists($rutaCompleta)) {
@@ -63,10 +72,8 @@ class AuthController extends BaseController
         }
     }
 
-    // vista para cuando el registro haya sido completado
     public function pantallaRegistro()
     {
-        
-    return view('Registro/registro_completar'); 
+        return redirect()->to('/registro'); 
     }
 }
