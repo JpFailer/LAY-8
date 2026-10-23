@@ -1,7 +1,7 @@
 <footer class="footer-global">
   <div class="footer-column">
     <img src="<?= base_url('img/lay8_logo.png')?>" alt="LAY-8 MAP Logo" class="decoracion-logo">
-    <p style="margin-top: 15px;">Prototipo funcional desarrollado exclusivamente con fines académicos para la Unidad Marítima del Caribe.</p>
+    <p style="margin-top: 15px;">Prototipo funcional desarrollado exclusivamente con fines académicos para la Universidad Marítima del Caribe.</p>
   </div>
 
   <div class="footer-column">
@@ -17,7 +17,7 @@
     <p>Lider de Equipo, BDD</p>
     <p>Backend</p>
     <p>Backend</p>
-    <p>Fronted</p>
+    <p>Frontend</p>
   </div>
 
 </footer>
