@@ -5,7 +5,6 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-//$routes->get('/', 'Home::index');
 
 // Rutas automáticas de Shield (Login/Logout)
 // service('auth')->routes($routes);
@@ -14,8 +13,8 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('upload', 'AuthController::index'); 
 $routes->post('upload', 'AuthController::procesarConstancia'); 
 
-// Ruta para cuando la constancia es válida
-//$routes->get('registro', 'AuthController::pantallaRegistro');
+// Ruta para cuando la constancia es válida (Comentada para evitar errores viejos)
+// $routes->get('registro', 'AuthController::pantallaRegistro');
 
 // Ruta para entrar a ver el formulario
 $routes->get('biblioteca', 'BibliotecaController::index');
@@ -27,17 +26,23 @@ $routes->get('aula', 'AulasController::importar_json');
 $routes->get('mapa', 'MapaController::mostrar_mapa');
 $routes->get('mapa/info_aula/(:segment)', 'MapaController::info_aula/$1');
 $routes->get('mapa/estado_en_vivo', 'MapaController::estado_aulas_en_vivo');
-// Rutas Públicas
-$routes->get('/login', 'Login::index');
+
+// --- Rutas Públicas (Nuevas) ---
+// La landing page de tu compañera es ahora la puerta de entrada (localhost/LAY-8/public/)
+$routes->view('/', 'Home/landing');
+
 $routes->post('/login/autenticar', 'Login::autenticar');
 $routes->get('/registro', 'Registro::index');
 $routes->post('/registro/procesar', 'Registro::procesar');
 $routes->get('/logout', 'Login::salir');
-$routes->view('/landing', 'home/landing');
 
-// Rutas Protegidas (Solo usuarios logueados)
+
+// --- Rutas Protegidas (Solo usuarios logueados) ---
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('/', 'Home::index');
+    
+    // El sistema interno (donde dice "Hola, tu rol es...") ahora vive en /dashboard
+    $routes->get('/dashboard', 'Home::index'); 
+    
     $routes->get('/perfil', 'Usuario::perfil');
     $routes->post('/perfil/solicitar-profesor', 'Usuario::solicitarProfesor');
     
