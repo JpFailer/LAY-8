@@ -28,6 +28,7 @@ class UsuarioModel extends Model
         'motivo_baneo',
         'baneado_en',
         'ultimo_acceso',
+        'foto_perfil'
     ];
 
     /**
