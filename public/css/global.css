@@ -326,7 +326,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 5px;
 }
 
-/*----MENSAJES DE ERROR----*/
+/*----MENSAJES DE ERROR Y EXITO----*/
 
 .error-msg {
     background-color: #fee2e2;
@@ -337,6 +337,17 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
     border: 1px solid #f87171;
     margin-bottom: 5px;
+}
+
+.success-msg {
+    background-color: #fee2e2; 
+    color: #1b9921; 
+    padding: 12px; 
+    border-radius: 8px; 
+    font-size: 0.9rem;
+    text-align: center;
+    border: 1px solid #71f888
+    margin-bottom: 5px;  
 }
 
 

@@ -43,7 +43,7 @@
     <?php endif;?>
 
     <?php if(session()->getFlashdata('mensaje')): ?>
-      <div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500; text-align: center;">
+      <div class="success-msg">
         <?= session()->getFlashdata('mensaje') ?>
       </div>
     <?php endif;?>
