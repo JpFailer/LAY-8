@@ -72,6 +72,11 @@ pdf_file.close()
 if len(lista_tablas_limpias) > 0:
     df_final = pd.concat(lista_tablas_limpias, ignore_index=True)
     json_datos = df_final.to_json(orient='records', force_ascii=True)
+    try:
+        with open('horarios_procesados.json', 'w', encoding='utf-8') as f_out:
+            f_out.write(json_datos)
+    except Exception:
+        pass
     print(json_datos)
 else:
     print('[{"error": "No se encontraron tablas válidas"}]')
