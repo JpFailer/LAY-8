@@ -172,24 +172,38 @@ h1, h2, h3, h4, h5, h6 {
 
 .content-area {
     grid-area: content;
-    padding: 0;
     position: relative;
     z-index: 20;
     margin-left: -30px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .content-box {
     background-color: #fff;
-    border-radius: 20px 0 0 0;
-    box-shadow: -8px 0px 30px rgba(0,0,0,0.05);
+    border-top-left-radius: 15px;
+    box-shadow: -4px 0px 15px rgba(0,0,0,0.05);
     padding: 40px;
-    height: 100%;
-    font-family: var(--fuente-cuerpo);
-    position: relative;
-    overflow-y: auto;
-    margin-left: -20px;
+    flex-grow: 1;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    margin: 0;
 
     animation: slideLeft 0.5s ease-out forwards;
+}
+
+.layout-grid.modo-focus {
+    grid-template-columns: 1fr;
+}
+
+.layout-grid.modo-focus .sidebar {
+    display: none;
+}
+
+.layout-grid.modo-focus .content-area {
+    grid-column: 1 / -1;
+    padding-left: 40px;
 }
 
 @keyframes slideLeft {
@@ -307,6 +321,26 @@ h1, h2, h3, h4, h5, h6 {
     box-shadow: 0 5px 15px rgba(28, 83, 176, 0.4);
 }
 
+.btn-expandir-layout {
+    background: none;
+    border: none;
+    cursor: pointer;
+    float: left;
+    margin-right: 15px;
+    margin-bottom: 15px;
+    padding: 2px;
+    transition: transform 0.2s ease;
+}
+
+.btn-expandir-layout:hover {
+    transform: scale(1.1);
+}
+
+.focus-icon {
+    font-size: 24px;
+    color: #555;
+}
+
 /*----LINKS----*/
 
 .link-global {
@@ -360,13 +394,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .success-msg {
-    background-color: #fee2e2; 
-    color: #1b9921; 
+    background-color: #b5e7c5; 
+    color: #277941; 
     padding: 12px; 
     border-radius: 8px; 
     font-size: 0.9rem;
     text-align: center;
-    border: 1px solid #71f888;
+    border: 1px solid #4cb76e;
     margin-bottom: 5px;
 }
 
@@ -421,4 +455,48 @@ h1, h2, h3, h4, h5, h6 {
 .decoracion-logo {
     max-width: 150px;
     height: auto;
+}
+
+/*----MENU DESPLEGABLE----*/
+
+.perfil-contenedor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    cursor:pointer;
+}
+
+.nombre-usuario {
+    color: #fff;
+    font-weight: 500;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 50px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-width: 150px;
+    z-index: 100;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 12px 15px;
+    color: #1c53b0;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background: #f1f5f9;
 }

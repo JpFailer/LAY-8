@@ -76,6 +76,7 @@ class Login extends BaseController
                 'apellidos'           => $usuario['apellidos'],
                 'rol'                 => $usuario['rol'],
                 'estado_verificacion' => $usuario['estado_verificacion'],
+                'foto_perfil'         => $usuario['foto_perfil'],
                 'isLoggedIn'          => true
             ]);
             
