@@ -38,10 +38,29 @@ h1, h2, h3, h4, h5, h6 {
     position: relative;
 }
 
-.barra-superior {
-    background: #1c53b0; 
-    border-radius: 20px;
-    padding: 10px 20px;
+/*----ESTRUCTURA PRINCIPAL----*/
+.layout-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        "navbar navbar"
+        "sidebar content";
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+
+}
+.layout-grid .barra-superior {
+    grid-area: navbar;
+    background-color: #1c53b0;
+    margin: 0;
+    width: 100%;
+    padding: 15px 15px;
+    box-sizing: border-box;
+    position: relative;
+    border-radius: 0;
+    z-index: 30;
 
     display: flex;
     justify-content: space-between;
@@ -108,81 +127,82 @@ h1, h2, h3, h4, h5, h6 {
     object-fit: cover;
 }
 
-.popout-perfil {
-    position: absolute;
-    top: 60px;
-    right: 0;
-    background: #fff;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
-    width: 200px;
-    padding: 15px;
-    z-index: 100;
-
-    opacity: 1;
-    visibility: visible;
-    transform:translateY(0);
-    transition: all 0.3s ease;
-}
-
-.popout-header img {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 10px;
-}
-
-.popout-header {
+.sidebar {
+    grid-area: sidebar;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e2e8f0;
-    margin-bottom: 10px;
+    justify-content: space-between;
+    padding: 20px 0;
+    position: relative;
+    z-index: 10;
 }
 
-.nombre-usuario {
-    font-family: var(--fuente-cuerpo);
-    font-weight: 600;
-    color: #64748b;
-    font-size: 0.85rem;
-}
-
-.carrera-usuario {
-    font-family: var(--fuente-cuerpo);
-    color: #64748b;
-    font-size: 0.85rem;
-}
-
-.popout-perfil.oculto {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-15px);
-}
-
-.popout-enlaces {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.popout-enlaces a {
+.menu-links a {
+    display: block;
+    padding: 15px 30px;
+    color: #555;
     text-decoration: none;
-    color: #475569;
-    padding: 10px 15px;
-    border-radius: 8px;
+    font-family: var(--fuente-cuerpo);
     font-weight: 500;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    transition: background-color 0.3s;
 }
 
-.popout-enlaces a:hover {
-    background-color: #f1f5f9;
-    color: #1d4ed8;
+.menu-links a.active, .menu-links a:hover {
+    background-color: rgba(26, 83, 176, 0.1);
+    color: #1c53b0;
+    font-weight: 700;
 }
+
+.sidebar-footer {
+    padding: 0 30px;
+}
+
+.logout-btn i {
+    font-size: 24px;
+    color: #555;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.logout-btn i:hover {
+    color: #1c53b0;
+}
+
+/*----CONTENIDO----*/
+
+.content-area {
+    grid-area: content;
+    padding: 0;
+    position: relative;
+    z-index: 20;
+    margin-left: -30px;
+}
+
+.content-box {
+    background-color: #fff;
+    border-radius: 20px 0 0 0;
+    box-shadow: -8px 0px 30px rgba(0,0,0,0.05);
+    padding: 40px;
+    height: 100%;
+    font-family: var(--fuente-cuerpo);
+    position: relative;
+    overflow-y: auto;
+    margin-left: -20px;
+
+    animation: slideLeft 0.5s ease-out forwards;
+}
+
+@keyframes slideLeft {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
 
 /*====COMPONENTES UI====*/
 
@@ -326,7 +346,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 5px;
 }
 
-/*----MENSAJES DE ERROR----*/
+/*----MENSAJES DE ERROR Y EXITO----*/
 
 .error-msg {
     background-color: #fee2e2;
@@ -336,6 +356,17 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 0.9rem;
     text-align: center;
     border: 1px solid #f87171;
+    margin-bottom: 5px;
+}
+
+.success-msg {
+    background-color: #fee2e2; 
+    color: #1b9921; 
+    padding: 12px; 
+    border-radius: 8px; 
+    font-size: 0.9rem;
+    text-align: center;
+    border: 1px solid #71f888;
     margin-bottom: 5px;
 }
 
