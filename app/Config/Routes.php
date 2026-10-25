@@ -38,7 +38,9 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Panel interno / Dashboard
     $routes->get('/dashboard', 'Home::index'); 
     
-    $routes->get('/perfil', 'Usuario::perfil');
+    //Perfil y usuario
+    $routes->get('perfil', 'PerfilController::index');
+    $routes->post('perfil/subirFoto', 'PerfilController::subirFoto');
     $routes->post('/perfil/solicitar-profesor', 'Usuario::solicitarProfesor');
 
     // Sistema de Notificaciones para Alumnos

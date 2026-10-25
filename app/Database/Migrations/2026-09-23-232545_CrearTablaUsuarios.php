@@ -63,6 +63,11 @@ class CrearTablaUsuarios extends Migration
             'fecha_registro' => [
                 'type' => 'DATETIME', 'null' => true,
             ],
+            'foto_perfil' => [
+            'type'       => 'VARCHAR',
+            'constraint' => '255',
+            'null'       => true,
+],
         ]);
         
         $this->forge->addKey('id', true);
