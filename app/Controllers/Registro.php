@@ -30,8 +30,6 @@ class Registro extends BaseController
         ];
 
         if (!$this->validate($reglas, $mensajes)) {
-            return view('auth/registro_view', ['errores' => $this->validator]);
-        if (!$this->validate($reglas)) {
             return redirect()->back()->withInput()->with('errores', $this->validator->getErrors());
         }
 

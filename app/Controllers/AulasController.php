@@ -300,6 +300,7 @@ class AulasController extends BaseController
     public function eliminarBloqueManual(int $id)
     {
         $usuarioId = (int) session()->get('usuario_id');
+        $rol       = session()->get('rol') ?? 'estudiante';
         $claseModel = new ClaseProgramadaModel();
 
         $bloque = $claseModel->find($id);
@@ -307,9 +308,16 @@ class AulasController extends BaseController
             return redirect()->back()->with('error', 'Bloque de horario no encontrado.');
         }
 
-        // Solo permitir eliminar si es el estudiante dueño del bloque o un profesor
-        if (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] !== $usuarioId && session()->get('rol') !== 'administrador') {
-            return redirect()->back()->with('error', 'No tienes permisos para eliminar este bloque de clase.');
+        // Si es un bloque oficial de la universidad (estudiante_id es null), solo profesores o administradores pueden eliminarlo
+        if (empty($bloque['estudiante_id'])) {
+            if ($rol !== 'administrador' && $rol !== 'profesor') {
+                return redirect()->back()->with('error', 'No tienes permisos para eliminar bloques oficiales de horario.');
+            }
+        } else {
+            // Si es un bloque personal, solo el alumno que lo creó o un administrador pueden eliminarlo
+            if ((int)$bloque['estudiante_id'] !== $usuarioId && $rol !== 'administrador') {
+                return redirect()->back()->with('error', 'No tienes permisos para eliminar este bloque de clase.');
+            }
         }
 
         $claseModel->delete($id);
@@ -342,7 +350,28 @@ class AulasController extends BaseController
             $tipo = 'tarea';
         }
 
-        $esProfesor = (session()->get('rol') === 'profesor');
+        $rol = session()->get('rol') ?? 'estudiante';
+        $esProfesor = ($rol === 'profesor');
+
+        // Validar que el usuario pertenezca a la sección (inscrito o profesor asignado)
+        $db = \Config\Database::connect();
+        if ($esProfesor) {
+            $esProfesorSeccion = ($db->table('secciones')
+                ->where('id', $seccionId)
+                ->where('profesor_id', $usuarioId)
+                ->countAllResults() > 0);
+            if (!$esProfesorSeccion && $rol !== 'administrador') {
+                return redirect()->back()->with('error', 'Solo puedes crear actividades para tus secciones asignadas.');
+            }
+        } else {
+            $estaInscrito = ($db->table('inscripciones')
+                ->where('estudiante_id', $usuarioId)
+                ->where('seccion_id', $seccionId)
+                ->countAllResults() > 0);
+            if (!$estaInscrito && $rol !== 'administrador') {
+                return redirect()->back()->with('error', 'Solo puedes crear tareas en materias que tengas formalmente inscritas.');
+            }
+        }
 
         $actividadModel = new ActividadClaseModel();
         $actividadModel->insert([
@@ -370,6 +399,11 @@ class AulasController extends BaseController
         }
 
         $actividadModel = new ActividadClaseModel();
+        $actividad = $actividadModel->find($id);
+        if (!$actividad) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
+        }
+
         $exito = $actividadModel->toggleEstadoEstudiante($id, $usuarioId);
 
         return $this->response->setJSON([

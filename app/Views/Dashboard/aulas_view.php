@@ -242,6 +242,7 @@
                                                     </div>
                                                     <?php if (!empty($item['es_personal'])): ?>
                                                         <form method="post" action="<?= base_url('aulas/eliminar-bloque/' . $item['id']) ?>" onsubmit="return confirm('¿Eliminar este bloque personal de horario?')">
+                                                            <?= csrf_field() ?>
                                                             <button type="submit" class="btn-borrar-bloque" title="Eliminar bloque manual">&times;</button>
                                                         </form>
                                                     <?php endif; ?>
@@ -326,6 +327,7 @@
                         <div class="acciones-columna">
                             <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || session('rol') === 'profesor' || session('rol') === 'admin'): ?>
                                 <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return confirm('¿Deseas eliminar esta actividad del cronograma?')">
+                                    <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
                                         <i class="bx bx-trash"></i>
                                     </button>
@@ -556,11 +558,17 @@
 
     // 3. Toggle de Estado de Actividad (AJAX)
     function toggleActividadCheckbox(actividadId, checkboxElem) {
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
+        if (csrfInput) {
+            headers['<?= csrf_header() ?>'] = csrfInput.value;
+        }
+
         fetch(BASE_URL + 'aulas/toggle-actividad/' + actividadId, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: headers
         })
         .then(res => res.json())
         .then(data => {
