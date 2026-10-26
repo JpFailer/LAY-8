@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Validar Constancia - LAY-8 MAP</title>
+    <title>Validar Constancia - LAY-8</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 50px; }
         .alerta-error { background: #ffdddd; color: #d8000c; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #d8000c; }

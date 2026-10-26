@@ -36,7 +36,7 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro - LAY-8 MAP</title>
+  <title>Registro - LAY-8</title>
 
   <!-- precarga de fuentes-->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,7 +64,7 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
   
     <div class="registro-logo">
         <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LOGO">
-        <span>LAY-8 MAP</span>
+        <span>LAY-8</span>
     </div>
   </div>
 
@@ -193,6 +193,16 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
             <label class="form-label">Confirmar contraseña</label>
             <input type="password" name="repetir_contrasena" class="input-global" required>
           </div>
+        </div>
+
+        <!-- Casilla obligatoria de Términos y Condiciones -->
+        <div class="form-row" style="margin-top: 12px; margin-bottom: 22px;">
+          <label class="checkbox-terminos-label" style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.84rem; color: #475569; cursor: pointer; line-height: 1.45;">
+            <input type="checkbox" name="terminos" id="terminos" value="1" required style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1e3a8a; cursor: pointer; flex-shrink: 0;">
+            <span>
+              He leído y acepto los <a href="<?= base_url('terminos') ?>" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;">Términos, Condiciones de Uso y Políticas de Privacidad</a> de LAY-8.
+            </span>
+          </label>
         </div>
 
         <div class="botones-wizard">

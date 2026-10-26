@@ -19,10 +19,17 @@ class Registro extends BaseController
             'nombre_usuario'     => 'required|is_unique[usuarios.nombre_usuario]',
             'correo'             => 'required|valid_email|is_unique[usuarios.correo]',
             'contrasena'         => 'required|min_length[8]',
-            'repetir_contrasena' => 'matches[contrasena]'
+            'repetir_contrasena' => 'matches[contrasena]',
+            'terminos'           => 'required'
         ];
 
-        if (!$this->validate($reglas)) {
+        $mensajes = [
+            'terminos' => [
+                'required' => 'Debes leer y aceptar los Términos y Condiciones de uso para registrarte en LAY-8.'
+            ]
+        ];
+
+        if (!$this->validate($reglas, $mensajes)) {
             return view('auth/registro_view', ['errores' => $this->validator]);
         }
 

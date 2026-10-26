@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión - LAY-8 MAP</title>
+  <title>Iniciar Sesión - LAY-8</title>
 
   <!-- precarga de fuentes-->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,7 +30,7 @@
   
     <div class="registro-logo">
         <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LOGO">
-        <span>LAY-8 MAP</span>
+        <span>LAY-8</span>
     </div>
   </div>
 

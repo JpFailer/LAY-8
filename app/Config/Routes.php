@@ -9,6 +9,7 @@ use CodeIgniter\Router\RouteCollection;
 // --- Rutas Públicas ---
 // Landing page principal
 $routes->view('/', 'Home/landing');
+$routes->get('/terminos', 'Home::terminos');
 
 // Autenticación y Registro
 $routes->get('/login', 'Login::index');

@@ -12,4 +12,9 @@ class Home extends BaseController
     {
         return view('Dashboard/ajustes_view');
     }
+
+    public function terminos()
+    {
+        return view('Home/terminos_view');
+    }
 }

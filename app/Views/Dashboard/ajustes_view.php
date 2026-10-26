@@ -4,7 +4,7 @@
 <div class="ajustes-pagina-contenedor">
     <div class="ajustes-pagina-header">
         <h2><i class="bx bx-cog"></i> Configuración y Ajustes</h2>
-        <p>Personaliza tu experiencia y preferencias visuales en LAY-8 MAP.</p>
+        <p>Personaliza tu experiencia y preferencias visuales en LAY-8.</p>
     </div>
 
     <div class="ajustes-seccion-card">
