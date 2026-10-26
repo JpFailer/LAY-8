@@ -6,6 +6,11 @@ use App\Models\AulasModel;
 
 class AulasController extends BaseController {
 
+    // Método que carga la vista visual al entrar a /aulas
+    public function index() {
+        return view('Dashboard/aulas_view'); 
+    }
+
     public function importar_json() {
         $aulasModel = new AulasModel();
 
