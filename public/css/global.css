@@ -4124,3 +4124,12 @@ body.dark-mode .campo-grupo label {
         background: #fff !important;
     }
 }
+
+
+/* Adaptación de Términos y Condiciones en Registro (Dark Mode) */
+body.dark-mode .checkbox-terminos-label {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .checkbox-terminos-label a {
+    color: #60a5fa !important;
+}

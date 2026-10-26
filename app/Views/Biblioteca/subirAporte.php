@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir Material - Biblioteca LAY-8 MAP</title>
+    <title>Subir Material - Biblioteca LAY-8</title>
 
     <!-- Script anti-flicker de Modo Oscuro -->
     <script>

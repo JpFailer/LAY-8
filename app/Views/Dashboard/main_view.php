@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAY-8 MAP</title>
+  <title>LAY-8</title>
 
   <!-- Script inline antividrios/anti-flicker de Modo Oscuro -->
   <script>
@@ -69,7 +69,7 @@
     <header class="barra-superior">
       <div class="logo">
         <a href="<?= base_url('dashboard') ?>" style="color:white; text-decoration:none;">
-          <h1>LAY-8 MAP</h1>
+          <h1>LAY-8</h1>
         </a>
       </div>
 
