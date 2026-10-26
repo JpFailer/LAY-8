@@ -1,47 +1,83 @@
-<div class="perfil-container" style="max-width: 800px; margin: 0 auto; font-family: 'Montserrat', sans-serif; padding: 20px;">
+<?= $this->extend('Dashboard/main_view') ?>
 
-    <!-- Alertas de éxito o error -->
+<?= $this->section('content') ?>
+<div class="perfil-pagina-centrada">
+    <!-- Alertas Flash -->
     <?php if(session()->getFlashdata('mensaje')): ?>
-        <div style="background: #dcfce3; color: #166534; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-            <?= session()->getFlashdata('mensaje') ?>
+        <div class="alerta-notif alerta-exito" style="max-width: 580px; margin: 0 auto 20px auto;">
+            <i class="bx bx-check-circle" style="font-size: 1.3rem;"></i>
+            <span><?= session()->getFlashdata('mensaje') ?></span>
         </div>
     <?php endif; ?>
     
     <?php if(session()->getFlashdata('error')): ?>
-        <div style="background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-            <?= session()->getFlashdata('error') ?>
+        <div class="alerta-notif alerta-error" style="max-width: 580px; margin: 0 auto 20px auto;">
+            <i class="bx bx-error-circle" style="font-size: 1.3rem;"></i>
+            <span><?= session()->getFlashdata('error') ?></span>
         </div>
     <?php endif; ?>
 
-    <!-- Encabezado del Perfil -->
-    <div style="display: flex; align-items: center; gap: 20px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div class="foto-wrapper" style="position: relative; text-align: center;">
-            <img src="<?= base_url($usuario['foto_perfil'] ?? 'img/default-avatar.png') ?>" 
-                 alt="Foto de perfil" 
-                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #1e40af;">
-            
-            <form action="<?= base_url('perfil/subirFoto') ?>" method="post" enctype="multipart/form-data" style="margin-top: 10px;">
-                <label for="foto" style="cursor: pointer; font-size: 13px; color: #1e40af; text-decoration: underline; font-weight: 500;">Cambiar foto</label>
-                <input type="file" id="foto" name="foto" accept="image/png, image/jpeg, image/jpg" style="display: none;" onchange="this.form.submit()">
-            </form>
-        </div>
-        
-        <div>
-            <h2 style="color: #1e40af; margin: 0;"><?= esc($usuario['primer_nombre'] . ' ' . $usuario['apellidos']) ?></h2>
-            <p style="color: #666; margin: 5px 0 10px 0;">Rol: <?= esc(ucfirst($usuario['rol'])) ?></p>
-            <a href="<?= base_url('logout') ?>" style="color: #ef4444; font-size: 14px; text-decoration: none; font-weight: 600;">Cerrar Sesión</a>
-        </div>
-    </div>
+    <!-- Tarjeta de Perfil idéntica al modal y al diseño de referencia -->
+    <div class="perfil-card-standalone">
+        <!-- Banner decorativo superior -->
+        <div class="perfil-card-banner"></div>
 
-    <!-- Estadísticas -->
-    <div style="display: flex; gap: 20px; margin-top: 20px;">
-        <div style="flex: 1; background: #fff; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3 style="margin: 0; color: #1e40af; font-size: 24px;"><?= esc($total_aportes ?? 0) ?></h3>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Aportes</p>
-        </div>
-        <div style="flex: 1; background: #fff; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h3 style="margin: 0; color: #1e40af; font-size: 24px;"><?= esc($total_likes ?? 0) ?></h3>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 14px;">Likes</p>
+        <div class="perfil-card-inner">
+            <div class="perfil-user-header">
+                <div class="perfil-avatar-wrapper">
+                    <?php if (!empty($usuario['foto_perfil'])): ?>
+                        <img src="<?= base_url($usuario['foto_perfil']) ?>" class="perfil-card-avatar" alt="Foto de perfil">
+                    <?php else: ?>
+                        <img src="<?= base_url('img/usuario.png') ?>" class="perfil-card-avatar" alt="Foto de perfil">
+                    <?php endif; ?>
+                </div>
+
+                <div class="perfil-user-meta">
+                    <div class="perfil-name-badge-row">
+                        <h2 class="perfil-user-name"><?= esc($usuario['primer_nombre'] . ' ' . $usuario['apellidos']) ?></h2>
+                        <span class="perfil-pill-badge"><?= ucfirst(esc($usuario['rol'])) ?></span>
+                    </div>
+                    <div class="perfil-user-handle">@<?= esc($usuario['nombre_usuario']) ?></div>
+                </div>
+            </div>
+
+            <!-- Línea azul divisoria continua -->
+            <div class="perfil-blue-divider"></div>
+
+            <!-- Grilla 2x2 de Información -->
+            <div class="perfil-info-grid">
+                <div class="perfil-grid-cell">
+                    <span class="grid-label">Carrera</span>
+                    <span class="grid-value"><?= ($usuario['rol'] === 'profesor') ? 'Docente UMC' : 'ING-INF' ?></span>
+                </div>
+
+                <div class="perfil-grid-cell">
+                    <span class="grid-label">Contacto</span>
+                    <span class="grid-value" title="<?= esc($usuario['correo'] ?? '') ?>"><?= esc($usuario['correo'] ?? 'No disponible') ?></span>
+                </div>
+
+                <div class="perfil-grid-cell">
+                    <span class="grid-label">Aportes</span>
+                    <span class="grid-value"><?= (int)($total_aportes ?? 0) ?> <?= ($total_aportes == 1) ? 'recurso' : 'recursos' ?></span>
+                </div>
+
+                <div class="perfil-grid-cell">
+                    <span class="grid-label">Estado</span>
+                    <span class="grid-value"><i class="bx bxs-check-circle" style="color:#10b981; font-size:1.05rem; vertical-align:middle;"></i> <?= ucfirst(esc($usuario['estado_cuenta'] ?? 'Activo')) ?></span>
+                </div>
+            </div>
+
+            <!-- Pie con botón de Editar perfil -->
+            <div class="perfil-card-bottom">
+                <form id="form-cambiar-foto-page" action="<?= base_url('perfil/subirFoto') ?>" method="post" enctype="multipart/form-data" style="display:none;">
+                    <?= csrf_field() ?>
+                    <input type="file" id="input-subir-foto-page" name="foto" accept="image/png, image/jpeg, image/jpg" onchange="this.form.submit()">
+                </form>
+                <button type="button" class="btn-editar-perfil-trigger" onclick="document.getElementById('input-subir-foto-page').click()">
+                    <i class="bx bx-edit-alt"></i> Editar perfil
+                </button>
+            </div>
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
