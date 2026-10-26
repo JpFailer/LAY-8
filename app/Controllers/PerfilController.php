@@ -65,6 +65,9 @@ class PerfilController extends BaseController
                 'foto_perfil' => 'uploads/perfiles/' . $nombreAleatorio
             ]);
 
+            //Actualiza la sesion (pa q salga la foto actualizada al volver al inicio)
+            session()->set('foto_perfil', 'uploads/perfiles/' . $nombreAleatorio);
+
             return redirect()->back()->with('mensaje', 'Foto actualizada con éxito.');
         }
         

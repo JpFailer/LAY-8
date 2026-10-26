@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-	<!-- stylesheets-->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=4')?>">
+  <!-- stylesheets-->
+  <link rel="stylesheet" href="<?= base_url('css/global.css?v=7')?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
@@ -20,14 +20,21 @@
         <h1>LAY-8 MAP</h1>
       </div>
 
-      <div class="perfil-contenedor" style="display: flex; align-items: center; gap: 10px;">
-        <span><?= session()->get('primer_nombre') . ' ' . session()->get('apellidos'); ?></span>
+      <!-- Contenedor del perfil clickeable -->
+      <div class="perfil-contenedor user-menu-container" onclick="toggleMenu()">
+        <span class="nombre-usuario"><?= session()->get('primer_nombre') . ' ' . session()->get('apellidos'); ?></span>
         <div class="avatar-trigger">
           <?php if (session()->get('foto_perfil')): ?>
-            <img src="<?= base_url('uploads/' . session()->get('foto_perfil')); ?>" alt="Foto de perfil">
+            <img src="<?= base_url(session()->get('foto_perfil')) ?>" alt="Foto de perfil">
           <?php else: ?>
-            <img src="<?= base_url('img/usuario.png'); ?>" alt="Avatar predeterminado">
-          <?php endif; ?>
+            <img src="<?= base_url('img/usuario.png') ?>" alt="Foto de perfil">
+            <?php endif; ?>
+        </div>
+
+        <!-- Menú desplegable oculto -->
+        <div id="dropdown-perfil" class="dropdown-menu">
+          <a href="<?= base_url('perfil') ?>" class="dropdown-item">Perfil</a>
+          <a href="<?= base_url('ajustes') ?>" class="dropdown-item">Ajustes</a>
         </div>
       </div>
     </header>
@@ -37,7 +44,7 @@
         <a href="<?= base_url('/feed'); ?>" class="active">Inicio</a>
         <a href="<?= base_url('/mapa'); ?>">Mapa UMC</a>
         <a href="<?= base_url('/biblioteca'); ?>">Biblioteca</a>
-        <a href="<?= base_url('/aulas'); ?>">Aulas</a>
+        <a href="<?= base_url('/aulas_view'); ?>">Aulas</a>
       </nav>
 
       <div class="sidebar-footer">
@@ -48,9 +55,15 @@
     </aside>
 
     <main class="content-area">
-      <?= $this->renderSection('content') ?>
+        <div class="content-box">
+          <button id="btn-expandir" class="btn-expandir-layout" onclick="toggleFocus()">
+            <i id="focus-icon" class="bx bx-expand focus-icon"></i>
+          </button>
+          <?= $this->renderSection('content') ?>
+        </div>
     </main>
   </div>
 
+  <script src="<?= base_url('js/main.js?v=7')?>"></script>
 </body>
 </html>
