@@ -22,7 +22,7 @@ class PerfilController extends BaseController
         
         $datos = [
             'usuario'       => $usuario,
-            'total_aportes' => 0, // Se conectará al feed más adelante
+            'total_aportes' => (new \App\Models\AporteBibliotecaModel())->where('usuario_id', $idUsuario)->countAllResults(),
             'total_likes'   => 0  // Se conectará al feed más adelante
         ];
 

@@ -23,7 +23,9 @@ $routes->post('upload', 'AuthController::procesarConstancia');
 
 // Biblioteca estudiantil
 $routes->get('biblioteca', 'BibliotecaController::index');
+$routes->get('biblioteca/subir', 'BibliotecaController::formularioSubir');
 $routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
+$routes->get('biblioteca/descargar/(:num)', 'BibliotecaController::descargar/$1');
 
 // Mapa interactivo y Aulas
 $routes->get('mapa', 'MapaController::mostrar_mapa');
