@@ -78,7 +78,7 @@ class Login extends BaseController
                 'rol'                 => $usuario['rol'],
                 'carrera'             => $usuario['carrera'] ?? 'ING-INF',
                 'estado_verificacion' => $usuario['estado_verificacion'],
-                'foto_perfil'         => $usuario['foto_perfil'],
+                'foto_perfil'         => $usuario['foto_perfil'] ?? null,
                 'isLoggedIn'          => true
             ]);
             
