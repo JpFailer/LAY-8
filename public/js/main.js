@@ -75,6 +75,66 @@ function cerrarModalPerfil() {
 }
 
 // ==========================================================================
+// MODAL DE EDITAR PERFIL Y CARRERA
+// ==========================================================================
+
+function abrirModalEditarPerfil(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    cerrarModalPerfil();
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function cerrarModalEditarPerfil() {
+    const modal = document.getElementById('modal-editar-perfil');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+function seleccionarCarreraEditar(codigo) {
+    const input = document.getElementById('input-editar-carrera');
+    if (input) {
+        input.value = codigo;
+    }
+    const opciones = document.querySelectorAll('#modal-editar-perfil .carrera-card-opcion');
+    opciones.forEach(card => {
+        const check = card.querySelector('.check-radio i');
+        if (card.dataset.codigo === codigo) {
+            card.classList.add('seleccionada');
+            if (check) {
+                check.className = 'bx bxs-check-circle';
+            }
+        } else {
+            card.classList.remove('seleccionada');
+            if (check) {
+                check.className = 'bx bx-circle';
+            }
+        }
+    });
+}
+
+function previsualizarFotoPerfil(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('preview-foto-modal');
+            if (preview) {
+                preview.src = e.target.result;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// ==========================================================================
 // MODAL DE AJUSTES & MODO OSCURO
 // ==========================================================================
 
@@ -123,6 +183,11 @@ window.addEventListener('click', function(event) {
     if (modalPerfil && event.target === modalPerfil) {
         cerrarModalPerfil();
     }
+
+    const modalEditar = document.getElementById('modal-editar-perfil');
+    if (modalEditar && event.target === modalEditar) {
+        cerrarModalEditarPerfil();
+    }
 });
 
 // Cerrar modales al presionar Escape
@@ -130,6 +195,7 @@ window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         cerrarModalAjustes();
         cerrarModalPerfil();
+        cerrarModalEditarPerfil();
     }
 });
 

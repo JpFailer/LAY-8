@@ -16,6 +16,73 @@ class AdminController extends BaseController
     protected AuditoriaAdminModel $auditoriaModel;
     protected int $adminId;
 
+    /**
+     * Renderiza la interfaz visual completa del panel de administración
+     */
+    public function index()
+    {
+        $db = \Config\Database::connect();
+
+        // 1. Métricas clave
+        $totalEstudiantes = $db->table('usuarios')->where('rol', 'estudiante')->countAllResults();
+        $totalProfesores  = $db->table('usuarios')->where('rol', 'profesor')->countAllResults();
+        $totalAdmins      = $db->table('usuarios')->whereIn('rol', ['administrador', 'admin'])->countAllResults();
+        $totalBaneados    = $db->fieldExists('estado_cuenta', 'usuarios') 
+            ? $db->table('usuarios')->where('estado_cuenta', 'baneado')->countAllResults() 
+            : 0;
+
+        // 2. Solicitudes de profesores pendientes
+        $solicitudes = $this->usuarioModel
+            ->where('estado_verificacion', 'pendiente')
+            ->orderBy('id', 'ASC')
+            ->findAll();
+
+        // 3. Usuarios registrados (últimos 100)
+        $usuarios = $this->usuarioModel
+            ->select('id, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
+            ->orderBy('id', 'DESC')
+            ->findAll(100);
+
+        // 4. Aportes de biblioteca
+        $aporteModel = new AporteBibliotecaModel();
+        $aportes = [];
+        try {
+            $aportes = $aporteModel->obtenerTodosConUsuario();
+        } catch (\Throwable $e) {}
+
+        // 5. Historial de auditoría
+        $auditoriaLogs = $this->auditoriaModel->ultimosRegistros(40);
+
+        // 6. Información del horario del mapa
+        $rutaPdfHorario = ROOTPATH . 'scripts_python' . DIRECTORY_SEPARATOR . 'horario.pdf';
+        $horarioInfo = [
+            'existe_archivo'      => file_exists($rutaPdfHorario),
+            'tamano_kb'           => file_exists($rutaPdfHorario) ? round(filesize($rutaPdfHorario) / 1024, 2) : 0,
+            'ultima_modificacion' => file_exists($rutaPdfHorario) ? date('d/m/Y H:i', filemtime($rutaPdfHorario)) : 'No cargado',
+            'total_clases'        => (new \App\Models\ClaseProgramadaModel())->countAllResults(),
+            'total_aulas'         => (new AulasModel())->countAllResults()
+        ];
+
+        $datos = [
+            'metricas' => [
+                'estudiantes'            => $totalEstudiantes,
+                'profesores'             => $totalProfesores,
+                'admins'                 => $totalAdmins,
+                'baneados'               => $totalBaneados,
+                'total_usuarios'         => $totalEstudiantes + $totalProfesores + $totalAdmins,
+                'solicitudes_pendientes' => count($solicitudes),
+                'total_aportes'          => count($aportes),
+            ],
+            'solicitudes' => $solicitudes,
+            'usuarios'    => $usuarios,
+            'aportes'     => $aportes,
+            'auditoria'   => $auditoriaLogs,
+            'horarioInfo' => $horarioInfo
+        ];
+
+        return view('admin/dashboard_view', $datos);
+    }
+
     public function __construct()
     {
         $this->usuarioModel   = new UsuarioModel();
@@ -896,5 +963,52 @@ class AdminController extends BaseController
             'mensaje'        => "Comunicado oficial emitido con éxito a {$totalEnviados} usuario(s).",
             'total_enviados' => $totalEnviados,
         ]);
+    }
+
+    /**
+     * Permite al Administrador subir un nuevo archivo PDF oficial de horarios
+     * y re-sincronizar automáticamente la base de datos de aulas y clases para el mapa.
+     */
+    public function actualizarHorarioPdf()
+    {
+        $archivo = $this->request->getFile('horario_pdf');
+        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
+            return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo PDF de horario oficial válido.');
+        }
+
+        if ($archivo->getClientMimeType() !== 'application/pdf') {
+            return redirect()->to(base_url('admin'))->with('error', 'El formato del archivo debe ser exclusivamente PDF.');
+        }
+
+        $carpetaScripts = ROOTPATH . 'scripts_python';
+        if (!is_dir($carpetaScripts)) {
+            mkdir($carpetaScripts, 0777, true);
+        }
+
+        // Sobrescribir horario.pdf de referencia
+        $archivo->move($carpetaScripts, 'horario.pdf', true);
+
+        // Limpiar caché JSON para forzar lectura actualizada
+        $rutaCacheJson = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
+        if (file_exists($rutaCacheJson)) {
+            @unlink($rutaCacheJson);
+        }
+
+        // Re-sincronizar bloques de clases en la base de datos
+        $clasesCargadas = 0;
+        try {
+            $mapaController = new \App\Controllers\MapaController();
+            $clasesCargadas = $mapaController->importar_horarios_automaticamente();
+        } catch (\Throwable $e) {}
+
+        $this->auditoriaModel->registrar(
+            $this->adminId,
+            'actualizar_horario_mapa',
+            'horario',
+            null,
+            ['clases_cargadas' => $clasesCargadas, 'archivo' => $archivo->getClientName()]
+        );
+
+        return redirect()->to(base_url('admin'))->with('mensaje', "¡Horario oficial actualizado con éxito! Se sincronizaron {$clasesCargadas} bloques de clases con el mapa del campus.");
     }
 }

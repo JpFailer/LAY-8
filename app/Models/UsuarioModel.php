@@ -21,6 +21,7 @@ class UsuarioModel extends Model
         'telefono',
         'contrasena',
         'rol',
+        'carrera',
         'estado_verificacion',
         'ruta_carnet',
         'fecha_registro',
