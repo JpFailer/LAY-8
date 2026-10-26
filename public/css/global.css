@@ -3106,3 +3106,1021 @@ body.dark-mode .admin-empty-state h4 {
 body.dark-mode .admin-empty-state p {
     color: #94a3b8 !important;
 }
+
+
+/* ==========================================================================
+   MÓDULO DE AULAS Y CRONOGRAMA ACADÉMICO (TIPO CLASSROOM SENCILLO)
+   ========================================================================== */
+
+.aulas-header-acciones {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-secundario-aulas {
+    background: #0284c7 !important;
+}
+
+.btn-secundario-aulas:hover {
+    background: #0369a1 !important;
+}
+
+/* Grid de Materias / Aulas Virtuales */
+.grid-aulas-classroom {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+}
+
+.tarjeta-aula-classroom {
+    border-top: 4px solid #1e3a8a;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cabecera-tarjeta-aula {
+    margin-bottom: 15px;
+}
+
+.aula-header-info {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.badge-codigo-materia {
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.badge-seccion-materia {
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+}
+
+.badge-semestre {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.titulo-materia-aula {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+
+.profesor-materia {
+    font-size: 0.85rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Estado del Profesor en Vivo */
+.estado-docente-box {
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+}
+
+.box-presencial {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.box-online {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.estado-docente-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1e293b;
+}
+
+.punto-vivo {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.vivo-verde {
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+}
+
+.vivo-azul {
+    background: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.vivo-gris {
+    background: #94a3b8;
+}
+
+.mensaje-docente-adicional {
+    font-size: 0.8rem;
+    color: #475569;
+    margin-top: 6px;
+    font-style: italic;
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+/* Modalidad y Ubicación / Mapa */
+.modalidad-ubicacion-box {
+    margin-bottom: 15px;
+}
+
+.btn-aula-virtual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.btn-aula-virtual:hover {
+    background: #1d4ed8;
+}
+
+.aulas-badges-lista {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.etiqueta-aula-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.btn-tag-mapa {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    padding: 5px 10px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.btn-tag-mapa:hover {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+}
+
+.sin-aula-asignada {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Resumen de Horarios */
+.resumen-horario-materia {
+    background: #f1f5f9;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.label-dias-clase {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.lista-mini-horarios {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lista-mini-horarios li {
+    font-size: 0.8rem;
+    color: #334155;
+    padding: 2px 0;
+}
+
+.aula-mini-tag {
+    color: #0284c7;
+    font-weight: 600;
+}
+
+/* Pie de tarjeta */
+.meta-aula-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.total-actividades-badge {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-agregar-tarea-mini {
+    background: transparent;
+    color: #1e3a8a;
+    border: 1px dashed #93c5fd;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-agregar-tarea-mini:hover {
+    background: #eff6ff;
+    border-color: #1e3a8a;
+}
+
+/* Panel Vacío */
+.panel-vacio-aulas {
+    text-align: center;
+    padding: 60px 20px;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px dashed #cbd5e1;
+}
+
+.panel-vacio-aulas .icono-vacio {
+    font-size: 3.5rem;
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.panel-vacio-aulas h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 8px;
+}
+
+.panel-vacio-aulas p {
+    font-size: 0.92rem;
+    color: #64748b;
+    max-width: 520px;
+    margin: 0 auto 20px;
+}
+
+/* ==========================================================================
+   TAB 2: HORARIO SEMANAL (TABLA OFICIAL UMC)
+   ========================================================================== */
+
+.horario-toolbar,
+.actividades-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.toolbar-info h3,
+.actividades-toolbar h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.toolbar-info p,
+.actividades-toolbar p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.btn-imprimir-horario {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #1e293b;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-imprimir-horario:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.contenedor-tabla-horario {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow-x: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.tabla-horario-umc {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+    min-width: 850px;
+}
+
+.tabla-horario-umc th {
+    background: #1e3a8a;
+    color: #ffffff;
+    padding: 12px 14px;
+    font-weight: 700;
+    border: 1px solid #1e40af;
+}
+
+.tabla-horario-umc td {
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    vertical-align: top;
+}
+
+.fila-separador-turno td {
+    background: #f1f5f9;
+    color: #1e3a8a;
+    font-weight: 800;
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    padding: 8px 14px;
+    border-top: 2px solid #cbd5e1;
+    border-bottom: 2px solid #cbd5e1;
+}
+
+.celda-hora-bloque {
+    background: #f8fafc;
+    color: #334155;
+    text-align: center;
+    vertical-align: middle !important;
+    font-size: 0.8rem;
+}
+
+.bloque-clase-card {
+    background: #eff6ff;
+    border-left: 3px solid #2563eb;
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.bloque-codigo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #1e40af;
+}
+
+.bloque-materia {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.25;
+    margin: 2px 0 4px;
+}
+
+.bloque-aula a {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #059669;
+    text-decoration: none;
+    background: #ecfdf5;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.bloque-aula a:hover {
+    background: #059669;
+    color: #ffffff;
+}
+
+.btn-borrar-bloque {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   TAB 3: CRONOGRAMA DE ACTIVIDADES (CLASSROOM TAREAS)
+   ========================================================================== */
+
+.filtros-actividades-chips {
+    display: flex;
+    gap: 8px;
+}
+
+.chip-actividad {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chip-actividad.activo {
+    background: #1e3a8a;
+    color: #ffffff;
+    border-color: #1e3a8a;
+}
+
+.lista-actividades-classroom {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.item-actividad-card {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+
+.item-actividad-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-color: #cbd5e1;
+}
+
+.check-columna {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-actividad {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #1e3a8a;
+}
+
+.info-columna {
+    flex: 1;
+}
+
+.meta-tags-actividad {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.badge-materia-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    background: #e0e7ff;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.badge-tipo-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-ponderacion-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #047857;
+    background: #d1fae5;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.titulo-actividad {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 2px 0;
+}
+
+.descripcion-actividad {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.fecha-columna {
+    text-align: right;
+    min-width: 140px;
+}
+
+.fecha-vencimiento {
+    font-size: 0.82rem;
+    color: #475569;
+    font-weight: 600;
+    display: block;
+}
+
+.texto-vencido {
+    color: #dc2626 !important;
+}
+
+.alerta-vencido-tag {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 3px;
+}
+
+.btn-eliminar-actividad {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 4px;
+}
+
+.btn-eliminar-actividad:hover {
+    color: #ef4444;
+}
+
+.actividad-completada {
+    background: #f8fafc;
+    opacity: 0.65;
+}
+
+.actividad-completada .titulo-actividad {
+    text-decoration: line-through;
+    color: #64748b;
+}
+
+/* ==========================================================================
+   TAB 4: CARGAR / ARMAR HORARIO (FORMULARIOS)
+   ========================================================================== */
+
+.grid-cargar-horario {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 24px;
+}
+
+.card-formulario-aulas {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+}
+
+.card-form-header {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.icono-header-card {
+    width: 44px;
+    height: 44px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.card-form-header h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.card-form-header p {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.formulario-estilo-lay8 {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.campo-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campo-grupo label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.select-lay8,
+.input-lay8 {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #1e293b;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.select-lay8:focus,
+.input-lay8:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    outline: none;
+}
+
+.textarea-lay8 {
+    resize: vertical;
+}
+
+.campo-fila-doble {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.caja-subida-dropzone {
+    border: 2px dashed #93c5fd;
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.caja-subida-dropzone:hover {
+    background: #eff6ff;
+    border-color: #1e3a8a;
+}
+
+.icono-dropzone {
+    font-size: 3rem;
+    color: #3b82f6;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.label-archivo-custom {
+    display: block;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 6px;
+}
+
+.label-archivo-custom input[type="file"] {
+    display: none;
+}
+
+.ayuda-dropzone {
+    font-size: 0.78rem;
+    color: #64748b;
+    display: block;
+}
+
+.btn-cta-submit {
+    background: #1e3a8a;
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-cta-submit:hover {
+    background: #172554;
+    transform: translateY(-1px);
+}
+
+.alerta-registro-requerido {
+    text-align: center;
+    padding: 35px 20px;
+    background: #fffbeb;
+    border-radius: 10px;
+    border: 1px solid #fde68a;
+}
+
+.alerta-registro-requerido h4 {
+    color: #92400e;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.alerta-registro-requerido p {
+    color: #78350f;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.modal-actividad-ancho {
+    max-width: 500px !important;
+}
+
+/* ==========================================================================
+   ADAPTACIONES DE MODO OSCURO PARA AULAS / CLASSROOM
+   ========================================================================== */
+
+body.dark-mode .tarjeta-aula-classroom {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    border-top-color: #3b82f6 !important;
+}
+
+body.dark-mode .titulo-materia-aula {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .badge-codigo-materia {
+    background: #1e3a8a !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .badge-seccion-materia {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .box-presencial {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .box-online {
+    background: #172554 !important;
+    border-color: #1e40af !important;
+}
+
+body.dark-mode .estado-docente-badge {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .resumen-horario-materia {
+    background: #1e293b !important;
+}
+
+body.dark-mode .label-dias-clase {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .lista-mini-horarios li {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .meta-aula-footer {
+    border-top-color: #334155 !important;
+}
+
+body.dark-mode .panel-vacio-aulas {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .panel-vacio-aulas h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .contenedor-tabla-horario {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .tabla-horario-umc th {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .tabla-horario-umc td {
+    border-color: #334155 !important;
+}
+
+body.dark-mode .fila-separador-turno td {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .celda-hora-bloque {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .bloque-clase-card {
+    background: #1e293b !important;
+    border-left-color: #60a5fa !important;
+}
+
+body.dark-mode .bloque-materia {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .btn-imprimir-horario {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .item-actividad-card {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .titulo-actividad {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .chip-actividad {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .chip-actividad.activo {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .card-formulario-aulas {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .card-form-header {
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode .card-form-header h3 {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .caja-subida-dropzone {
+    background: #1e293b !important;
+    border-color: #3b82f6 !important;
+}
+
+body.dark-mode .select-lay8,
+body.dark-mode .input-lay8 {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .campo-grupo label {
+    color: #cbd5e1 !important;
+}
+
+/* Reglas de impresión para el Horario */
+@media print {
+    .barra-superior,
+    .sidebar,
+    .filtros-categorias,
+    .horario-toolbar .toolbar-botones,
+    .aulas-header-acciones,
+    .btn-borrar-bloque {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    .layout-grid {
+        display: block !important;
+    }
+
+    .contenedor-tabla-horario {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+
+    .tabla-horario-umc th {
+        background: #f1f5f9 !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+    }
+
+    .tabla-horario-umc td {
+        border: 1px solid #000 !important;
+    }
+
+    .bloque-clase-card {
+        border-left: 2px solid #000 !important;
+        background: #fff !important;
+    }
+}

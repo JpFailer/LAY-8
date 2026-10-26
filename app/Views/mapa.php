@@ -136,6 +136,13 @@
     document.addEventListener("DOMContentLoaded", function() {
         actualizarLucesEnVivo();
         setInterval(actualizarLucesEnVivo, 60000);
+
+        // Si viene con parámetro ?aula= en la URL (desde el módulo de Aulas / Classroom)
+        const urlParams = new URLSearchParams(window.location.search);
+        const aulaParam = urlParams.get('aula');
+        if (aulaParam) {
+            setTimeout(() => abrirModalAula(aulaParam), 300);
+        }
     });
 </script>
 <?= $this->endSection() ?>
