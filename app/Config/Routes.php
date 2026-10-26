@@ -39,6 +39,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     
     // Panel interno / Dashboard
     $routes->get('/dashboard', 'Home::index'); 
+    $routes->get('/ajustes', 'Home::ajustes'); 
     
     // Aulas (Vista principal del menú lateral)
     $routes->get('/aulas', 'AulasController::index');

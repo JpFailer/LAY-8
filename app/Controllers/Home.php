@@ -7,4 +7,9 @@ class Home extends BaseController
     {
         return view('Dashboard/feed');
     }
+
+    public function ajustes()
+    {
+        return view('Dashboard/ajustes_view');
+    }
 }

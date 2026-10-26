@@ -74,6 +74,7 @@ class Login extends BaseController
                 'nombre_usuario'      => $usuario['nombre_usuario'],
                 'primer_nombre'       => $usuario['primer_nombre'],
                 'apellidos'           => $usuario['apellidos'],
+                'correo'              => $usuario['correo'] ?? '',
                 'rol'                 => $usuario['rol'],
                 'estado_verificacion' => $usuario['estado_verificacion'],
                 'foto_perfil'         => $usuario['foto_perfil'],
