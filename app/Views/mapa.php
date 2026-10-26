@@ -1,25 +1,25 @@
-﻿<?= $this->extend('Dashboard/main_view') ?>
+<?= $this->extend('Dashboard/main_view') ?>
 
 <?= $this->section('content') ?>
 <div class="mapa-dashboard-contenedor">
     <div class="mapa-header-box">
         <div>
             <h2><i class="bx bx-map-pin"></i> Mapa Interactivo UMC</h2>
-            <p>Monitoreo en tiempo real de la disponibilidad y programacion academica de cada aula y laboratorio del campus.</p>
+            <p>Monitoreo en tiempo real de la disponibilidad y programación académica de cada aula y laboratorio del campus.</p>
         </div>
     </div>
 
-    <!-- Leyenda de Estados del Semaforo -->
+    <!-- Leyenda de Estados del Semáforo -->
     <div class="leyenda-mapa">
         <div class="item-leyenda"><span class="punto-luz luz-verde"></span> Disponible</div>
-        <div class="item-leyenda"><span class="punto-luz luz-amarilla"></span> Proxima clase (15 min)</div>
+        <div class="item-leyenda"><span class="punto-luz luz-amarilla"></span> Próxima clase (15 min)</div>
         <div class="item-leyenda"><span class="punto-luz luz-roja"></span> En clase (Ocupada)</div>
         <div class="item-leyenda"><span class="punto-luz luz-azul"></span> Fuera de servicio</div>
     </div>
 
     <!-- Contenedor del Mapa con Coordenadas Interactivas -->
     <div class="contenedor-mapa">
-        <img src="<?= base_url('img/mapa_umc.jpg') ?>" alt="Mapa Universidad Maritima del Caribe" class="imagen-mapa">
+        <img src="<?= base_url('img/mapa_umc.jpg') ?>" alt="Mapa Universidad Marítima del Caribe" class="imagen-mapa">
 
         <?php if (!empty($aulas)): ?>
             <?php foreach ($aulas as $aula): ?>
@@ -37,7 +37,7 @@
         <?php endif; ?>
     </div>
 
-    <!-- Modal de Informacion y Horario del Aula -->
+    <!-- Modal de Información y Horario del Aula -->
     <div id="modalAula" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalAula()">
         <div class="modal-contenido-aula">
             <div class="modal-aula-header">
@@ -45,7 +45,7 @@
                 <span onclick="cerrarModalAula()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
             </div>
             <div id="cuerpoHorario" class="modal-aula-body">
-                <p>Cargando informacion...</p>
+                <p>Cargando información...</p>
             </div>
         </div>
     </div>
@@ -56,7 +56,7 @@
 
     function abrirModalAula(nombreAula) {
         document.getElementById('tituloAula').innerHTML = '<i class="bx bx-calendar"></i> Aula: ' + nombreAula;
-        document.getElementById('cuerpoHorario').innerHTML = '<p style="color:#64748b; padding:15px 0; text-align:center;"><i class="bx bx-loader-alt bx-spin" style="font-size:1.5rem;"></i><br>Cargando programacion...</p>';
+        document.getElementById('cuerpoHorario').innerHTML = '<p style="color:#64748b; padding:15px 0; text-align:center;"><i class="bx bx-loader-alt bx-spin" style="font-size:1.5rem;"></i><br>Cargando programación...</p>';
         document.getElementById('modalAula').style.display = 'flex';
 
         fetch(BASE_URL + "mapa/info_aula/" + encodeURIComponent(nombreAula))
@@ -67,39 +67,39 @@
                 // 1. Banner de clase activa en este momento
                 if (data.hay_clase_activa && data.clase_activa) {
                     const c = data.clase_activa;
-                    html += <div class="banner-clase-activa">
+                    html += `<div class="banner-clase-activa">
                                 <div class="banner-estado-titulo"><i class="bx bx-radio-circle-marked"></i> CLASE EN CURSO AHORA</div>
-                                <div class="banner-materia-nombre"> <span class="seccion-tag">[Secc. ]</span></div>
-                                <div class="banner-tiempo-detalle">Intervalo: <b></b> () &bull; Quedan ~ min</div>
-                             </div>;
+                                <div class="banner-materia-nombre">${c.materia} <span class="seccion-tag">[Secc. ${c.seccion}]</span></div>
+                                <div class="banner-tiempo-detalle">Intervalo: <b>${c.intervalo}</b> (${c.duracion}) &bull; Quedan ~${c.minutos_restantes} min</div>
+                             </div>`;
                 } else if (data.proxima_clase_hoy) {
                     const p = data.proxima_clase_hoy;
-                    html += <div class="banner-clase-proxima">
-                                <div class="banner-estado-titulo"><i class="bx bx-time"></i> Proxima clase hoy:</div>
-                                <div class="banner-materia-nombre"> <span class="seccion-tag">[Secc. ]</span></div>
-                                <div class="banner-tiempo-detalle">Intervalo: <b></b> &bull; Inicia en ~ min</div>
-                             </div>;
+                    html += `<div class="banner-clase-proxima">
+                                <div class="banner-estado-titulo"><i class="bx bx-time"></i> Próxima clase hoy:</div>
+                                <div class="banner-materia-nombre">${p.materia} <span class="seccion-tag">[Secc. ${p.seccion}]</span></div>
+                                <div class="banner-tiempo-detalle">Intervalo: <b>${p.intervalo}</b> &bull; Inicia en ~${p.inicia_en_minutos} min</div>
+                             </div>`;
                 }
 
-                // 2. Horarios agrupados por dia en intervalos
+                // 2. Horarios agrupados por día en intervalos
                 const dias = data.horarios_por_dia || {};
                 let tieneHorarios = false;
 
                 for (const [dia, sesiones] of Object.entries(dias)) {
                     if (sesiones && sesiones.length > 0) {
                         tieneHorarios = true;
-                        html += <div class="dia-horario-bloque">
-                                    <h4></h4>
-                                    <ul class="lista-sesiones">;
+                        html += `<div class="dia-horario-bloque">
+                                    <h4>${dia}</h4>
+                                    <ul class="lista-sesiones">`;
                         sesiones.forEach(s => {
                             const badge = s.es_activa_ahora ? ' <span class="badge-en-curso">EN CURSO</span>' : "";
-                            html += <li>
-                                        <span><b></b> () &bull;  <span class="sub-seccion">[]</span></span>
-                                        
-                                     </li>;
+                            html += `<li>
+                                        <span><b>${s.intervalo}</b> (${s.duracion_texto}) &bull; ${s.materia} <span class="sub-seccion">[${s.seccion}]</span></span>
+                                        ${badge}
+                                     </li>`;
                         });
-                        html +=    </ul>
-                                 </div>;
+                        html +=    `</ul>
+                                 </div>`;
                     }
                 }
 
@@ -124,9 +124,9 @@
             .then(estados_aulas => {
                 for (const [alias, color] of Object.entries(estados_aulas)) {
                     let idSeguro = alias.replace(/\s+/g, '_');
-                    let imagenLuz = document.getElementById(luz_aula_);
+                    let imagenLuz = document.getElementById(`luz_aula_${idSeguro}`);
                     if (imagenLuz) {
-                        imagenLuz.src = ${BASE_URL}img/luz_.png;
+                        imagenLuz.src = `${BASE_URL}img/luz_${color}.png`;
                     }
                 }
             })

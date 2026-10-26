@@ -1,4 +1,4 @@
-<?= $this->extend('dashboard/main_view')?>
+<?= $this->extend('Dashboard/main_view')?>
 
 <?= $this->section('content') ?>
     <h2>Hola, <?= session()->get('primer_nombre'); ?>!</h2>

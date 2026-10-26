@@ -23,7 +23,7 @@ class Registro extends BaseController
         ];
 
         if (!$this->validate($reglas)) {
-            return view('auth/registro_view', ['errores' => $this->validator]);
+            return redirect()->back()->withInput()->with('errores', $this->validator->getErrors());
         }
 
         $carreraSeleccionada = in_array((string)$this->request->getPost('carrera'), ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR'], true) 

@@ -998,7 +998,7 @@ class AdminController extends BaseController
         $clasesCargadas = 0;
         try {
             $mapaController = new \App\Controllers\MapaController();
-            $clasesCargadas = $mapaController->importar_horarios_automaticamente();
+            $clasesCargadas = $mapaController->importar_horarios_automaticamente(true);
         } catch (\Throwable $e) {}
 
         $this->auditoriaModel->registrar(
