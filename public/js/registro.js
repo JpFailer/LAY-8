@@ -3,16 +3,27 @@
 //muestra/oculta el input del carnet si es docente
 
 function mostrarCarnet(esDocente) {
-    const divCarnet= document.getElementById('div_carnet')
-    const inputCarnet= divCarnet.querySelector('input[type="file"]');
+    const divCarnet= document.getElementById('div_carnet');
+    const inputCarnet= divCarnet ? divCarnet.querySelector('input[type="file"]') : null;
+    const divInscripcion = document.getElementById('div_inscripcion_estudiante');
+    const inputInscripcion = document.getElementById('input_planilla_inscripcion');
 
     if (esDocente) {
-        divCarnet.style.display= 'block';
-        inputCarnet.setAttribute('required','required');
+        if (divCarnet) divCarnet.style.display= 'block';
+        if (inputCarnet) inputCarnet.setAttribute('required','required');
+        if (divInscripcion) divInscripcion.style.display = 'none';
+        if (inputInscripcion) {
+            inputInscripcion.removeAttribute('required');
+            inputInscripcion.value = '';
+        }
     } else {
-        divCarnet.style.display= 'none';
-        inputCarnet.removeAttribute('required');
-        inputCarnet.value = ''; //limpia el archivo en caso q el user se arrepienta
+        if (divCarnet) divCarnet.style.display= 'none';
+        if (inputCarnet) {
+            inputCarnet.removeAttribute('required');
+            inputCarnet.value = '';
+        }
+        if (divInscripcion) divInscripcion.style.display = 'block';
+        if (inputInscripcion) inputInscripcion.setAttribute('required', 'required');
     }
 }
 

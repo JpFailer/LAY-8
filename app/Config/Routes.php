@@ -67,7 +67,11 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
 
     // Rutas exclusivas para el Administrador (Filtro Admin)
     $routes->group('', ['filter' => 'admin'], static function ($routes) {
+        // Vista Principal del Panel de Administración
+        $routes->get('/admin', 'AdminController::index');
+
         // Dashboard y Métricas
+        $routes->post('/api/admin/horario/actualizar', 'AdminController::actualizarHorarioPdf');
         $routes->get('/api/admin/metricas', 'AdminController::metricas');
 
         // Gestión de Profesores (Aprobación, Denegación y Revocación)

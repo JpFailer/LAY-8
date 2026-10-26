@@ -38,7 +38,7 @@
     $userCorreo         = session()->get('correo');
     $carreraSesion      = session()->get('carrera');
     $userCodigoCarrera  = $carreraSesion ?: 'ING-INF';
-    $userCarrera        = ($userRol === 'profesor') ? 'Docente UMC' : $userCodigoCarrera;
+    $userCarrera        = ($userRol === 'profesor') ? 'Docente UMC' : (in_array($userRol, ['administrador', 'admin']) ? 'Administración UMC' : $userCodigoCarrera);
     $userEstado         = 'Activo';
 
     $userTotalAportes = 0;
@@ -86,6 +86,11 @@
 
         <!-- Menú desplegable oculto -->
         <div id="dropdown-perfil" class="dropdown-menu">
+          <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+            <a href="<?= base_url('admin') ?>" class="dropdown-item" style="color: #1e3a8a; font-weight: 700;">
+              <i class="bx bx-shield-quarter" style="margin-right: 6px;"></i> Panel Admin
+            </a>
+          <?php endif; ?>
           <a href="<?= base_url('perfil') ?>" class="dropdown-item" onclick="abrirModalPerfil(event)">
             <i class="bx bx-user" style="margin-right: 6px;"></i> Perfil
           </a>
@@ -111,6 +116,11 @@
         <a href="<?= base_url('/aulas'); ?>" class="<?= ($segmentoActual === 'aulas') ? 'active' : '' ?>">
           <i class="bx bx-door-open" style="margin-right: 8px;"></i> Aulas
         </a>
+        <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+          <a href="<?= base_url('/admin'); ?>" class="<?= ($segmentoActual === 'admin') ? 'active' : '' ?>" style="color: #3b82f6; font-weight: 700;">
+            <i class="bx bx-shield-quarter" style="margin-right: 8px;"></i> Panel Admin
+          </a>
+        <?php endif; ?>
       </nav>
 
       <div class="sidebar-footer">
@@ -287,6 +297,18 @@
                 </div>
               <?php endforeach; ?>
             </div>
+          </div>
+
+          <!-- Sección Verificación y Seguridad para Cambio de Carrera -->
+          <div class="form-group-editar" style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; margin-top: 15px;">
+            <label class="form-label-editar" style="color: #1e3a8a; font-size: 0.9rem;"><i class="bx bx-shield-quarter"></i> Certificación Oficial UMC</label>
+            <p class="form-sublabel-editar" style="font-size: 0.8rem; margin-bottom: 8px;">
+              Si cambias de carrera, adjunta tu nuevo <strong>Registro de Inscripción (PDF)</strong> de la UMC para certificarla y sincronizar tus aulas automáticamente:
+            </p>
+            <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global" style="margin-bottom: 12px; font-size: 0.82rem; background: white;">
+
+            <label class="form-label-editar" style="font-size: 0.88rem;"><i class="bx bx-lock-alt"></i> Confirmar con tu Contraseña</label>
+            <input type="password" name="confirmar_contrasena" class="input-global" placeholder="Ingresa tu contraseña actual para autorizar" style="background: white;">
           </div>
         </div>
 
