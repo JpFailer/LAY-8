@@ -41,10 +41,10 @@
 
     <aside class="sidebar">
       <nav class="menu-links">
-        <a href="<?= base_url('/feed'); ?>" class="active">Inicio</a>
+        <a href="<?= base_url('/dashboard'); ?>" class="active">Inicio</a>
         <a href="<?= base_url('/mapa'); ?>">Mapa UMC</a>
         <a href="<?= base_url('/biblioteca'); ?>">Biblioteca</a>
-        <a href="<?= base_url('/aulas_view'); ?>">Aulas</a>
+        <a href="<?= base_url('/aulas'); ?>">Aulas</a>
       </nav>
 
       <div class="sidebar-footer">

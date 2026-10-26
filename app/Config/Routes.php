@@ -38,6 +38,9 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Panel interno / Dashboard
     $routes->get('/dashboard', 'Home::index'); 
     
+    // Aulas (Vista principal del menú lateral)
+    $routes->get('/aulas', 'AulasController::index');
+    
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');
     $routes->post('perfil/subirFoto', 'PerfilController::subirFoto');
