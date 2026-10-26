@@ -6,21 +6,65 @@ use App\Models\AporteBibliotecaModel;
 
 class BibliotecaController extends BaseController
 {
+    /**
+     * Muestra la lista de aportes y materiales de la biblioteca estudiantil
+     */
     public function index()
+    {
+        $aporteModel = new AporteBibliotecaModel();
+
+        // Filtros opcionales por GET
+        $categoriaSeleccionada = $this->request->getGet('categoria');
+        $busqueda = $this->request->getGet('q');
+
+        if ($categoriaSeleccionada === 'todas' || empty($categoriaSeleccionada)) {
+            $categoriaSeleccionada = null;
+        }
+
+        // Obtener aportes con los datos del usuario que lo subió
+        $aportes = $aporteModel->obtenerTodosConUsuario($categoriaSeleccionada, $busqueda);
+
+        // Conteos para los botones/tabs de categorías
+        $conteos = [
+            'todos'      => (new AporteBibliotecaModel())->countAllResults(),
+            'guias'      => (new AporteBibliotecaModel())->where('categoria', 'guias')->countAllResults(),
+            'ejercicios' => (new AporteBibliotecaModel())->where('categoria', 'ejercicios')->countAllResults(),
+            'resumenes'  => (new AporteBibliotecaModel())->where('categoria', 'resumenes')->countAllResults(),
+            'otros'      => (new AporteBibliotecaModel())->where('categoria', 'otros')->countAllResults(),
+        ];
+
+        $datos = [
+            'aportes'              => $aportes,
+            'categoriaActual'      => $categoriaSeleccionada ?? 'todas',
+            'busquedaActual'       => $busqueda ?? '',
+            'conteos'              => $conteos,
+            'totalAportes'         => count($aportes)
+        ];
+
+        return view('Biblioteca/feedInicio', $datos);
+    }
+
+    /**
+     * Muestra el formulario para subir un nuevo material (pantalla aparte)
+     */
+    public function formularioSubir()
     {
         return view('Biblioteca/subirAporte');
     }
 
+    /**
+     * Procesa la subida del aporte y redirige a la biblioteca
+     */
     public function subirAporte()
     {
         $reglas = [
             'aporte' => [
                 'label' => 'Archivo de Aporte',
-                'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt]',
+                'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt,pptx]',
                 'errors' => [
                     'uploaded' => 'Debes seleccionar una guía, resumen o ejercicio para subir.',
                     'max_size' => 'El archivo supera el límite permitido de 5MB.',
-                    'ext_in'   => 'Formato no válido. Solo se permiten archivos .pdf, .doc, .docx y .ppt.'
+                    'ext_in'   => 'Formato no válido. Solo se permiten archivos .pdf, .doc, .docx, .ppt y .pptx.'
                 ]
             ],
             'titulo' => 'permit_empty|max_length[150]',
@@ -90,7 +134,8 @@ class BibliotecaController extends BaseController
                 ]);
             }
 
-            return redirect()->back()->with('mensaje', 'El aporte ha sido subido exitosamente a la sección de ' . $categoria . '.');
+            // Redirigir a la biblioteca principal para que el estudiante vea su aporte publicado
+            return redirect()->to(base_url('biblioteca'))->with('mensaje', '¡Tu aporte "' . $tituloFinal . '" ha sido publicado con éxito en la biblioteca!');
         }
 
         $errorMsg = 'Hubo un error técnico al subir el archivo: ' . $archivo->getErrorString();
@@ -102,5 +147,28 @@ class BibliotecaController extends BaseController
         }
 
         return redirect()->back()->with('error', $errorMsg);
+    }
+
+    /**
+     * Descarga segura de archivos desde el almacenamiento protegido WRITEPATH
+     */
+    public function descargar(int $id)
+    {
+        $aporteModel = new AporteBibliotecaModel();
+        $aporte = $aporteModel->find($id);
+
+        if (!$aporte) {
+            return redirect()->to(base_url('biblioteca'))->with('error', 'El archivo solicitado no existe en los registros.');
+        }
+
+        $rutaAbsoluta = WRITEPATH . $aporte['ruta_archivo'];
+
+        if (!file_exists($rutaAbsoluta)) {
+            return redirect()->to(base_url('biblioteca'))->with('error', 'El archivo físico no se encuentra disponible en el servidor.');
+        }
+
+        // Descarga segura de CodeIgniter 4 manteniendo el nombre original del archivo
+        return $this->response->download($rutaAbsoluta, null)
+                              ->setFileName($aporte['nombre_original']);
     }
 }
