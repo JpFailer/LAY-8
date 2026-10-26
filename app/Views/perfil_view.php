@@ -48,7 +48,7 @@
             <div class="perfil-info-grid">
                 <div class="perfil-grid-cell">
                     <span class="grid-label">Carrera</span>
-                    <span class="grid-value"><?= ($usuario['rol'] === 'profesor') ? 'Docente UMC' : 'ING-INF' ?></span>
+                    <span class="grid-value"><?= ($usuario['rol'] === 'profesor') ? 'Docente UMC' : esc($usuario['carrera'] ?? 'ING-INF') ?></span>
                 </div>
 
                 <div class="perfil-grid-cell">
@@ -69,11 +69,7 @@
 
             <!-- Pie con botón de Editar perfil -->
             <div class="perfil-card-bottom">
-                <form id="form-cambiar-foto-page" action="<?= base_url('perfil/subirFoto') ?>" method="post" enctype="multipart/form-data" style="display:none;">
-                    <?= csrf_field() ?>
-                    <input type="file" id="input-subir-foto-page" name="foto" accept="image/png, image/jpeg, image/jpg" onchange="this.form.submit()">
-                </form>
-                <button type="button" class="btn-editar-perfil-trigger" onclick="document.getElementById('input-subir-foto-page').click()">
+                <button type="button" class="btn-editar-perfil-trigger" onclick="abrirModalEditarPerfil()">
                     <i class="bx bx-edit-alt"></i> Editar perfil
                 </button>
             </div>

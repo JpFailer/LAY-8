@@ -33,6 +33,7 @@ class Registro extends BaseController
             'telefono'            => trim($this->request->getPost('telefono')) ?: null,
             'contrasena'          => password_hash($this->request->getPost('contrasena'), PASSWORD_DEFAULT),
             'rol'                 => 'estudiante',
+            'carrera'             => in_array((string)$this->request->getPost('carrera'), ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR'], true) ? (string)$this->request->getPost('carrera') : 'ING-INF',
             'estado_verificacion' => 'no_aplica',
             'ruta_carnet'         => null,
             'fecha_registro'      => date('Y-m-d H:i:s')

@@ -47,6 +47,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');
     $routes->post('perfil/subirFoto', 'PerfilController::subirFoto');
+    $routes->post('perfil/actualizar', 'PerfilController::actualizar');
     $routes->post('/perfil/solicitar-profesor', 'Usuario::solicitarProfesor');
 
     // Sistema de Notificaciones para Alumnos

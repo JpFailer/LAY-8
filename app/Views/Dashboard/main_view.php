@@ -3,25 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LAY-8 MAP - Campus UMC</title>
-  
-  <!-- Script anti-destello para Modo Oscuro (Carga Inmediata) -->
+  <title>LAY-8 MAP</title>
+
+  <!-- Script inline antividrios/anti-flicker de Modo Oscuro -->
   <script>
     (function() {
-      const temaGuardado = localStorage.getItem('lay8_theme');
-      if (temaGuardado === 'dark') {
-        document.documentElement.classList.add('dark-mode');
-      }
+      try {
+        var tema = localStorage.getItem('lay8_theme');
+        if (tema === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch(e) {}
     })();
   </script>
 
-  <!-- Precarga de fuentes oficiales -->
+  <!-- Precarga de fuentes -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=10')?>">
+  <link rel="stylesheet" href="<?= base_url('css/global.css?v=11')?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
@@ -34,21 +36,29 @@
     $userRol            = session()->get('rol') ?? 'estudiante';
     $userFoto           = session()->get('foto_perfil');
     $userCorreo         = session()->get('correo');
-    $userCarrera        = ($userRol === 'profesor') ? 'Docente UMC' : 'ING-INF';
+    $carreraSesion      = session()->get('carrera');
+    $userCodigoCarrera  = $carreraSesion ?: 'ING-INF';
+    $userCarrera        = ($userRol === 'profesor') ? 'Docente UMC' : $userCodigoCarrera;
     $userEstado         = 'Activo';
 
     $userTotalAportes = 0;
     if ($sesionId) {
-        if (empty($userCorreo)) {
-            try {
-                $dbConn = \Config\Database::connect();
-                $rowU = $dbConn->table('usuarios')->select('correo, estado_cuenta')->where('id', $sesionId)->get()->getRowArray();
-                if ($rowU) {
+        try {
+            $dbConn = \Config\Database::connect();
+            $rowU = $dbConn->table('usuarios')->select('correo, estado_cuenta, carrera')->where('id', $sesionId)->get()->getRowArray();
+            if ($rowU) {
+                if (empty($userCorreo)) {
                     $userCorreo = $rowU['correo'] ?? '';
-                    $userEstado = ucfirst($rowU['estado_cuenta'] ?? 'Activo');
                 }
-            } catch (\Throwable $e) {}
-        }
+                $userEstado = ucfirst($rowU['estado_cuenta'] ?? 'Activo');
+                if (!empty($rowU['carrera'])) {
+                    $userCodigoCarrera = $rowU['carrera'];
+                    if ($userRol !== 'profesor') {
+                        $userCarrera = $rowU['carrera'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
         try {
             $userTotalAportes = (new \App\Models\AporteBibliotecaModel())->where('usuario_id', $sesionId)->countAllResults();
         } catch (\Throwable $e) {}
@@ -174,13 +184,9 @@
           </div>
         </div>
 
-        <!-- Pie de tarjeta con acción de editar/cambiar foto -->
+        <!-- Pie de tarjeta con acción de editar perfil -->
         <div class="perfil-card-bottom">
-          <form id="form-cambiar-foto-modal" action="<?= base_url('perfil/subirFoto') ?>" method="post" enctype="multipart/form-data" style="display:none;">
-            <?= csrf_field() ?>
-            <input type="file" id="input-subir-foto-modal" name="foto" accept="image/png, image/jpeg, image/jpg" onchange="this.form.submit()">
-          </form>
-          <button type="button" class="btn-editar-perfil-trigger" onclick="document.getElementById('input-subir-foto-modal').click()">
+          <button type="button" class="btn-editar-perfil-trigger" onclick="abrirModalEditarPerfil()">
             <i class="bx bx-edit-alt"></i> Editar perfil
           </button>
         </div>
@@ -221,6 +227,77 @@
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=10')?>"></script>
+  <!-- Modal Interactivo de Editar Perfil y Carrera -->
+  <div id="modal-editar-perfil" class="modal-carreras-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalEditarPerfil()">
+    <div class="modal-editar-perfil-content">
+      <div class="modal-editar-header">
+        <h3><i class="bx bx-user-pin"></i> Editar Perfil</h3>
+        <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalEditarPerfil()" title="Cerrar">&times;</button>
+      </div>
+
+      <form action="<?= base_url('perfil/actualizar') ?>" method="post" enctype="multipart/form-data">
+        <?= csrf_field() ?>
+        <input type="hidden" name="carrera" id="input-editar-carrera" value="<?= esc($userCodigoCarrera) ?>">
+
+        <div class="modal-editar-body">
+          <!-- Sección Foto de Perfil -->
+          <div class="form-group-editar">
+            <label class="form-label-editar"><i class="bx bx-camera"></i> Foto de Perfil</label>
+            <p class="form-sublabel-editar">Sube una imagen (JPG o PNG, máx. 2MB)</p>
+            <div class="editar-foto-preview-row">
+              <img src="<?= !empty($userFoto) ? base_url($userFoto) : base_url('img/usuario.png') ?>" id="preview-foto-modal" class="preview-mini-avatar" alt="Foto">
+              <div>
+                <input type="file" name="foto" id="input-foto-editar" accept="image/png, image/jpeg, image/jpg" style="display:none;" onchange="previsualizarFotoPerfil(this)">
+                <button type="button" class="btn-cambiar-carrera" onclick="document.getElementById('input-foto-editar').click()">
+                  <i class="bx bx-upload"></i> Subir nueva foto
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección Selección de Carrera UMC -->
+          <div class="form-group-editar" style="margin-bottom: 0;">
+            <label class="form-label-editar"><i class="bx bx-graduation"></i> Carrera Universitaria (UMC)</label>
+            <p class="form-sublabel-editar">Selecciona tu carrera oficial en la universidad:</p>
+
+            <div class="grid-carreras-selector">
+              <?php 
+                $carrerasUMC = [
+                    'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt'],
+                    'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor'],
+                    'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf'],
+                    'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2'],
+                    'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass'],
+                ];
+              ?>
+              <?php foreach ($carrerasUMC as $codigoC => $infoC): ?>
+                <div class="carrera-card-opcion <?= ($codigoC === $userCodigoCarrera) ? 'seleccionada' : '' ?>"
+                     data-codigo="<?= esc($codigoC) ?>"
+                     onclick="seleccionarCarreraEditar('<?= esc($codigoC) ?>')">
+                  <div class="carrera-icon-circle">
+                    <i class="bx <?= esc($infoC['icono']) ?>"></i>
+                  </div>
+                  <div class="carrera-info-box">
+                    <strong><?= esc($infoC['nombre']) ?></strong>
+                    <span><?= esc($codigoC) ?> &bull; <?= esc($infoC['escuela']) ?></span>
+                  </div>
+                  <div class="check-radio">
+                    <i class="bx <?= ($codigoC === $userCodigoCarrera) ? 'bxs-check-circle' : 'bx-circle' ?>"></i>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-editar-footer">
+          <button type="button" class="btn-cancelar-modal" onclick="cerrarModalEditarPerfil()">Cancelar</button>
+          <button type="submit" class="btn-guardar-perfil"><i class="bx bx-save"></i> Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="<?= base_url('js/main.js?v=11')?>"></script>
 </body>
 </html>

@@ -1,3 +1,36 @@
+<?php
+$carrerasDisponibles = [
+    'ING-INF' => [
+        'nombre'  => 'Ingeniería en Informática',
+        'escuela' => 'Escuela de Informática',
+        'icono'   => 'bx-code-alt'
+    ],
+    'ING-MAR' => [
+        'nombre'  => 'Ingeniería Marítima',
+        'escuela' => 'Escuela de Náutica',
+        'icono'   => 'bx-anchor'
+    ],
+    'ING-AMB' => [
+        'nombre'  => 'Ingeniería Ambiental',
+        'escuela' => 'Escuela de Ciencias Aplicadas',
+        'icono'   => 'bx-leaf'
+    ],
+    'ADM' => [
+        'nombre'  => 'Licenciatura en Administración',
+        'escuela' => 'Escuela de Ciencias Sociales',
+        'icono'   => 'bx-briefcase-alt-2'
+    ],
+    'TUR' => [
+        'nombre'  => 'Licenciatura en Turismo',
+        'escuela' => 'Escuela de Turismo',
+        'icono'   => 'bx-compass'
+    ]
+];
+$carreraActual = old('carrera', 'ING-INF');
+if (!isset($carrerasDisponibles[$carreraActual])) {
+    $carreraActual = 'ING-INF';
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,9 +42,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-	<!-- stylesheets-->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=4')?>">
-	<link rel="stylesheet" href="<?= base_url('css/registro.css?v=4')?>">
+  <!-- stylesheets-->
+  <link rel="stylesheet" href="<?= base_url('css/global.css?v=11')?>">
+  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=5')?>">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -86,6 +120,21 @@
           </div>
         </div>
 
+        <!-- Selector de Carrera con Ventana Modal -->
+        <div style="margin-bottom: 20px;">
+          <label class="form-label">Carrera Universitaria (UMC)</label>
+          <input type="hidden" name="carrera" id="input_carrera" value="<?= esc($carreraActual) ?>">
+          <div class="tarjeta-carrera-display" onclick="abrirModalCarreras()" title="Haz clic para seleccionar tu carrera">
+            <div class="carrera-display-info">
+              <span class="carrera-display-code" id="display_carrera_code"><?= esc($carreraActual) ?></span>
+              <span class="carrera-display-nombre" id="display_carrera_nombre"><?= esc($carrerasDisponibles[$carreraActual]['nombre']) ?></span>
+            </div>
+            <button type="button" class="btn-cambiar-carrera" onclick="event.stopPropagation(); abrirModalCarreras();">
+              <i class="bx bx-transfer-alt"></i> Cambiar
+            </button>
+          </div>
+        </div>
+
         <div class="docente-row">
           <div class="docente-col">
           <label class="form-label">¿Es docente?</label>
@@ -150,7 +199,46 @@
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=5')?>"></script>
-  <script src="<?= base_url('js/registro.js?v=5')?>"></script>
+  <!-- Modal Selector de Carreras UMC -->
+  <div id="modal-carreras-registro" class="modal-carreras-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalCarreras()">
+    <div class="modal-carreras-content">
+      <div class="modal-carreras-header">
+        <h3><i class="bx bx-graduation"></i> Seleccionar Carrera</h3>
+        <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalCarreras()" title="Cerrar">&times;</button>
+      </div>
+
+      <p class="modal-carreras-subtitulo">
+        Selecciona tu carrera oficial en la Universidad Marítima del Caribe (UMC):
+      </p>
+
+      <div class="grid-carreras-opciones">
+        <?php foreach ($carrerasDisponibles as $cod => $info): ?>
+          <div class="card-carrera-item <?= ($cod === $carreraActual) ? 'activa' : '' ?>" 
+               data-codigo="<?= esc($cod) ?>" 
+               data-nombre="<?= esc($info['nombre']) ?>"
+               onclick="seleccionarOpcionCarrera('<?= esc($cod) ?>', '<?= esc($info['nombre']) ?>')">
+            <div class="carrera-icon">
+              <i class="bx <?= esc($info['icono']) ?>"></i>
+            </div>
+            <div class="carrera-card-textos">
+              <strong><?= esc($info['nombre']) ?></strong>
+              <span><?= esc($cod) ?> &bull; <?= esc($info['escuela']) ?></span>
+            </div>
+            <div class="carrera-check">
+              <i class="bx <?= ($cod === $carreraActual) ? 'bxs-check-circle' : 'bx-circle' ?>"></i>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+
+      <div class="modal-carreras-footer">
+        <button type="button" class="btn-cancelar-modal" onclick="cerrarModalCarreras()">Cancelar</button>
+        <button type="button" class="btn-confirmar-carrera" onclick="confirmarCarreraSeleccionada()"><i class="bx bx-check"></i> Confirmar Selección</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="<?= base_url('js/main.js?v=11')?>"></script>
+  <script src="<?= base_url('js/registro.js?v=11')?>"></script>
 </body>
 </html>
