@@ -43,6 +43,12 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     
     // Aulas (Vista principal del menú lateral)
     $routes->get('/aulas', 'AulasController::index');
+    $routes->post('/aulas/subir-documento', 'AulasController::subirDocumentoHorario');
+    $routes->post('/aulas/guardar-bloque-manual', 'AulasController::guardarBloqueManual');
+    $routes->post('/aulas/eliminar-bloque/(:num)', 'AulasController::eliminarBloqueManual/$1');
+    $routes->post('/aulas/crear-actividad', 'AulasController::crearActividad');
+    $routes->post('/aulas/toggle-actividad/(:num)', 'AulasController::toggleActividad/$1');
+    $routes->post('/aulas/eliminar-actividad/(:num)', 'AulasController::eliminarActividad/$1');
     
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');
