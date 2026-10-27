@@ -158,3 +158,338 @@
     border-radius: 12px;
     margin-bottom: 20px;
 }
+
+
+/* ==========================================================================
+   FEEDBACK VISUAL DE ARCHIVOS (PDF)
+   ========================================================================== */
+.archivo-feedback-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    gap: 12px;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.archivo-feedback-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    overflow: hidden;
+}
+
+.archivo-pdf-ico {
+    font-size: 1.8rem;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+
+.archivo-feedback-textos {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.archivo-nombre {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #166534;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+
+.archivo-tamano {
+    font-size: 0.75rem;
+    color: #15803d;
+}
+
+.archivo-feedback-estado {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.badge-archivo-ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    border: 1px solid #bbf7d0;
+}
+
+.btn-quitar-archivo {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-quitar-archivo:hover {
+    color: #dc2626;
+    background: #fee2e2;
+}
+
+/* Modal de Términos y Condiciones en Registro */
+.modal-terminos-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-terminos-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 650px;
+    max-height: 85vh;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalScaleUp 0.25s ease-out;
+}
+
+.modal-terminos-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.modal-terminos-header h3 {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-cerrar-terminos {
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.btn-cerrar-terminos:hover {
+    color: #0f172a;
+}
+
+.modal-terminos-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: #334155;
+}
+
+.modal-terminos-body h4 {
+    font-family: 'Montserrat', sans-serif;
+    color: #1e3a8a;
+    font-size: 1rem;
+    margin: 18px 0 6px 0;
+}
+
+.modal-terminos-body h4:first-child {
+    margin-top: 0;
+}
+
+.modal-terminos-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.btn-aceptar-terminos {
+    background: #1a56db;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.btn-aceptar-terminos:hover {
+    background: #1e429f;
+}
+
+/* ==========================================================================
+   MODO OSCURO EN LOGIN Y REGISTRO (CON CONTRASTE ÓPTIMO)
+   ========================================================================== */
+body.dark-mode .card-global {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+body.dark-mode .form-titulo {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .form-subtitulo-inline {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .registro-logo span {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .form-label {
+    color: #cbd5e1 !important;
+    font-weight: 600 !important;
+}
+
+body.dark-mode .input-global {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1.5px solid #334155 !important;
+}
+
+body.dark-mode .input-global:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+}
+
+body.dark-mode .progress-bar {
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode .progress-bar .step {
+    color: #64748b;
+}
+
+body.dark-mode .progress-bar .step.activo {
+    color: #60a5fa !important;
+    border-bottom-color: #60a5fa !important;
+}
+
+body.dark-mode .tarjeta-carrera-display {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .carrera-display-nombre {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .carrera-display-code {
+    background: #1e3a8a !important;
+    color: #bfdbfe !important;
+}
+
+body.dark-mode .btn-cambiar-carrera {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #93c5fd !important;
+}
+
+body.dark-mode .radio-item {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .form-footer span {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .link-global {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .checkbox-terminos-label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .checkbox-terminos-label a {
+    color: #93c5fd !important;
+}
+
+body.dark-mode .modal-terminos-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .modal-terminos-header,
+body.dark-mode .modal-terminos-footer {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .modal-terminos-header h3,
+body.dark-mode .modal-terminos-body h4 {
+    color: #93c5fd !important;
+}
+
+body.dark-mode .modal-terminos-body {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .btn-cerrar-terminos {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .btn-cerrar-terminos:hover {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .archivo-feedback-box {
+    background: #064e3b !important;
+    border-color: #059669 !important;
+}
+
+body.dark-mode .archivo-nombre {
+    color: #a7f3d0 !important;
+}
+
+body.dark-mode .archivo-tamano {
+    color: #6ee7b7 !important;
+}
+
+body.dark-mode .badge-archivo-ok {
+    background: #022c22 !important;
+    color: #6ee7b7 !important;
+    border-color: #047857 !important;
+}

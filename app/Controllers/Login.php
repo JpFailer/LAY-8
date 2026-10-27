@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Services\VerificadorInscripcionService;
+
 class Login extends BaseController
 {
     public function index()
@@ -87,6 +89,135 @@ class Login extends BaseController
         } else {
             return redirect()->back()->with('error', 'Usuario o contraseña incorrectos.');
         }
+    }
+
+    public function verificarRecuperacion()
+    {
+        $identificador = trim((string) $this->request->getPost('identificador'));
+        if (empty($identificador)) {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Por favor introduce tu nombre de usuario o correo electrónico.'
+            ]);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario = $db->table('usuarios')
+                      ->where('nombre_usuario', $identificador)
+                      ->orWhere('correo', $identificador)
+                      ->get()
+                      ->getRowArray();
+
+        if (!$usuario) {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'No encontramos ninguna cuenta universitaria asociada a este usuario o correo.'
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'exito' => true,
+            'usuario_id' => (int) $usuario['id'],
+            'nombre' => $usuario['primer_nombre'] . ' ' . $usuario['apellidos'],
+            'rol' => ucfirst($usuario['rol']),
+            'usuario' => $usuario['nombre_usuario'],
+            'carrera' => $usuario['carrera'] ?? 'UMC'
+        ]);
+    }
+
+    public function restablecerContrasena()
+    {
+        $usuarioId = (int) $this->request->getPost('usuario_id');
+        $nueva     = (string) $this->request->getPost('nueva_contrasena');
+        $repetir   = (string) $this->request->getPost('repetir_contrasena');
+
+        if (!$usuarioId) {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Identificador de usuario inválido.']);
+        }
+
+        if (strlen($nueva) < 8) {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'La nueva contraseña debe contener al menos 8 caracteres.']);
+        }
+
+        if ($nueva !== $repetir) {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Las contraseñas no coinciden.']);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario = $db->table('usuarios')->where('id', $usuarioId)->get()->getRowArray();
+        if (!$usuario) {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Cuenta de usuario no encontrada en el sistema.']);
+        }
+
+        // ======================================================================
+        // COMPROBACIÓN OBLIGATORIA DE SEGURIDAD ANTI-SUPLANTACIÓN (UMC)
+        // ======================================================================
+        $archivo = $this->request->getFile('planilla_inscripcion');
+        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Por motivos estrictos de seguridad institucional y prevención de suplantación de identidad, debes adjuntar obligatoriamente tu Registro de Inscripción UMC oficial en formato PDF.'
+            ]);
+        }
+
+        if ($archivo->getClientMimeType() !== 'application/pdf') {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'El comprobante debe ser exclusivamente un archivo digital PDF emitido por el sistema oficial campus.umc.edu.ve.'
+            ]);
+        }
+
+        $verificador = new VerificadorInscripcionService();
+        $carreraUsuario = $usuario['carrera'] ?? null;
+        $analisis = $verificador->verificar($archivo->getTempName(), $carreraUsuario);
+
+        if (!$analisis['es_valido']) {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Seguridad UMC: ' . ($analisis['motivo_invalidez'] ?? 'El documento de inscripción no superó los filtros de autenticidad institucional.')
+            ]);
+        }
+
+        // Validar concordancia de titular para evitar que suban el documento de otro estudiante
+        if (!empty($analisis['estudiante'])) {
+            $nombreDoc     = mb_strtolower(trim($analisis['estudiante']));
+            $primerNombre  = mb_strtolower(trim($usuario['primer_nombre']));
+            $apellidos     = mb_strtolower(trim($usuario['apellidos']));
+
+            $coincide = (strpos($nombreDoc, $primerNombre) !== false) || (strpos($nombreDoc, $apellidos) !== false);
+            if (!$coincide) {
+                $partes = explode(' ', $apellidos);
+                foreach ($partes as $p) {
+                    if (strlen($p) > 2 && strpos($nombreDoc, $p) !== false) {
+                        $coincide = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$coincide) {
+                return $this->response->setJSON([
+                    'exito' => false,
+                    'mensaje' => 'Alerta de Seguridad: El comprobante de inscripción adjunto pertenece al titular "' . $analisis['estudiante'] . '", el cual no coincide con la cuenta solicitada. Solo el estudiante legítimo puede restablecer la clave.'
+                ]);
+            }
+        }
+
+        // Actualizar la contraseña
+        $actualizado = $db->table('usuarios')
+                          ->where('id', $usuarioId)
+                          ->update([
+                              'contrasena' => password_hash($nueva, PASSWORD_DEFAULT)
+                          ]);
+
+        if ($actualizado) {
+            return $this->response->setJSON([
+                'exito' => true,
+                'mensaje' => '¡Identidad verificada exitosamente con tu Registro de Inscripción UMC! Tu nueva contraseña ha sido establecida con éxito.'
+            ]);
+        }
+
+        return $this->response->setJSON(['exito' => false, 'mensaje' => 'Ocurrió un error al actualizar la contraseña en el servidor.']);
     }
 
     public function salir()

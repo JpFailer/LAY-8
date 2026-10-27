@@ -23,11 +23,49 @@ class Registro extends BaseController
             'terminos'           => 'required'
         ];
 
+        // Mensajes de validación en español amigables (Revisión Haryerit)
         $mensajes = [
+            'primer_nombre' => [
+                'required' => 'El primer nombre es obligatorio.'
+            ],
+            'apellidos' => [
+                'required' => 'Los apellidos son obligatorios.'
+            ],
+            'nombre_usuario' => [
+                'required'  => 'El nombre de usuario es obligatorio.',
+                'is_unique' => 'Ese nombre de usuario ya existe. Por favor elige otro.'
+            ],
+            'correo' => [
+                'required'    => 'El correo electrónico es obligatorio.',
+                'valid_email' => 'Por favor introduce un correo electrónico válido.',
+                'is_unique'   => 'Este correo electrónico ya está registrado en LAY-8.'
+            ],
+            'contrasena' => [
+                'required'   => 'La contraseña es obligatoria.',
+                'min_length' => 'La contraseña debe contener al menos 8 caracteres.'
+            ],
+            'repetir_contrasena' => [
+                'matches' => 'Las contraseñas no coinciden.'
+            ],
             'terminos' => [
                 'required' => 'Debes leer y aceptar los Términos y Condiciones de uso para registrarte en LAY-8.'
             ]
         ];
+
+        // Preservación de documento PDF cargado en caso de fallos posteriores en el paso 2
+        $archivoTempInscripcion = $this->request->getFile('planilla_inscripcion');
+        if ($archivoTempInscripcion && $archivoTempInscripcion->isValid() && !$archivoTempInscripcion->hasMoved()) {
+            if ($archivoTempInscripcion->getClientMimeType() === 'application/pdf') {
+                $carpetaTemp = WRITEPATH . 'uploads/temp_registro';
+                if (!is_dir($carpetaTemp)) {
+                    mkdir($carpetaTemp, 0777, true);
+                }
+                $nombreTemp = 'temp_' . md5(session_id() . time()) . '.pdf';
+                $archivoTempInscripcion->move($carpetaTemp, $nombreTemp);
+                session()->set('temp_registro_pdf', $carpetaTemp . DIRECTORY_SEPARATOR . $nombreTemp);
+                session()->set('temp_registro_pdf_nombre', $archivoTempInscripcion->getClientName());
+            }
+        }
 
         if (!$this->validate($reglas, $mensajes)) {
             return redirect()->back()->withInput()->with('errores', $this->validator->getErrors());
@@ -79,17 +117,26 @@ class Registro extends BaseController
             }
         } else {
             // Verificación Inteligente y Anti-Fraude del Registro de Inscripción UMC
-            $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
-            if (!$archivoInscripcion || !$archivoInscripcion->isValid() || $archivoInscripcion->hasMoved()) {
+            $rutaArchivoVerificar = null;
+            if (session()->has('temp_registro_pdf') && file_exists(session()->get('temp_registro_pdf'))) {
+                $rutaArchivoVerificar = session()->get('temp_registro_pdf');
+            } else {
+                $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
+                if ($archivoInscripcion && $archivoInscripcion->isValid() && !$archivoInscripcion->hasMoved()) {
+                    if ($archivoInscripcion->getClientMimeType() === 'application/pdf') {
+                        $rutaArchivoVerificar = $archivoInscripcion->getTempName();
+                    } else {
+                        return redirect()->back()->withInput()->with('error', 'El comprobante debe ser exclusivamente un archivo PDF original emitido por el sistema campus.umc.edu.ve.');
+                    }
+                }
+            }
+
+            if (!$rutaArchivoVerificar || !file_exists($rutaArchivoVerificar)) {
                 return redirect()->back()->withInput()->with('error', 'Por motivos de seguridad, debes adjuntar tu Registro de Inscripción oficial emitido por la UMC (formato PDF).');
             }
 
-            if ($archivoInscripcion->getClientMimeType() !== 'application/pdf') {
-                return redirect()->back()->withInput()->with('error', 'El comprobante debe ser exclusivamente un archivo PDF original emitido por el sistema campus.umc.edu.ve.');
-            }
-
             $verificador = new VerificadorInscripcionService();
-            $analisis = $verificador->verificar($archivoInscripcion->getTempName(), $carreraSeleccionada);
+            $analisis = $verificador->verificar($rutaArchivoVerificar, $carreraSeleccionada);
 
             if (!$analisis['es_valido']) {
                 return redirect()->back()->withInput()->with('error', 'Seguridad UMC: ' . ($analisis['motivo_invalidez'] ?? 'El documento no superó los filtros de autenticidad institucional.'));
@@ -104,6 +151,15 @@ class Registro extends BaseController
 
         $usuarioModel = new UsuarioModel();
         $nuevoUsuarioId = $usuarioModel->insert($datos, true);
+
+        // Limpiar archivo temporal de sesión si existía
+        if (session()->has('temp_registro_pdf')) {
+            $tempPath = session()->get('temp_registro_pdf');
+            if (file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+            session()->remove(['temp_registro_pdf', 'temp_registro_pdf_nombre']);
+        }
 
         // Si es estudiante, inscribir automáticamente en las aulas detectadas en el documento
         $aulasMensaje = '';

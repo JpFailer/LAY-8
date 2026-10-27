@@ -64,22 +64,13 @@
   text-transform: uppercase;
   box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08);
   margin-bottom: 18px;
-  transition: transform 0.3s ease;
-}
-
-.insignia-pill-rumbo:hover {
-  transform: scale(1.03);
+  cursor: default;
+  user-select: none;
 }
 
 .insignia-pill-rumbo i {
   font-size: 1.15rem;
   color: #2563eb;
-  animation: pulseCompass 2.5s infinite ease-in-out;
-}
-
-@keyframes pulseCompass {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(20deg) scale(1.15); }
 }
 
 .rumbo-titulo {
@@ -214,30 +205,18 @@
   background: #eff6ff;
   color: #2563eb;
   box-shadow: 0 8px 18px -4px rgba(37, 99, 235, 0.25);
-  animation: floatIcon 4s ease-in-out infinite;
 }
 
 .icono-box-vision {
   background: #faf5ff;
   color: #7c3aed;
   box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.25);
-  animation: floatIcon 4s ease-in-out infinite 0.7s;
 }
 
 .icono-box-valores {
   background: #ecfdf5;
   color: #059669;
   box-shadow: 0 8px 18px -4px rgba(5, 150, 105, 0.25);
-  animation: floatIcon 4s ease-in-out infinite 1.4s;
-}
-
-@keyframes floatIcon {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
 }
 
 .card-filosofia:hover .icono-flotante {
@@ -253,6 +232,8 @@
   letter-spacing: 0.8px;
   padding: 6px 14px;
   border-radius: 9999px;
+  cursor: default;
+  user-select: none;
 }
 
 .tag-blue {
@@ -654,16 +635,17 @@
             <label for="nombre_usuario">Usuario</label>
             <input type="text" id="nombre_usuario" name="nombre_usuario" class="input-login" required>
 
-            <div class="label-pass-group">
-              <label for="contrasena">Contraseña</label>
-              <a href="#" class="link-olvido">Olvidaste tu contraseña?</a>
-            </div>
-
+            <label for="contrasena">Contraseña</label>
             <div class="input-pass-group">
               <input type="password" id="contrasena" name="contrasena" class="input-login" required>
               <button type="button" id="btn-toggle-pass" class="btn-toggle-pass">
                 <img src="<?= base_url('img/ojo.svg')?>" alt="Mostrar contraseña" id="eye-icon">
               </button>
+            </div>
+
+            <!-- Posición correcta: debajo de la contraseña, no de usuario -->
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px; margin-bottom: 20px;">
+              <a href="javascript:void(0)" class="link-olvido" onclick="abrirModalRecuperacion()" style="font-size: 0.83rem; color: #1a56db; text-decoration: none; font-weight: 600;">¿Olvidaste tu contraseña?</a>
             </div>
 
             <button type="submit" class="btn-ingresar">Ingresar</button>
@@ -685,41 +667,325 @@
       </div>
     </div>
 
+    <!-- Modal Recuperación de Contraseña Interactivo (Con Scroll Adaptativo y Diseño Compacto) -->
+    <div id="modal-recuperacion-pass" class="modal-overlay oculto" onclick="if(event.target === this) cerrarModalRecuperacion()" style="padding: 15px; box-sizing: border-box;">
+      <div class="card-recuperar-adaptativa" style="background: #ffffff; width: 100%; max-width: 530px; max-height: calc(100vh - 30px); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); position: relative; display: flex; flex-direction: column; overflow: hidden; animation: modalScaleUp 0.25s ease-out;">
+        <button type="button" class="btn-close" onclick="cerrarModalRecuperacion()" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #64748b; z-index: 10;">&times;</button>
+        
+        <div style="padding: 24px 28px; overflow-y: auto; max-height: calc(100vh - 30px); box-sizing: border-box;">
+          
+          <!-- PASO 1: Ingresar usuario o correo -->
+          <div id="recup-paso-1">
+            <div style="text-align: center; margin-bottom: 18px;">
+              <div style="width: 52px; height: 52px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 10px auto;">
+                <i class="bx bx-key"></i>
+              </div>
+              <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.35rem; color: #0f172a; margin: 0 0 6px 0; font-weight: 700;">Recuperar Contraseña</h3>
+              <p style="font-size: 0.88rem; color: #64748b; line-height: 1.5; margin: 0;">
+                Ingresa tu usuario o correo electrónico de <strong>LAY-8</strong> para verificar tu cuenta:
+              </p>
+            </div>
+
+            <div id="recup-alerta-error" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 0.86rem; margin-bottom: 15px;"></div>
+
+            <div style="margin-bottom: 20px;">
+              <label style="font-size: 0.86rem; font-weight: 600; color: #334155; display: block; margin-bottom: 6px;">Usuario o Correo Registrado</label>
+              <input type="text" id="recup_identificador" class="input-login" style="width: 100%; box-sizing: border-box;" placeholder="Ej: tu_usuario o correo@umc.edu.ve">
+            </div>
+
+            <button type="button" id="btn-verificar-recup" onclick="ejecutarVerificarCuenta()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600;">Verificar Cuenta</button>
+          </div>
+
+          <!-- PASO 2: Verificación de Identidad con PDF y Nueva Contraseña -->
+          <div id="recup-paso-2" style="display: none;">
+            <div style="text-align: center; margin-bottom: 12px;">
+              <div style="width: 46px; height: 46px; background: #eff6ff; color: #1e40af; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 6px auto;">
+                <i class="bx bx-shield-quarter"></i>
+              </div>
+              <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.25rem; color: #0f172a; margin: 0 0 4px 0; font-weight: 700;">Verificación de Identidad</h3>
+              <div style="background: #f1f5f9; border-radius: 8px; padding: 4px 12px; font-size: 0.82rem; color: #1e40af; display: inline-block; font-weight: 600;" id="recup-usuario-info">
+                Usuario Verificado
+              </div>
+            </div>
+
+            <!-- AVISO DE SEGURIDAD UMC ANTI-SUPLANTACIÓN COMPACTO -->
+            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
+              <div style="display: flex; align-items: flex-start; gap: 8px;">
+                <i class="bx bx-shield-check" style="font-size: 1.4rem; color: #1e40af; flex-shrink: 0; margin-top: 1px;"></i>
+                <div style="font-size: 0.8rem; color: #1e3a8a; line-height: 1.4;">
+                  <strong style="display: block; font-size: 0.84rem; margin-bottom: 1px;">Comprobación de Titularidad Anti-Suplantación</strong>
+                  Para comprobar que eres el titular legítimo, sube tu <strong>Registro de Inscripción oficial UMC (PDF)</strong> emitido por <code>campus.umc.edu.ve</code> (válido el original o uno más reciente).
+                </div>
+              </div>
+            </div>
+
+            <div id="recup-alerta-error-2" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px;"></div>
+
+            <input type="hidden" id="recup_usuario_id">
+
+            <!-- Campo de subida de PDF obligatorio -->
+            <div style="margin-bottom: 14px;">
+              <label style="font-size: 0.84rem; font-weight: 700; color: #1e3a8a; display: block; margin-bottom: 4px;">
+                <i class="bx bxs-file-pdf" style="color: #dc2626;"></i> Registro de Inscripción UMC (PDF) *
+              </label>
+              <input type="file" id="recup_pdf" accept=".pdf" class="input-login" style="width: 100%; box-sizing: border-box; padding: 8px 12px;" required onchange="actualizarFeedbackPdfRecup(this)">
+              
+              <!-- Feedback visual de PDF seleccionado -->
+              <div id="recup-pdf-feedback" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 6px 10px; margin-top: 6px;">
+                <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                  <i class="bx bxs-file-pdf" style="font-size: 1.3rem; color: #dc2626; flex-shrink: 0;"></i>
+                  <div style="display: flex; flex-direction: column; overflow: hidden;">
+                    <span id="recup-pdf-nombre" style="font-size: 0.8rem; font-weight: 600; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">documento.pdf</span>
+                    <span id="recup-pdf-tamano" style="font-size: 0.72rem; color: #15803d;">0 KB</span>
+                  </div>
+                </div>
+                <span style="font-size: 0.72rem; font-weight: 700; background: #dcfce7; color: #166534; padding: 2px 7px; border-radius: 9999px;"><i class="bx bx-check"></i> Listo</span>
+              </div>
+            </div>
+
+            <!-- Campos de Contraseña lado a lado en 2 columnas para optimizar espacio vertical -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
+              <div>
+                <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Nueva Contraseña *</label>
+                <input type="password" id="recup_nueva_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Mín. 8 caracteres">
+              </div>
+
+              <div>
+                <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Confirmar Contraseña *</label>
+                <input type="password" id="recup_repetir_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Repite la contraseña">
+              </div>
+            </div>
+
+            <button type="button" id="btn-guardar-clave" onclick="ejecutarGuardarClave()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              <i class="bx bx-check-shield"></i> Validar Documento y Restablecer
+            </button>
+          </div>
+
+          <!-- PASO 3: Éxito -->
+          <div id="recup-paso-3" style="display: none; text-align: center; padding: 10px 0;">
+            <div style="width: 58px; height: 58px; background: #dcfce7; color: #166534; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 12px auto;">
+              <i class="bx bx-check"></i>
+            </div>
+            <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.3rem; color: #0f172a; margin: 0 0 6px 0; font-weight: 700;">¡Contraseña Actualizada!</h3>
+            <p style="font-size: 0.88rem; color: #64748b; line-height: 1.5; margin: 0 0 18px 0;" id="recup-mensaje-exito">
+              Tu contraseña ha sido actualizada con éxito. Ya puedes iniciar sesión con tu nueva clave.
+            </p>
+            <button type="button" onclick="volverALoginDesdeRecuperacion()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600;">Iniciar Sesión</button>
+          </div>
+
+          <div style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+            ¿Problemas con tu cuenta? Escribe a <a href="mailto:info@lay8.com" style="color: #2563eb; text-decoration: underline;">info@lay8.com</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <footer class="footer-global">
 
       <div class="footer-columna">
-    <img src="<?= base_url('img/lay8_logo.png')?>" alt="LAY-8 Logo" class="decoracion-logo">
-    <p style="margin-top: 15px;">Prototipo funcional desarrollado exclusivamente con fines académicos para la Unidad Marítima del Caribe.</p>
-  </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LAY-8" style="height: 38px; width: auto;">
+          <span style="font-family: var(--fuente-logo); font-size: 1.8rem; color: #ffffff; letter-spacing: 0.5px;">LAY-8</span>
+        </div>
+        <p>Prototipo funcional desarrollado exclusivamente con fines académicos para la Universidad Marítima del Caribe.</p>
+      </div>
 
-  <div class="footer-columna">
-    <h4>ESTUDIANTES</h4>
-    <p>Eric Mendez</p>
-    <p>Abraham Angulo</p>
-    <p>Juan Morles</p>
-    <p>Haryerit Larez</p>
-  </div>
+      <div class="footer-columna">
+        <h4>ESTUDIANTES</h4>
+        <p>Eric Mendez</p>
+        <p>Abraham Angulo</p>
+        <p>Juan Morles</p>
+        <p>Haryerit Larez</p>
+      </div>
 
-  <div class="footer-columna">
-    <h4>LABORES</h4>
-    <p>Lider de Equipo, BDD</p>
-    <p>Backend</p>
-    <p>Backend</p>
-    <p>Fronted</p>
-  </div>
+      <div class="footer-columna">
+        <h4>LABORES</h4>
+        <p>Lider de Equipo, BDD</p>
+        <p>Backend</p>
+        <p>Backend</p>
+        <p>Frontend</p>
+      </div>
 
-  <div class="footer-columna">
-    <h4>CONTACTO</h4>
-    <p style="margin-bottom: 8px;"><i class="bx bx-envelope" style="vertical-align: middle;"></i> info@lay8.com</p>
-    <p style="margin-top: 6px;">
-      <a href="<?= base_url('terminos') ?>" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.2s;">
-        <i class="bx bx-shield-quarter"></i> Términos y Condiciones
-      </a>
-    </p>
-  </div>
+      <div class="footer-columna">
+        <h4>CONTACTO</h4>
+        <p style="margin-bottom: 8px;"><i class="bx bx-envelope" style="vertical-align: middle;"></i> info@lay8.com</p>
+        <p style="margin-top: 6px;">
+          <a href="<?= base_url('terminos') ?>" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.2s;">
+            <i class="bx bx-shield-quarter"></i> Términos y Condiciones
+          </a>
+        </p>
+      </div>
+
+      <!-- Marca de agua timón en la esquina inferior derecha del footer -->
+      <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LAY-8 Marca de Agua" class="decoracion-logo">
     </footer>
 
-    <script src="<?= base_url('js/landing.js') ?>"></script>
+    <script src="<?= base_url('js/landing.js?v=' . time()) ?>"></script>
+
+    <!-- Script de Recuperación de Contraseña Garantizado -->
+    <script>
+      function abrirModalRecuperacion() {
+        const modalLogin = document.getElementById('modal-login-overlay');
+        const modalRecup = document.getElementById('modal-recuperacion-pass');
+        if (modalLogin) modalLogin.classList.add('oculto');
+        if (modalRecup) {
+          modalRecup.classList.remove('oculto');
+          document.body.style.overflow = 'hidden';
+          // Resetear al paso 1
+          document.getElementById('recup-paso-1').style.display = 'block';
+          document.getElementById('recup-paso-2').style.display = 'none';
+          document.getElementById('recup-paso-3').style.display = 'none';
+          const errBox = document.getElementById('recup-alerta-error');
+          if (errBox) errBox.style.display = 'none';
+        }
+      }
+
+      function cerrarModalRecuperacion() {
+        const modalRecup = document.getElementById('modal-recuperacion-pass');
+        if (modalRecup) {
+          modalRecup.classList.add('oculto');
+          document.body.style.overflow = '';
+        }
+      }
+
+      function ejecutarVerificarCuenta() {
+        const iden = document.getElementById('recup_identificador').value.trim();
+        const errBox = document.getElementById('recup-alerta-error');
+        const btn = document.getElementById('btn-verificar-recup');
+
+        if (!iden) {
+          errBox.textContent = 'Por favor ingresa tu usuario o correo.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        errBox.style.display = 'none';
+        btn.textContent = 'Verificando...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('identificador', iden);
+
+        fetch('<?= base_url('login/verificar-recuperacion') ?>', {
+          method: 'POST',
+          body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+          btn.textContent = 'Verificar Cuenta';
+          btn.disabled = false;
+          if (data.exito) {
+            document.getElementById('recup_usuario_id').value = data.usuario_id;
+            document.getElementById('recup-usuario-info').innerHTML = '<i class="bx bxs-user-check"></i> ' + data.nombre + ' (' + data.rol + ' - ' + data.carrera + ')';
+            document.getElementById('recup-paso-1').style.display = 'none';
+            document.getElementById('recup-paso-2').style.display = 'block';
+          } else {
+            errBox.textContent = data.mensaje || 'Cuenta no encontrada.';
+            errBox.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          btn.textContent = 'Verificar Cuenta';
+          btn.disabled = false;
+          errBox.textContent = 'Error al verificar la cuenta. Intenta de nuevo.';
+          errBox.style.display = 'block';
+        });
+      }
+
+      function actualizarFeedbackPdfRecup(input) {
+        const feedback = document.getElementById('recup-pdf-feedback');
+        const nombreSpan = document.getElementById('recup-pdf-nombre');
+        const tamanoSpan = document.getElementById('recup-pdf-tamano');
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+          if (nombreSpan) nombreSpan.textContent = file.name;
+          if (tamanoSpan) {
+            const kb = (file.size / 1024).toFixed(1);
+            tamanoSpan.textContent = (kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB');
+          }
+          if (feedback) feedback.style.display = 'flex';
+        }
+      }
+
+      function ejecutarGuardarClave() {
+        const uid = document.getElementById('recup_usuario_id').value;
+        const clave = document.getElementById('recup_nueva_clave').value;
+        const rep = document.getElementById('recup_repetir_clave').value;
+        const fileInput = document.getElementById('recup_pdf');
+        const errBox = document.getElementById('recup-alerta-error-2');
+        const btn = document.getElementById('btn-guardar-clave');
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+          errBox.textContent = 'Por seguridad anti-suplantación, debes adjuntar obligatoriamente tu Registro de Inscripción UMC en formato PDF.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        const archivo = fileInput.files[0];
+        if (!archivo.name.toLowerCase().endsWith('.pdf')) {
+          errBox.textContent = 'El comprobante debe ser exclusivamente un archivo digital PDF oficial.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        if (!clave || clave.length < 8) {
+          errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        if (clave !== rep) {
+          errBox.textContent = 'Las contraseñas no coinciden.';
+          errBox.style.display = 'block';
+          return;
+        }
+
+        errBox.style.display = 'none';
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Verificando documento con motor UMC...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('usuario_id', uid);
+        formData.append('nueva_contrasena', clave);
+        formData.append('repetir_contrasena', rep);
+        formData.append('planilla_inscripcion', archivo);
+
+        fetch('<?= base_url('login/restablecer-contrasena') ?>', {
+          method: 'POST',
+          body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+          btn.innerHTML = '<i class="bx bx-check-shield"></i> Validar Documento y Restablecer';
+          btn.disabled = false;
+          if (data.exito) {
+            const exitoMsg = document.getElementById('recup-mensaje-exito');
+            if (exitoMsg) exitoMsg.textContent = data.mensaje;
+            document.getElementById('recup-paso-2').style.display = 'none';
+            document.getElementById('recup-paso-3').style.display = 'block';
+          } else {
+            errBox.textContent = data.mensaje || 'Error al validar el documento o actualizar contraseña.';
+            errBox.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          btn.innerHTML = '<i class="bx bx-check-shield"></i> Validar Documento y Restablecer';
+          btn.disabled = false;
+          errBox.textContent = 'Ocurrió un error al verificar el comprobante en el servidor.';
+          errBox.style.display = 'block';
+        });
+      }
+
+      function volverALoginDesdeRecuperacion() {
+        cerrarModalRecuperacion();
+        const modalLogin = document.getElementById('modal-login-overlay');
+        if (modalLogin) {
+          modalLogin.classList.remove('oculto');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+    </script>
 
   </body>
 </html>

@@ -30,6 +30,22 @@ $carreraActual = old('carrera', 'ING-INF');
 if (!isset($carrerasDisponibles[$carreraActual])) {
     $carreraActual = 'ING-INF';
 }
+
+// CAPTURA ÚNICA DE ERRORES EN FLASH (para no perderlos en CodeIgniter)
+$erroresFlash = session()->getFlashdata('errores') ?? [];
+$tieneArchivoEnSesion = session()->has('temp_registro_pdf') && file_exists((string)session()->get('temp_registro_pdf'));
+$nombreArchivoEnSesion = session()->get('temp_registro_pdf_nombre') ?? 'Registro_Inscripcion_UMC.pdf';
+
+// Determinar si debemos saltar directo al Paso 2
+$irAPaso2 = false;
+if (!empty($erroresFlash) && is_array($erroresFlash)) {
+    $camposPaso1 = ['primer_nombre', 'apellidos', 'correo', 'telefono', 'carrera', 'carnet', 'planilla_inscripcion'];
+    $erroresPaso1 = array_intersect_key($erroresFlash, array_flip($camposPaso1));
+    // Si no hubo errores en el paso 1 y el usuario ya envió datos, mantenerlo en el paso 2
+    if (empty($erroresPaso1) && old('primer_nombre')) {
+        $irAPaso2 = true;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -38,17 +54,30 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro - LAY-8</title>
 
+  <!-- Script anti-flicker: tema claro por defecto en auth -->
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('lay8_auth_override') !== 'true') {
+          document.documentElement.classList.remove('dark-mode');
+        } else if (localStorage.getItem('lay8_theme') === 'dark') {
+          document.documentElement.classList.add('dark-mode');
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <!-- precarga de fuentes-->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- stylesheets-->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=11')?>">
-  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=5')?>">
+  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
+  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=' . time())?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
-<body>
+<body data-tema-default="light">
   <div class="top-header-registro">
 
     <div>
@@ -63,8 +92,10 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
   
   
     <div class="registro-logo">
-        <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LOGO">
-        <span>LAY-8</span>
+        <a href="<?= base_url('/') ?>" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+          <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LOGO">
+          <span>LAY-8</span>
+        </a>
     </div>
   </div>
 
@@ -76,9 +107,9 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
       </div>
     <?php endif;?>
 
-    <?php if(session()->getFlashdata('errores')): ?>
+    <?php if(!empty($erroresFlash)): ?>
       <div class="error-msg">
-        <?php foreach((array)session()->getFlashdata('errores') as $err): ?>
+        <?php foreach((array)$erroresFlash as $err): ?>
           <div>&bull; <?= esc($err) ?></div>
         <?php endforeach; ?>
       </div>
@@ -149,7 +180,23 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
           <p style="font-size: 0.82rem; color: #64748b; margin-top: -3px; margin-bottom: 8px;">
             Sube el comprobante oficial (PDF) emitido por <code>campus.umc.edu.ve</code>. El sistema certificará tu carrera y te asignará automáticamente a tus aulas.
           </p>
-          <input type="file" name="planilla_inscripcion" id="input_planilla_inscripcion" accept=".pdf" class="input-global" <?= old('es_profesor') === 'si' ? '' : 'required' ?>>
+          <input type="hidden" id="tiene_archivo_previo" value="<?= $tieneArchivoEnSesion ? '1' : '0' ?>">
+          <input type="file" name="planilla_inscripcion" id="input_planilla_inscripcion" accept=".pdf" class="input-global" <?= ($tieneArchivoEnSesion || old('es_profesor') === 'si') ? '' : 'required' ?>>
+
+          <!-- Feedback visual de archivo cargado/seleccionado -->
+          <div id="archivo-feedback-inscripcion" class="archivo-feedback-box" style="display: <?= $tieneArchivoEnSesion ? 'flex' : 'none' ?>;">
+            <div class="archivo-feedback-info">
+              <i class="bx bxs-file-pdf archivo-pdf-ico"></i>
+              <div class="archivo-feedback-textos">
+                <span class="archivo-nombre" id="nombre_archivo_inscripcion"><?= esc($nombreArchivoEnSesion) ?></span>
+                <span class="archivo-tamano" id="tamano_archivo_inscripcion"><?= $tieneArchivoEnSesion ? 'Cargado y validado en sesión' : 'Documento listo' ?></span>
+              </div>
+            </div>
+            <div class="archivo-feedback-estado">
+              <span class="badge-archivo-ok"><i class="bx bx-check-circle"></i> Archivo listo</span>
+              <button type="button" class="btn-quitar-archivo" onclick="removerArchivoInscripcion()" title="Quitar o cambiar documento">&times;</button>
+            </div>
+          </div>
         </div>
 
         <div class="docente-row">
@@ -203,12 +250,12 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
           </div>
         </div>
 
-        <!-- Casilla obligatoria de Términos y Condiciones -->
+        <!-- Casilla obligatoria de Términos y Condiciones con Modal Overlay -->
         <div class="form-row" style="margin-top: 12px; margin-bottom: 22px;">
           <label class="checkbox-terminos-label" style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.84rem; color: #475569; cursor: pointer; line-height: 1.45;">
-            <input type="checkbox" name="terminos" id="terminos" value="1" required style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1e3a8a; cursor: pointer; flex-shrink: 0;">
+            <input type="checkbox" name="terminos" id="terminos" value="1" required style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1e3a8a; cursor: pointer; flex-shrink: 0;" <?= old('terminos') ? 'checked' : '' ?>>
             <span>
-              He leído y acepto los <a href="<?= base_url('terminos') ?>" target="_blank" rel="noopener noreferrer" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;">Términos, Condiciones de Uso y Políticas de Privacidad</a> de LAY-8.
+              He leído y acepto los <a href="javascript:void(0)" onclick="abrirModalTerminos()" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;">Términos, Condiciones de Uso y Políticas de Privacidad</a> de LAY-8.
             </span>
           </label>
         </div>
@@ -265,19 +312,46 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=11')?>"></script>
-  <script src="<?= base_url('js/registro.js?v=11')?>"></script>
+  <!-- Modal de Términos y Condiciones dentro del Registro -->
+  <div id="modal-terminos-registro" class="modal-terminos-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalTerminos()">
+    <div class="modal-terminos-content">
+      <div class="modal-terminos-header">
+        <h3><i class="bx bx-shield-quarter"></i> Términos y Condiciones de Uso</h3>
+        <button type="button" class="btn-cerrar-terminos" onclick="cerrarModalTerminos()" title="Cerrar">&times;</button>
+      </div>
 
-  <?php 
-    $erroresFlash = session()->getFlashdata('errores');
-    $irAPaso2 = false;
-    if ($erroresFlash && is_array($erroresFlash)) {
-        $erroresPaso1 = array_intersect_key($erroresFlash, array_flip(['primer_nombre', 'apellidos', 'correo', 'telefono', 'carrera', 'carnet', 'planilla_inscripcion']));
-        if (empty($erroresPaso1) && old('primer_nombre')) {
-            $irAPaso2 = true;
-        }
-    }
-  ?>
+      <div class="modal-terminos-body">
+        <h4>1. Naturaleza y Propósito de la Plataforma</h4>
+        <p>
+          LAY-8 es una plataforma tecnológica desarrollada exclusivamente con fines de apoyo académico, formativo y de geolocalización dentro del campus de la <strong>Universidad Marítima del Caribe (UMC)</strong>.
+        </p>
+
+        <h4>2. Verificación Documental y Cero Tolerancia al Fraude</h4>
+        <p>
+          El registro como estudiante requiere la carga del Registro de Inscripción emitido por el sistema oficial <code>campus.umc.edu.ve</code>. La falsificación o alteración de datos documentales acarreará sanciones conforme al reglamento académico disciplinario de la UMC.
+        </p>
+
+        <h4>3. Confidencialidad y Uso de Información</h4>
+        <p>
+          Toda información proporcionada (nombres, matrículas, horarios y calificaciones) se resguarda bajo estrictos principios de privacidad y es utilizada exclusivamente para sincronizar tu jornada académica y las aulas del campus.
+        </p>
+
+        <h4>4. Convivencia y Recursos Colaborativos</h4>
+        <p>
+          Las publicaciones en el muro informativo y aportes compartidos en la biblioteca virtual deben regirse bajo principios de respeto mutuo, veracidad y rigor académico.
+        </p>
+      </div>
+
+      <div class="modal-terminos-footer">
+        <button type="button" onclick="cerrarModalTerminos()" style="background: none; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 8px; color: #475569; font-weight: 600; cursor: pointer;">Cerrar</button>
+        <button type="button" class="btn-aceptar-terminos" onclick="aceptarTerminosModal()"><i class="bx bx-check"></i> Aceptar y Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="<?= base_url('js/main.js?v=' . time())?>"></script>
+  <script src="<?= base_url('js/registro.js?v=' . time())?>"></script>
+
   <?php if ($irAPaso2): ?>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
