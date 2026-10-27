@@ -3,6 +3,12 @@ import json
 import os
 import re
 
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 def normalizar(texto):
     if not texto:
         return ""
@@ -16,6 +22,51 @@ def normalizar(texto):
     for k, v in reemplazos.items():
         texto = texto.replace(k, v)
     return texto
+
+def limpiar_nombre_materia(nombre_raw):
+    if not nombre_raw:
+        return ""
+    reglas = [
+        (r'M[\ufffd\?]?ndez', 'Méndez'),
+        (r'C[\ufffd\?]?lculo', 'Cálculo'),
+        (r'Num[\ufffd\?]?rico', 'Numérico'),
+        (r'F[\ufffd\?]?sica', 'Física'),
+        (r'Programaci[\ufffd\?]?n', 'Programación'),
+        (r'Inform[\ufffd\?]?tica', 'Informática'),
+        (r'Ingenier[\ufffd\?]?a', 'Ingeniería'),
+        (r'Administraci[\ufffd\?]?n', 'Administración'),
+        (r'Segur\s+idad', 'Seguridad'),
+        (r'Estad[\ufffd\?]?stica', 'Estadística'),
+        (r'Electr[\ufffd\?]?nica', 'Electrónica'),
+        (r'M[\ufffd\?]?todos', 'Métodos'),
+        (r'Q[\ufffd\?]?mica', 'Química')
+    ]
+    nombre = nombre_raw
+    for pat, rep in reglas:
+        nombre = re.sub(pat, rep, nombre, flags=re.IGNORECASE)
+    nombre = re.sub(r'[\ufffd\?]+', '', nombre)
+    return re.sub(r'\s+', ' ', nombre).strip()
+
+def limpiar_nombre_persona(nombre_raw):
+    if not nombre_raw:
+        return ""
+    reglas = [
+        (r'M[\ufffd\?]?ndez', 'Méndez'),
+        (r'Gonz[\ufffd\?]?lez', 'González'),
+        (r'P[\ufffd\?]?rez', 'Pérez'),
+        (r'S[\ufffd\?]?nchez', 'Sánchez'),
+        (r'Rodr[\ufffd\?]?guez', 'Rodríguez'),
+        (r'Mart[\ufffd\?]?nez', 'Martínez'),
+        (r'Hern[\ufffd\?]?ndez', 'Hernández'),
+        (r'Garc[\ufffd\?]?a', 'García'),
+        (r'L[\ufffd\?]?pez', 'López'),
+        (r'D[\ufffd\?]?az', 'Díaz')
+    ]
+    nombre = nombre_raw
+    for pat, rep in reglas:
+        nombre = re.sub(pat, rep, nombre, flags=re.IGNORECASE)
+    nombre = re.sub(r'[\ufffd\?]+', '', nombre)
+    return re.sub(r'\s+', ' ', nombre).strip()
 
 def procesar_pdf(pdf_path):
     resultado = {
@@ -74,10 +125,10 @@ def procesar_pdf(pdf_path):
     criterios = {
         "maritima": ("maritima del caribe" in texto_norm or "experimental maritima" in texto_norm),
         "secretaria": ("secretaria general" in texto_norm),
-        "registro": ("registro estudiantil" in texto_norm or "regisstudent" in texto_norm or "reg-seg-cre" in texto_norm),
+        "registro": ("registro estudiantil" in texto_norm or "regisstudent" in texto_norm or "reg-seg-cre" in texto_norm or "registro de inscripcion" in texto_norm),
         "formulario": ("upe-002" in texto_norm or "forma 006 ree" in texto_norm or "upe 002" in texto_norm),
-        "titulo": ("registro de inscripcion" in texto_norm or "tramites de inscripcion" in texto_norm),
-        "republica": ("republica bolivariana" in texto_norm)
+        "titulo": ("registro de inscripcion" in texto_norm or "tramites de inscripcion" in texto_norm or "inscripciones" in texto_norm),
+        "republica": ("republica bolivariana" in texto_norm or "venezuela" in texto_norm)
     }
 
     for k, ok in criterios.items():
@@ -91,37 +142,48 @@ def procesar_pdf(pdf_path):
     # 3. Extracción de Datos del Estudiante
     texto_espacios = re.sub(r'[ \t]+', ' ', texto_completo)
 
-    # Estudiante / Bachiller (Nombre Completo)
-    m_est = re.search(r'Bachiller:\s*(.*?)\s+Estudiante\s+Nro\.?:', texto_espacios, re.DOTALL | re.IGNORECASE)
+    # Estudiante / Nombre Completo
+    m_est = re.search(r'Nombre\s*:\s*([^\n\r]+?)(?:\s+Programa\s+de|\s+C[eé\?]+dula|\r|\n|$)', texto_espacios, re.IGNORECASE)
+    if not m_est:
+        m_est = re.search(r'Bachiller:\s*(.*?)\s+Estudiante\s+Nro\.?:', texto_espacios, re.DOTALL | re.IGNORECASE)
     if not m_est:
         m_est = re.search(r'Bachiller:\s*(.*?)\s+(?:portador|\n)', texto_espacios, re.IGNORECASE)
     if m_est:
-        nombre_raw = re.sub(r'\s+', ' ', m_est.group(1).replace('\n', ' ')).strip()
-        nombre_raw = re.sub(r'[\ufffd\?]+', '', nombre_raw)
-        resultado["estudiante"] = nombre_raw
+        resultado["estudiante"] = limpiar_nombre_persona(m_est.group(1))
 
     # Código de Estudiante
-    m_cod = re.search(r'Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
+    m_cod = re.search(r'C[oó\?]+digo(?:\s+del)?\s+Estudiante\s*[:\.]?\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
+    if not m_cod:
+        m_cod = re.search(r'Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
     if m_cod:
         resultado["codigo_estudiante"] = m_cod.group(1).strip()
 
     # Cédula de Identidad
-    m_ced = re.search(r'c[ée\?]+dula(?:\s+de\s+identidad)?\s*[:\.]?\s*([VvEe]\s*-\s*\d+)', texto_espacios, re.IGNORECASE)
+    m_ced = re.search(r'C[eé\?]+dula(?:\s+(?:de\s+)?Identidad)?\s*[:\.]?\s*([VvEe]\s*-\s*\d+)', texto_espacios, re.IGNORECASE)
     if not m_ced:
         m_ced = re.search(r'\b([VvEe]\s*-\s*\d{6,9})\b', texto_espacios)
     if m_ced:
         resultado["cedula"] = re.sub(r'\s+', '', m_ced.group(1)).upper()
 
     # Período y Año
-    m_per = re.search(r'per[íi\?]+odo(?:\s+acad[ée\?]+mico)?\s*[:\.]?\s*([0-9]{4}-[0-9]{2})', texto_espacios, re.IGNORECASE)
-    if m_per:
-        resultado["periodo"] = m_per.group(1)
-
-    m_ano = re.search(r'del\s+a[ñn\?]+o\s*([0-9]{4})', texto_espacios, re.IGNORECASE)
+    m_ano = re.search(r'A[ñn\?]+o\s*[:\.]?\s*([0-9]{4})', texto_espacios, re.IGNORECASE)
+    if not m_ano:
+        m_ano = re.search(r'del\s+a[ñn\?]+o\s*([0-9]{4})', texto_espacios, re.IGNORECASE)
     if m_ano:
         resultado["ano"] = m_ano.group(1)
-    elif resultado["periodo"]:
-        resultado["ano"] = resultado["periodo"].split("-")[0]
+
+    m_per = re.search(r'Per[íi\?]+odo(?:\s+acad[ée\?]+mico)?\s*[:\.]?\s*([0-9]{4}-[0-9]{2})', texto_espacios, re.IGNORECASE)
+    if m_per:
+        resultado["periodo"] = m_per.group(1)
+        if not resultado["ano"]:
+            resultado["ano"] = resultado["periodo"].split("-")[0]
+    elif resultado["ano"]:
+        resultado["periodo"] = f"{resultado['ano']}-01"
+
+    # Total Créditos
+    m_tot = re.search(r'Total\s+Cr[eé\?]+ditos\s*[:\.]?\s*(\d+(?:\.\d+)?)', texto_espacios, re.IGNORECASE)
+    if m_tot:
+        resultado["total_creditos"] = float(m_tot.group(1))
 
     # Carrera Universitaria
     mapa_carreras = {
@@ -137,7 +199,7 @@ def procesar_pdf(pdf_path):
         'turismo': ('TUR', 'Licenciatura en Turismo')
     }
 
-    m_car = re.search(r'Programa\s+de\s+Formaci[óo\?]+n\s+([^\n,]+)', texto_espacios, re.IGNORECASE)
+    m_car = re.search(r'Programa\s+de\s+Formaci[óo\?]+n\s*[:\.]?\s*([^\n,]+)', texto_espacios, re.IGNORECASE)
     if m_car:
         car_texto = normalizar(m_car.group(1))
         for frase, (cod, nom) in mapa_carreras.items():
@@ -154,59 +216,72 @@ def procesar_pdf(pdf_path):
                 break
 
     # 4. Extracción de Materias
-    patron_mats = re.compile(
-        r'(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*-\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA|REPROBADA|CURSANDO)',
-        re.IGNORECASE
-    )
-
     materias_encontradas = []
-    for m in patron_mats.finditer(texto_espacios):
-        semestre = int(m.group(2))
-        seccion = m.group(3).strip()
-        codigo = m.group(4).strip()
-        nombre_raw = m.group(5).strip()
 
-        # Limpiar y normalizar nombres de materias
-        nombre_limpio = re.sub(r'[\ufffd\?]+', '', nombre_raw)
-        nombre_limpio = re.sub(r'\s+', ' ', nombre_limpio).strip()
-        nombre_limpio = re.sub(r'\bF[íi\xed]?\s*sica\b', 'Física', nombre_limpio, flags=re.IGNORECASE)
-        nombre_limpio = re.sub(r'\bSegur\s+idad\b', 'Seguridad', nombre_limpio, flags=re.IGNORECASE)
-        nombre_limpio = re.sub(r'\bC\s*lculo\b', 'Cálculo', nombre_limpio, flags=re.IGNORECASE)
-        nombre_limpio = re.sub(r'\bNum\s*rico\b', 'Numérico', nombre_limpio, flags=re.IGNORECASE)
-        nombre_limpio = re.sub(r'\bProgramaci\s*n\b', 'Programación', nombre_limpio, flags=re.IGNORECASE)
+    # Formato A: Oficial UMC UPE-002 fila completa
+    # Ej: 06 CAL604 - Cálculo Numérico SVC-A 4.0
+    patron_upe002 = re.compile(
+        r'^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s+([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)\s*$',
+        re.MULTILINE
+    )
+    for m in patron_upe002.finditer(texto_completo):
+        semestre = int(m.group(1)) if m.group(1) else 1
+        codigo = m.group(2).strip()
+        nombre_limpio = limpiar_nombre_materia(m.group(3).strip())
+        seccion = m.group(4).strip()
+        creditos = float(m.group(5))
 
         materias_encontradas.append({
             "semestre": semestre,
             "codigo": codigo,
             "nombre": nombre_limpio,
             "seccion": seccion,
-            "creditos": 3.0
+            "creditos": creditos
         })
 
-    # Si Formato A no encontró materias, probar Formato B (por líneas individuales)
+    # Formato B: Dos líneas (Línea 1: Semestre? Codigo - Nombre / Línea 2: Sección Créditos)
     if not materias_encontradas:
         for idx, line in enumerate(lineas):
-            m_ind = re.match(r'^(\d{2})\s+([A-Z0-9]{4,8})\s*-\s*(.+)$', line)
-            if m_ind:
-                sem = int(m_ind.group(1))
-                cod = m_ind.group(2).strip()
-                nom = m_ind.group(3).strip()
-                sec = "SVC-A"
-                crd = 3.0
-                if idx + 1 < len(lineas):
-                    m_next = re.match(r'^([A-Z0-9\-]+)\s+(\d+(?:\.\d+)?)$', lineas[idx+1])
-                    if m_next:
-                        sec = m_next.group(1).strip()
-                        crd = float(m_next.group(2))
-                materias_encontradas.append({
-                    "semestre": sem,
-                    "codigo": cod,
-                    "nombre": nom,
-                    "seccion": sec,
-                    "creditos": crd
-                })
+            m_ind = re.match(r'^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s*$', line)
+            if m_ind and idx + 1 < len(lineas):
+                m_next = re.match(r'^([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)$', lineas[idx + 1])
+                if m_next:
+                    semestre = int(m_ind.group(1)) if m_ind.group(1) else 1
+                    codigo = m_ind.group(2).strip()
+                    nombre_limpio = limpiar_nombre_materia(m_ind.group(3).strip())
+                    seccion = m_next.group(1).strip()
+                    creditos = float(m_next.group(2))
+                    materias_encontradas.append({
+                        "semestre": semestre,
+                        "codigo": codigo,
+                        "nombre": nombre_limpio,
+                        "seccion": seccion,
+                        "creditos": creditos
+                    })
+
+    # Formato C: Histórico con estados (EN CURSO, APROBADA, etc.)
+    if not materias_encontradas:
+        patron_hist = re.compile(
+            r'(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*[-–]\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA|REPROBADA|CURSANDO)',
+            re.IGNORECASE
+        )
+        for m in patron_hist.finditer(texto_espacios):
+            semestre = int(m.group(2))
+            seccion = m.group(3).strip()
+            codigo = m.group(4).strip()
+            nom_limpio = limpiar_nombre_materia(m.group(5).strip())
+            materias_encontradas.append({
+                "semestre": semestre,
+                "codigo": codigo,
+                "nombre": nom_limpio,
+                "seccion": seccion,
+                "creditos": 3.0
+            })
 
     resultado["materias"] = materias_encontradas
+
+    if resultado["total_creditos"] == 0.0 and materias_encontradas:
+        resultado["total_creditos"] = round(sum(m["creditos"] for m in materias_encontradas), 1)
 
     if resultado["carrera_codigo"]:
         puntos += 15
@@ -230,9 +305,9 @@ def procesar_pdf(pdf_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(json.dumps({"es_valido": False, "motivo_invalidez": "Ruta de archivo no proporcionada."}, ensure_ascii=True))
+        print(json.dumps({"es_valido": False, "motivo_invalidez": "Ruta de archivo no proporcionada."}, ensure_ascii=False))
         sys.exit(1)
 
     ruta = sys.argv[1]
     res = procesar_pdf(ruta)
-    print(json.dumps(res, ensure_ascii=True, indent=2))
+    print(json.dumps(res, ensure_ascii=False, indent=2))

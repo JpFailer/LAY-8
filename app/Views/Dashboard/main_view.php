@@ -351,11 +351,23 @@
     </div>
   </div>
 
+  <div style="display:none;" id="global-csrf-container"><?= csrf_field() ?></div>
   <script src="<?= base_url('js/main.js?v=11')?>"></script>
 
   <!-- Scripts de Notificaciones en Tiempo Real -->
   <script>
     const BASE_URL_NOTIF = '<?= base_url() ?>/';
+    const CSRF_TOKEN_NOTIF = '<?= csrf_token() ?>';
+    const CSRF_HEADER_NOTIF = '<?= csrf_header() ?>';
+
+    function getNotifHeaders() {
+      const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+      const csrfInput = document.querySelector('input[name="' + CSRF_TOKEN_NOTIF + '"]');
+      if (csrfInput && csrfInput.value) {
+        headers[CSRF_HEADER_NOTIF] = csrfInput.value;
+      }
+      return headers;
+    }
 
     function toggleDropdownNotificaciones(e) {
       if (e) e.stopPropagation();
@@ -442,7 +454,10 @@
     }
 
     function marcarNotifLeida(id) {
-      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-leida/' + id, { method: 'POST' })
+      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-leida/' + id, { 
+        method: 'POST',
+        headers: getNotifHeaders()
+      })
         .then(() => {
           cargarConteoNotificaciones();
         })
@@ -451,7 +466,10 @@
 
     function marcarTodasNotificacionesLeidas(e) {
       if (e) e.stopPropagation();
-      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-todas-leidas', { method: 'POST' })
+      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-todas-leidas', { 
+        method: 'POST',
+        headers: getNotifHeaders()
+      })
         .then(r => r.json())
         .then(() => {
           actualizarBadgeConteo(0);

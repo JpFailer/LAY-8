@@ -126,9 +126,11 @@ _modules/*
 /phpunit.xml
 
 
-# Entornos virtuales de Python
+# Entornos virtuales de Python y caché
 venv/
 scripts_python/venv/
+__pycache__/
+*.pyc
 
 # Archivos subidos por usuarios (seguridad y privacidad)
 /public/uploads/carnets/*

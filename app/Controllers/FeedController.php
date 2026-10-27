@@ -26,8 +26,8 @@ class FeedController extends BaseController
             ]);
         }
 
-        $titulo    = trim($this->request->getPost('titulo') ?? '');
-        $contenido = trim($this->request->getPost('contenido') ?? '');
+        $titulo    = strip_tags(trim($this->request->getPost('titulo') ?? ''));
+        $contenido = strip_tags(trim($this->request->getPost('contenido') ?? ''));
         $categoria = trim($this->request->getPost('categoria') ?? 'Institucional');
         $fijado    = ($this->request->getPost('fijado') === '1' && in_array($rol, ['administrador', 'admin'], true)) ? 1 : 0;
 

@@ -53,8 +53,10 @@ class Home extends BaseController
                           JOIN secciones s ON s.id = cp.seccion_id
                           JOIN materias m ON m.id = s.materia_id
                           WHERE cp.dia_semana = ?
-                            AND (cp.seccion_id IN (SELECT seccion_id FROM inscripciones WHERE estudiante_id = ?)
-                                 OR cp.estudiante_id = ?)
+                            AND (
+                                (cp.seccion_id IN (SELECT seccion_id FROM inscripciones WHERE estudiante_id = ?) AND cp.estudiante_id IS NULL)
+                                OR cp.estudiante_id = ?
+                            )
                           ORDER BY cp.hora_inicio ASC";
             $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId, $usuarioId])->getResultArray();
         }

@@ -25,7 +25,6 @@ class VerificadorInscripcionService
         'ingenieria en informatica'      => 'ING-INF',
         'informatica'                    => 'ING-INF',
         'ingenieria maritima'            => 'ING-MAR',
-        'maritima'                       => 'ING-MAR',
         'ingenieria ambiental'           => 'ING-AMB',
         'ambiental'                      => 'ING-AMB',
         'licenciatura en administracion' => 'ADM',
@@ -57,6 +56,20 @@ class VerificadorInscripcionService
             'python3'
         ];
 
+        // En Windows, consultar 'where python' para obtener el ejecutable absoluto del sistema si está en PATH
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $wherePython = @shell_exec('where python 2>nul');
+            if (!empty($wherePython)) {
+                $lines = explode("\n", trim($wherePython));
+                foreach ($lines as $p) {
+                    $p = trim($p);
+                    if ($p && file_exists($p) && !in_array($p, $pythonExes, true)) {
+                        array_unshift($pythonExes, $p);
+                    }
+                }
+            }
+        }
+
         $pythonExecutable = null;
         foreach ($pythonExes as $exe) {
             if (file_exists($exe) || in_array($exe, ['python', 'python3'], true)) {
@@ -80,8 +93,17 @@ class VerificadorInscripcionService
             return null;
         }
 
-        $datos = json_decode(trim($output), true);
-        return is_array($datos) ? $datos : null;
+        // En Windows cmd.exe suele anteponer mensajes de consola (ej: 'Página de códigos activa: 65001')
+        // Por tanto, extraemos con precisión el bloque JSON delimitado por '{' y '}'
+        $jsonStart = strpos($output, '{');
+        $jsonEnd = strrpos($output, '}');
+        if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
+            $jsonStr = substr($output, $jsonStart, $jsonEnd - $jsonStart + 1);
+            $datos = json_decode($jsonStr, true);
+            return is_array($datos) ? $datos : null;
+        }
+
+        return null;
     }
 
     /**
@@ -100,9 +122,7 @@ class VerificadorInscripcionService
         }
 
         // Buscar todos los streams binarios del PDF
-        preg_match_all('#stream[
-]+(.*?)[
-]+endstream#s', $rawPdf, $matches);
+        preg_match_all('#stream[\r\n]+(.*?)[\r\n]+endstream#s', $rawPdf, $matches);
         if (empty($matches[1])) {
             return [];
         }
@@ -228,7 +248,7 @@ class VerificadorInscripcionService
      */
     protected function decodificarCadenaPdf(string $str): string
     {
-        $str = preg_replace_callback('/\\([0-7]{1,3})/', function($m) {
+        $str = preg_replace_callback('/\\\\([0-7]{1,3})/', function($m) {
             return chr(octdec($m[1]));
         }, $str);
 
@@ -239,6 +259,61 @@ class VerificadorInscripcionService
         }
 
         return $str;
+    }
+
+    /**
+     * Limpia y restaura acentuaciones comunes en materias UMC
+     */
+    public function limpiarNombreMateria(string $nombre): string
+    {
+        $reglas = [
+            '/M[\x{fffd}\?]?ndez/iu'         => 'Méndez',
+            '/C[\x{fffd}\?]?lculo/iu'        => 'Cálculo',
+            '/Num[\x{fffd}\?]?rico/iu'       => 'Numérico',
+            '/F[\x{fffd}\?]?sica/iu'         => 'Física',
+            '/Programaci[\x{fffd}\?]?n/iu'   => 'Programación',
+            '/Inform[\x{fffd}\?]?tica/iu'    => 'Informática',
+            '/Ingenier[\x{fffd}\?]?a/iu'     => 'Ingeniería',
+            '/Administraci[\x{fffd}\?]?n/iu' => 'Administración',
+            '/Segur\s+idad/iu'               => 'Seguridad',
+            '/Estad[\x{fffd}\?]?stica/iu'    => 'Estadística',
+            '/Electr[\x{fffd}\?]?nica/iu'    => 'Electrónica',
+            '/M[\x{fffd}\?]?todos/iu'        => 'Métodos',
+            '/Q[\x{fffd}\?]?mica/iu'         => 'Química',
+        ];
+
+        foreach ($reglas as $pat => $rep) {
+            $nombre = preg_replace($pat, $rep, $nombre);
+        }
+
+        $nombre = preg_replace('/[\x{fffd}\?]+/u', '', $nombre);
+        return trim(preg_replace('/\s+/', ' ', $nombre));
+    }
+
+    /**
+     * Limpia nombres de personas restaurando acentos si se corrompieron en el PDF
+     */
+    public function limpiarNombrePersona(string $nombre): string
+    {
+        $reglas = [
+            '/M[\x{fffd}\?]?ndez/iu'    => 'Méndez',
+            '/Gonz[\x{fffd}\?]?lez/iu'  => 'González',
+            '/P[\x{fffd}\?]?rez/iu'     => 'Pérez',
+            '/S[\x{fffd}\?]?nchez/iu'   => 'Sánchez',
+            '/Rodr[\x{fffd}\?]?guez/iu' => 'Rodríguez',
+            '/Mart[\x{fffd}\?]?nez/iu'  => 'Martínez',
+            '/Hern[\x{fffd}\?]?ndez/iu' => 'Hernández',
+            '/Garc[\x{fffd}\?]?a/iu'    => 'García',
+            '/L[\x{fffd}\?]?pez/iu'     => 'López',
+            '/D[\x{fffd}\?]?az/iu'      => 'Díaz',
+        ];
+
+        foreach ($reglas as $pat => $rep) {
+            $nombre = preg_replace($pat, $rep, $nombre);
+        }
+
+        $nombre = preg_replace('/[\x{fffd}\?]+/u', '', $nombre);
+        return trim(preg_replace('/\s+/', ' ', $nombre));
     }
 
     /**
@@ -306,10 +381,10 @@ class VerificadorInscripcionService
         $criterios = [
             'institucion' => (strpos($textNorm, 'maritima del caribe') !== false || strpos($textNorm, 'experimental maritima') !== false),
             'secretaria'  => (strpos($textNorm, 'secretaria general') !== false),
-            'registro_est'=> (strpos($textNorm, 'registro estudiantil') !== false || strpos($textNorm, 'reg-seg-cre') !== false),
-            'formulario'  => (strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'forma 006 ree') !== false),
-            'titulo'      => (strpos($textNorm, 'registro de inscripcion') !== false || strpos($textNorm, 'tramites de inscripcion') !== false),
-            'republica'   => (strpos($textNorm, 'republica bolivariana') !== false),
+            'registro_est'=> (strpos($textNorm, 'registro estudiantil') !== false || strpos($textNorm, 'reg-seg-cre') !== false || strpos($textNorm, 'registro de inscripcion') !== false),
+            'formulario'  => (strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'forma 006 ree') !== false || strpos($textNorm, 'upe 002') !== false),
+            'titulo'      => (strpos($textNorm, 'registro de inscripcion') !== false || strpos($textNorm, 'tramites de inscripcion') !== false || strpos($textNorm, 'inscripciones') !== false),
+            'republica'   => (strpos($textNorm, 'republica bolivariana') !== false || strpos($textNorm, 'venezuela') !== false),
         ];
 
         $puntos = 0;
@@ -322,48 +397,121 @@ class VerificadorInscripcionService
             return $resultado;
         }
 
-        // Extracción de datos con patrones flexibles
-        for ($i = 0; $i < count($lines); $i++) {
-            $line = trim($lines[$i]);
-            $lineNorm = $this->normalizarTexto($line);
+        // Extracción de datos del estudiante con patrones flexibles UMC
+        $fullTextSpaces = preg_replace('/[ \t]+/', ' ', implode(' ', $lines));
 
-            if (preg_match('/Bachiller:\s*(.*?)(?:\s+Estudiante\s+Nro\.:|portador|\n|$)/iu', $line, $m)) {
-                $resultado['estudiante'] = trim($m[1]);
-            }
+        // 1. Nombre completo
+        if (preg_match('/Nombre\s*:\s*([^,]+?)(?=\s+Programa\s+de|\s+C[eé]dula|\s+A[ñn]o|$)/iu', $fullTextSpaces, $m)) {
+            $resultado['estudiante'] = $this->limpiarNombrePersona(trim($m[1]));
+        } elseif (preg_match('/Bachiller:\s*(.*?)(?=\s+Estudiante\s+Nro\.:|portador|\n|$)/iu', $fullTextSpaces, $m)) {
+            $resultado['estudiante'] = $this->limpiarNombrePersona(trim($m[1]));
+        }
 
-            if (preg_match('/(?:c[ée]dula|identidad)\s*[:\.]?\s*([VvEe]\s*-\s*\d+)/iu', $line, $m)) {
-                $resultado['cedula'] = strtoupper(str_replace(' ', '', $m[1]));
-            }
+        // 2. Cédula
+        if (preg_match('/(?:c[ée]dula|identidad)\s*[:\.]?\s*([VvEe]\s*-\s*\d+)/iu', $fullTextSpaces, $m)) {
+            $resultado['cedula'] = strtoupper(str_replace(' ', '', $m[1]));
+        }
 
-            if (preg_match('/Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)/iu', $line, $m)) {
-                $resultado['codigo_estudiante'] = trim($m[1]);
-            }
+        // 3. Código de estudiante
+        if (preg_match('/(?:c[oó]digo(?:\s+del)?\s+estudiante|estudiante\s+nro\.?)\s*[:\.]?\s*([A-Za-z0-9\-]+)/iu', $fullTextSpaces, $m)) {
+            $resultado['codigo_estudiante'] = trim($m[1]);
+        }
 
+        // 4. Año y período
+        if (preg_match('/(?:del\s+a[ñn]o|a[ñn]o)\s*[:\.]?\s*(\d{4})/iu', $fullTextSpaces, $m)) {
+            $resultado['ano'] = trim($m[1]);
+        }
+        if (preg_match('/per[íi]odo(?:\s+acad[ée]mico)?\s*[:\.]?\s*(\d{4}-\d{2})/iu', $fullTextSpaces, $m)) {
+            $resultado['periodo'] = trim($m[1]);
+        }
+
+        // 5. Total créditos
+        if (preg_match('/total\s+cr[eé]ditos\s*[:\.]?\s*(\d+(?:\.\d+)?)/iu', $fullTextSpaces, $m)) {
+            $resultado['total_creditos'] = (float)$m[1];
+        }
+
+        // 6. Programa de Formación / Carrera Universitaria
+        if (preg_match('/Programa\s+de\s+Formaci[óo]n\s*[:\.]?\s*([^,]+?)(?=\s+C[eé]dula|\s+A[ñn]o|\s+C[oó]digo|$)/iu', $fullTextSpaces, $m)) {
+            $carNorm = $this->normalizarTexto($m[1]);
             foreach ($this->mapaCarreras as $frase => $codigoCarrera) {
-                if (strpos($lineNorm, $frase) !== false) {
+                if (strpos($carNorm, $frase) !== false) {
                     $resultado['carrera_codigo'] = $codigoCarrera;
                     $resultado['carrera_nombre'] = $this->nombresCarreras[$codigoCarrera];
                     break;
                 }
             }
+        }
 
-            if (preg_match('/del\s+a[ñn]o\s*(\d{4})/iu', $line, $m)) {
-                $resultado['ano'] = trim($m[1]);
+        if (empty($resultado['carrera_codigo'])) {
+            foreach ($this->mapaCarreras as $frase => $codigoCarrera) {
+                if (strpos($textNorm, $frase) !== false) {
+                    $resultado['carrera_codigo'] = $codigoCarrera;
+                    $resultado['carrera_nombre'] = $this->nombresCarreras[$codigoCarrera];
+                    break;
+                }
             }
-            if (preg_match('/per[íi]odo(?:\s+acad[ée]mico)?\s*[:\.]?\s*(\d{4}-\d{2})/iu', $line, $m)) {
-                $resultado['periodo'] = trim($m[1]);
+        }
+
+
+        // Extracción de materias (Formato A: Fila completa / Formato B: Dos líneas / Formato C: Histórico)
+        for ($i = 0; $i < count($lines); $i++) {
+            $line = trim($lines[$i]);
+            if ($line === '') continue;
+
+            // Formato A: Fila completa (06 CAL604 - Cálculo Numérico SVC-A 4.0)
+            if (preg_match('/^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s+([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)\s*$/u', $line, $m)) {
+                $resultado['materias'][] = [
+                    'semestre' => !empty($m[1]) ? (int)$m[1] : 1,
+                    'codigo'   => trim($m[2]),
+                    'nombre'   => $this->limpiarNombreMateria(trim($m[3])),
+                    'seccion'  => trim($m[4]),
+                    'creditos' => (float)$m[5]
+                ];
+                continue;
             }
 
-            // Materias en formato fila completa
-            if (preg_match('/(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*-\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA)/iu', $line, $m)) {
+            // Formato B: Dos líneas (Línea 1: 06 CAL604 - Cálculo Numérico / Línea 2: SVC-A 4.0)
+            if (preg_match('/^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s*$/u', $line, $m1)) {
+                if ($i + 1 < count($lines)) {
+                    $nextLine = trim($lines[$i + 1]);
+                    if (preg_match('/^([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)$/u', $nextLine, $m2)) {
+                        $resultado['materias'][] = [
+                            'semestre' => !empty($m1[1]) ? (int)$m1[1] : 1,
+                            'codigo'   => trim($m1[2]),
+                            'nombre'   => $this->limpiarNombreMateria(trim($m1[3])),
+                            'seccion'  => trim($m2[1]),
+                            'creditos' => (float)$m2[2]
+                        ];
+                        $i++;
+                        continue;
+                    }
+                }
+            }
+
+            // Formato C: Histórico con estados (EN CURSO, APROBADA, INSCRITA)
+            if (preg_match('/(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*[-–]\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA)/iu', $line, $m)) {
                 $resultado['materias'][] = [
                     'semestre' => (int)$m[2],
                     'codigo'   => trim($m[4]),
-                    'nombre'   => trim($m[5]),
+                    'nombre'   => $this->limpiarNombreMateria(trim($m[5])),
                     'seccion'  => trim($m[3]),
                     'creditos' => 3.0
                 ];
             }
+        }
+
+        if (empty($resultado['ano']) && !empty($resultado['periodo'])) {
+            $resultado['ano'] = explode('-', $resultado['periodo'])[0];
+        }
+        if (empty($resultado['periodo']) && !empty($resultado['ano'])) {
+            $resultado['periodo'] = $resultado['ano'] . '-01';
+        }
+        if ($resultado['total_creditos'] == 0.0 && !empty($resultado['materias'])) {
+            $sum = 0.0;
+            foreach ($resultado['materias'] as $mat) {
+                $sum += (float)($mat['creditos'] ?? 0);
+            }
+            $resultado['total_creditos'] = round($sum, 1);
         }
 
         if (!empty($resultado['carrera_codigo'])) $puntos += 15;
@@ -413,10 +561,10 @@ class VerificadorInscripcionService
         // Horarios estándar para distribuir materias iniciales si no tienen horario programado
         $diasSemanales = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
         $bloquesHoras  = [
-            ['inicio' => '08:00:00', 'fin' => '09:30:00', 'aula' => 'Aula 56 (Primer piso)'],
-            ['inicio' => '09:30:00', 'fin' => '11:00:00', 'aula' => 'Aula 57 (Primer piso)'],
-            ['inicio' => '11:00:00', 'fin' => '12:45:00', 'aula' => 'Aula 58 (Primer piso)'],
-            ['inicio' => '13:30:00', 'fin' => '15:00:00', 'aula' => 'Laboratorio de Info 1 (Segundo piso)'],
+            ['inicio' => '08:00:00', 'fin' => '09:30:00', 'aula' => 'Aula 56'],
+            ['inicio' => '09:30:00', 'fin' => '11:00:00', 'aula' => 'Aula 57'],
+            ['inicio' => '11:00:00', 'fin' => '12:45:00', 'aula' => 'Aula 58'],
+            ['inicio' => '13:30:00', 'fin' => '15:00:00', 'aula' => 'Laboratorio de Info 1'],
         ];
 
         foreach ($materias as $index => $mat) {

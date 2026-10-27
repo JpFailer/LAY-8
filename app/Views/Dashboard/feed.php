@@ -3,6 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="feed-contenedor-principal">
+  <div style="display:none;"><?= csrf_field() ?></div>
 
   <!-- ========================================================================= -->
   <!-- 1. BANNER DINÁMICO DE BIENVENIDA Y JORNADA                              -->
@@ -115,6 +116,7 @@
           </div>
 
           <form id="formPublicarNoticia" class="form-publicar-noticia" onsubmit="publicarNoticiaFeed(event)">
+            <?= csrf_field() ?>
             <input type="text" name="titulo" id="composer-titulo" class="composer-input-titulo" placeholder="Título del comunicado o anuncio universitario..." required>
             <textarea name="contenido" id="composer-contenido" class="composer-textarea-cuerpo" placeholder="Escribe aquí los detalles del aviso, directrices de clase o novedades para la comunidad..." required></textarea>
 
@@ -424,6 +426,24 @@
 <!-- ========================================================================= -->
 <script>
   const BASE_URL_FEED = '<?= base_url() ?>/';
+  const CSRF_TOKEN_NAME = '<?= csrf_token() ?>';
+  const CSRF_HEADER_NAME = '<?= csrf_header() ?>';
+
+  function getCsrfHeaders() {
+    const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+    const csrfInput = document.querySelector('input[name="' + CSRF_TOKEN_NAME + '"]');
+    if (csrfInput && csrfInput.value) {
+      headers[CSRF_HEADER_NAME] = csrfInput.value;
+    }
+    return headers;
+  }
+
+  function appendCsrf(formData) {
+    const csrfInput = document.querySelector('input[name="' + CSRF_TOKEN_NAME + '"]');
+    if (csrfInput && csrfInput.value && !formData.has(CSRF_TOKEN_NAME)) {
+      formData.append(CSRF_TOKEN_NAME, csrfInput.value);
+    }
+  }
 
   // A. Publicar Comunicado Oficial (Docentes y Admins)
   function publicarNoticiaFeed(e) {
@@ -436,9 +456,11 @@
     btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Publicando...';
 
     const formData = new FormData(form);
+    appendCsrf(formData);
 
     fetch(BASE_URL_FEED + 'api/feed/publicar', {
       method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
       body: formData
     })
     .then(r => r.json())
@@ -466,7 +488,10 @@
     const conteoEl = document.getElementById('conteo-likes-' + noticiaId);
     if (!btn) return;
 
-    fetch(BASE_URL_FEED + 'api/feed/toggle-like/' + noticiaId, { method: 'POST' })
+    fetch(BASE_URL_FEED + 'api/feed/toggle-like/' + noticiaId, { 
+      method: 'POST',
+      headers: getCsrfHeaders()
+    })
       .then(r => r.json())
       .then(res => {
         if (res && res.success) {
@@ -510,9 +535,11 @@
 
     const formData = new FormData();
     formData.append('contenido', texto);
+    appendCsrf(formData);
 
     fetch(BASE_URL_FEED + 'api/feed/comentar/' + noticiaId, {
       method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
       body: formData
     })
     .then(r => r.json())
@@ -587,9 +614,11 @@
     const formData = new FormData();
     formData.append('contenido', texto);
     formData.append('parent_id', parentId);
+    appendCsrf(formData);
 
     fetch(BASE_URL_FEED + 'api/feed/comentar/' + noticiaId, {
       method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
       body: formData
     })
     .then(r => r.json())
@@ -631,7 +660,10 @@
       return;
     }
 
-    fetch(BASE_URL_FEED + 'api/feed/eliminar/' + noticiaId, { method: 'POST' })
+    fetch(BASE_URL_FEED + 'api/feed/eliminar/' + noticiaId, { 
+      method: 'POST',
+      headers: getCsrfHeaders()
+    })
       .then(r => r.json())
       .then(res => {
         if (res && res.success) {

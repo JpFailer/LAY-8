@@ -71,7 +71,7 @@ class NoticiaComentarioModel extends Model
      */
     public function agregarComentario(int $noticiaId, int $usuarioId, string $contenido, ?int $parentId = null): array
     {
-        $contenido = trim($contenido);
+        $contenido = strip_tags(trim($contenido));
         if (empty($contenido)) {
             return ['error' => 'El comentario no puede estar vacío.'];
         }
