@@ -20,7 +20,7 @@
     <!-- Fuentes oficiales del proyecto -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Iconografía Boxicons -->
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -72,10 +72,16 @@
             gap: 10px;
             text-decoration: none;
             color: var(--primary);
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.35rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
+            font-family: var(--fuente-logo);
+            font-size: 1.8rem;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .terminos-logo span {
+            font-family: var(--fuente-logo);
+            font-size: 1.8rem;
+            font-weight: 400;
         }
 
         .terminos-logo img {
@@ -360,6 +366,10 @@
         body.dark-mode .terminos-navbar {
             background: #0f172a;
             border-bottom-color: #334155;
+        }
+
+        body.dark-mode .terminos-logo span {
+            color: #f8fafc;
         }
 
         body.dark-mode .terminos-documento {

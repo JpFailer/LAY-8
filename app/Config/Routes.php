@@ -14,6 +14,8 @@ $routes->get('/terminos', 'Home::terminos');
 // Autenticación y Registro
 $routes->get('/login', 'Login::index');
 $routes->post('/login/autenticar', 'Login::autenticar');
+$routes->post('/login/verificar-recuperacion', 'Login::verificarRecuperacion');
+$routes->post('/login/restablecer-contrasena', 'Login::restablecerContrasena');
 $routes->get('/registro', 'Registro::index');
 $routes->post('/registro/procesar', 'Registro::procesar');
 $routes->get('/logout', 'Login::salir');

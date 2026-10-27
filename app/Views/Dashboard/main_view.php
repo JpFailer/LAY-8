@@ -268,7 +268,7 @@
     </div>
   </div>
 
-  <!-- Modal Interactivo de Editar Perfil y Carrera -->
+  <!-- Modal Interactivo de Editar Perfil y Carrera (Diseño Cuadrado Optimizado) -->
   <div id="modal-editar-perfil" class="modal-carreras-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalEditarPerfil()">
     <div class="modal-editar-perfil-content">
       <div class="modal-editar-header">
@@ -276,70 +276,77 @@
         <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalEditarPerfil()" title="Cerrar">&times;</button>
       </div>
 
-      <form action="<?= base_url('perfil/actualizar') ?>" method="post" enctype="multipart/form-data">
+      <form action="<?= base_url('perfil/actualizar') ?>" method="post" enctype="multipart/form-data" class="modal-editar-form">
         <?= csrf_field() ?>
         <input type="hidden" name="carrera" id="input-editar-carrera" value="<?= esc($userCodigoCarrera) ?>">
 
         <div class="modal-editar-body">
-          <!-- Sección Foto de Perfil -->
-          <div class="form-group-editar">
-            <label class="form-label-editar"><i class="bx bx-camera"></i> Foto de Perfil</label>
-            <p class="form-sublabel-editar">Sube una imagen (JPG o PNG, máx. 2MB)</p>
-            <div class="editar-foto-preview-row">
-              <img src="<?= !empty($userFoto) ? base_url($userFoto) : base_url('img/usuario.png') ?>" id="preview-foto-modal" class="preview-mini-avatar" alt="Foto">
-              <div>
-                <input type="file" name="foto" id="input-foto-editar" accept="image/png, image/jpeg, image/jpg" style="display:none;" onchange="previsualizarFotoPerfil(this)">
-                <button type="button" class="btn-cambiar-carrera" onclick="document.getElementById('input-foto-editar').click()">
-                  <i class="bx bx-upload"></i> Subir nueva foto
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sección Selección de Carrera UMC -->
-          <div class="form-group-editar" style="margin-bottom: 0;">
-            <label class="form-label-editar"><i class="bx bx-graduation"></i> Carrera Universitaria (UMC)</label>
-            <p class="form-sublabel-editar">Selecciona tu carrera oficial en la universidad:</p>
-
-            <div class="grid-carreras-selector">
-              <?php 
-                $carrerasUMC = [
-                    'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt'],
-                    'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor'],
-                    'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf'],
-                    'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2'],
-                    'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass'],
-                ];
-              ?>
-              <?php foreach ($carrerasUMC as $codigoC => $infoC): ?>
-                <div class="carrera-card-opcion <?= ($codigoC === $userCodigoCarrera) ? 'seleccionada' : '' ?>"
-                     data-codigo="<?= esc($codigoC) ?>"
-                     onclick="seleccionarCarreraEditar('<?= esc($codigoC) ?>')">
-                  <div class="carrera-icon-circle">
-                    <i class="bx <?= esc($infoC['icono']) ?>"></i>
-                  </div>
-                  <div class="carrera-info-box">
-                    <strong><?= esc($infoC['nombre']) ?></strong>
-                    <span><?= esc($codigoC) ?> &bull; <?= esc($infoC['escuela']) ?></span>
-                  </div>
-                  <div class="check-radio">
-                    <i class="bx <?= ($codigoC === $userCodigoCarrera) ? 'bxs-check-circle' : 'bx-circle' ?>"></i>
+          <div class="modal-editar-grid-2col">
+            <!-- Columna Izquierda: Foto y Verificación / Seguridad -->
+            <div class="modal-editar-col-izq">
+              <!-- Sección Foto de Perfil -->
+              <div class="form-group-editar">
+                <label class="form-label-editar"><i class="bx bx-camera"></i> Foto de Perfil</label>
+                <p class="form-sublabel-editar">Sube una imagen (JPG o PNG, máx. 2MB)</p>
+                <div class="editar-foto-preview-row">
+                  <img src="<?= !empty($userFoto) ? base_url($userFoto) : base_url('img/usuario.png') ?>" id="preview-foto-modal" class="preview-mini-avatar" alt="Foto">
+                  <div class="editar-foto-acciones">
+                    <input type="file" name="foto" id="input-foto-editar" accept="image/png, image/jpeg, image/jpg" style="display:none;" onchange="previsualizarFotoPerfil(this)">
+                    <button type="button" class="btn-cambiar-carrera" onclick="document.getElementById('input-foto-editar').click()">
+                      <i class="bx bx-upload"></i> Subir nueva foto
+                    </button>
                   </div>
                 </div>
-              <?php endforeach; ?>
+              </div>
+
+              <!-- Sección Verificación y Seguridad para Cambio de Carrera -->
+              <div class="editar-seguridad-box">
+                <label class="form-label-editar label-seguridad"><i class="bx bx-shield-quarter"></i> Certificación Oficial UMC</label>
+                <p class="form-sublabel-editar" style="font-size: 0.78rem; margin-bottom: 6px; line-height: 1.35;">
+                  Si cambias de carrera, adjunta tu nuevo <strong>Registro de Inscripción (PDF)</strong> de la UMC para certificarla y sincronizar tus aulas:
+                </p>
+                <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-certificacion">
+
+                <label class="form-label-editar label-pass-confirm"><i class="bx bx-lock-alt"></i> Confirmar con tu Contraseña</label>
+                <input type="password" name="confirmar_contrasena" class="input-global input-pass-perfil" placeholder="Ingresa tu contraseña actual para autorizar" required>
+              </div>
             </div>
-          </div>
 
-          <!-- Sección Verificación y Seguridad para Cambio de Carrera -->
-          <div class="form-group-editar" style="background: #f8fafc; padding: 14px; border-radius: 10px; border: 1px solid #cbd5e1; margin-top: 15px;">
-            <label class="form-label-editar" style="color: #1e3a8a; font-size: 0.9rem;"><i class="bx bx-shield-quarter"></i> Certificación Oficial UMC</label>
-            <p class="form-sublabel-editar" style="font-size: 0.8rem; margin-bottom: 8px;">
-              Si cambias de carrera, adjunta tu nuevo <strong>Registro de Inscripción (PDF)</strong> de la UMC para certificarla y sincronizar tus aulas automáticamente:
-            </p>
-            <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global" style="margin-bottom: 12px; font-size: 0.82rem; background: white;">
+            <!-- Columna Derecha: Selección de Carrera UMC -->
+            <div class="modal-editar-col-der">
+              <div class="form-group-editar" style="margin-bottom: 0;">
+                <label class="form-label-editar"><i class="bx bx-graduation"></i> Carrera Universitaria (UMC)</label>
+                <p class="form-sublabel-editar">Selecciona tu carrera oficial en la universidad:</p>
 
-            <label class="form-label-editar" style="font-size: 0.88rem;"><i class="bx bx-lock-alt"></i> Confirmar con tu Contraseña</label>
-            <input type="password" name="confirmar_contrasena" class="input-global" placeholder="Ingresa tu contraseña actual para autorizar" style="background: white;">
+                <div class="grid-carreras-selector">
+                  <?php 
+                    $carrerasUMC = [
+                        'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt'],
+                        'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor'],
+                        'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf'],
+                        'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2'],
+                        'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass'],
+                    ];
+                  ?>
+                  <?php foreach ($carrerasUMC as $codigoC => $infoC): ?>
+                    <div class="carrera-card-opcion <?= ($codigoC === $userCodigoCarrera) ? 'seleccionada' : '' ?>"
+                         data-codigo="<?= esc($codigoC) ?>"
+                         onclick="seleccionarCarreraEditar('<?= esc($codigoC) ?>')">
+                      <div class="carrera-icon-circle">
+                        <i class="bx <?= esc($infoC['icono']) ?>"></i>
+                      </div>
+                      <div class="carrera-info-box">
+                        <strong><?= esc($infoC['nombre']) ?></strong>
+                        <span><?= esc($codigoC) ?> &bull; <?= esc($infoC['escuela']) ?></span>
+                      </div>
+                      <div class="check-radio">
+                        <i class="bx <?= ($codigoC === $userCodigoCarrera) ? 'bxs-check-circle' : 'bx-circle' ?>"></i>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

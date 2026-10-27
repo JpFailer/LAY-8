@@ -230,7 +230,11 @@ function aplicarTema(tema) {
 }
 
 function inicializarModoOscuro() {
-    const temaGuardado = localStorage.getItem('lay8_theme') || 'light';
+    const temaForzadoClaro = document.body && document.body.dataset.temaDefault === 'light';
+    let temaGuardado = localStorage.getItem('lay8_theme') || 'light';
+    if (temaForzadoClaro && localStorage.getItem('lay8_auth_override') !== 'true') {
+        temaGuardado = 'light';
+    }
     aplicarTema(temaGuardado);
 
     const switches = document.querySelectorAll('.toggle-dark-mode-input');
