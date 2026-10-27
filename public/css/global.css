@@ -2327,11 +2327,11 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     box-sizing: border-box;
 }
 
-.modal-carreras-content,
-.modal-editar-perfil-content {
+.modal-carreras-content {
     background: #ffffff;
     width: 100%;
     max-width: 540px;
+    max-height: calc(100vh - 40px);
     border-radius: 18px;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
     overflow: hidden;
@@ -2339,6 +2339,27 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
+}
+
+.modal-editar-perfil-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 820px;
+    max-height: calc(100vh - 36px);
+    border-radius: 20px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: modalScaleUp 0.25s ease-out forwards;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-editar-form {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex: 1;
 }
 
 .modal-carreras-header,
@@ -2522,45 +2543,248 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     color: #0f172a;
 }
 
-/* Modal Editar Perfil */
+/* Modal Editar Perfil (Diseño Cuadrado Optimizado) */
+.modal-editar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 22px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.modal-editar-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .modal-editar-body {
-    padding: 20px 24px;
+    padding: 18px 22px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(100vh - 145px);
+}
+
+.modal-editar-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-editar-body::-webkit-scrollbar-track {
+    background: rgba(241, 245, 249, 0.5);
+}
+
+.modal-editar-body::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.5);
+    border-radius: 6px;
+}
+
+.modal-editar-body::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.7);
+}
+
+.modal-editar-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.modal-editar-col-izq,
+.modal-editar-col-der {
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group-editar {
-    margin-bottom: 20px;
+    margin-bottom: 14px;
 }
 
 .form-label-editar {
     font-weight: 700;
     color: #1e3a8a;
-    font-size: 0.95rem;
-    margin-bottom: 6px;
-    display: block;
+    font-size: 0.92rem;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .form-sublabel-editar {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #64748b;
-    margin: 0 0 10px 0;
+    margin: 0 0 8px 0;
+    line-height: 1.35;
 }
 
 .editar-foto-preview-row {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 14px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
 }
 
 .preview-mini-avatar {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid #1e3a8a;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.editar-foto-acciones {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.editar-seguridad-box {
+    background: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+}
+
+.label-seguridad {
+    color: #1e3a8a;
+    font-size: 0.88rem;
+}
+
+.label-pass-confirm {
+    font-size: 0.86rem;
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.input-file-certificacion {
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    width: 100%;
+}
+
+.input-pass-perfil {
+    background: #ffffff;
+    font-size: 0.88rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    width: 100%;
+}
+
+#modal-editar-perfil .grid-carreras-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 0;
+    max-height: none;
+    overflow: visible;
+}
+
+#modal-editar-perfil .carrera-card-opcion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#modal-editar-perfil .carrera-card-opcion:hover {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+    transform: translateY(-1px);
+}
+
+#modal-editar-perfil .carrera-card-opcion.seleccionada {
+    border-color: #1e3a8a;
+    background: #eef4ff;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.12);
+}
+
+#modal-editar-perfil .carrera-icon-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+#modal-editar-perfil .carrera-card-opcion.seleccionada .carrera-icon-circle {
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+#modal-editar-perfil .carrera-info-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#modal-editar-perfil .carrera-info-box strong {
+    font-size: 0.9rem;
+    color: #0f172a;
+    line-height: 1.25;
+}
+
+#modal-editar-perfil .carrera-info-box span {
+    font-size: 0.76rem;
+    color: #64748b;
+}
+
+#modal-editar-perfil .check-radio {
+    font-size: 1.25rem;
+    color: #cbd5e1;
+}
+
+#modal-editar-perfil .carrera-card-opcion.seleccionada .check-radio {
+    color: #10b981;
+}
+
+.modal-editar-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 12px 22px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .modal-editar-perfil-content {
+        max-width: 95vw;
+        max-height: 94vh;
+        border-radius: 14px;
+    }
+    .modal-editar-body {
+        padding: 14px 16px;
+    }
+    .modal-editar-grid-2col {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
 }
 
 /* Modo Oscuro para Selector de Carreras y Modal Editar */
@@ -2654,6 +2878,72 @@ body.dark-mode .editar-foto-preview-row {
 body.dark-mode .btn-confirmar-carrera,
 body.dark-mode .btn-guardar-perfil {
     background: #2563eb !important;
+}
+
+body.dark-mode .modal-editar-body::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+body.dark-mode .modal-editar-body::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.6);
+}
+
+body.dark-mode .editar-foto-preview-row {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .preview-mini-avatar {
+    border-color: #3b82f6 !important;
+}
+
+body.dark-mode .editar-seguridad-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .label-seguridad {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .input-file-certificacion,
+body.dark-mode .input-pass-perfil {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-card-opcion {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-card-opcion:hover {
+    background: #1e293b !important;
+    border-color: #60a5fa !important;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-card-opcion.seleccionada {
+    background: #1a2a47 !important;
+    border-color: #3b82f6 !important;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-icon-circle {
+    background: #1e293b;
+    color: #93c5fd;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-card-opcion.seleccionada .carrera-icon-circle {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-info-box strong {
+    color: #f8fafc !important;
+}
+
+body.dark-mode #modal-editar-perfil .carrera-info-box span {
+    color: #94a3b8 !important;
 }
 
 body.dark-mode .btn-confirmar-carrera:hover,
