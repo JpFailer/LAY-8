@@ -72,7 +72,15 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
 
     <?php if(isset($errores)): ?>
       <div class="error-msg">
-        <?= $errores->listErrors() ?>
+        <?= is_object($errores) ? $errores->listErrors() : (is_array($errores) ? implode('<br>', $errores) : esc($errores)) ?>
+      </div>
+    <?php endif;?>
+
+    <?php if(session()->getFlashdata('errores')): ?>
+      <div class="error-msg">
+        <?php foreach((array)session()->getFlashdata('errores') as $err): ?>
+          <div>&bull; <?= esc($err) ?></div>
+        <?php endforeach; ?>
       </div>
     <?php endif;?>
 
@@ -259,5 +267,32 @@ if (!isset($carrerasDisponibles[$carreraActual])) {
 
   <script src="<?= base_url('js/main.js?v=11')?>"></script>
   <script src="<?= base_url('js/registro.js?v=11')?>"></script>
+
+  <?php 
+    $erroresFlash = session()->getFlashdata('errores');
+    $irAPaso2 = false;
+    if ($erroresFlash && is_array($erroresFlash)) {
+        $erroresPaso1 = array_intersect_key($erroresFlash, array_flip(['primer_nombre', 'apellidos', 'correo', 'telefono', 'carrera', 'carnet', 'planilla_inscripcion']));
+        if (empty($erroresPaso1) && old('primer_nombre')) {
+            $irAPaso2 = true;
+        }
+    }
+  ?>
+  <?php if ($irAPaso2): ?>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const p1 = document.getElementById('paso1');
+        const p2 = document.getElementById('paso2');
+        const ind1 = document.getElementById('indicator-1');
+        const ind2 = document.getElementById('indicator-2');
+        if (p1 && p2 && ind1 && ind2) {
+          p1.style.display = 'none';
+          p2.style.display = 'block';
+          ind1.classList.remove('activo');
+          ind2.classList.add('activo');
+        }
+      });
+    </script>
+  <?php endif; ?>
 </body>
 </html>

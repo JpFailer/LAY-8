@@ -10,7 +10,16 @@ use App\Models\AulasModel;
 class MapaController extends BaseController {
 
     // 1. CARGA AUTOMÁTICA DE HORARIOS A LA BASE DE DATOS
-    public function importar_horarios_automaticamente(): int {
+    public function importar_horarios_automaticamente(bool $limpiarPrevias = false): int {
+        if ($limpiarPrevias) {
+            $db = \Config\Database::connect();
+            try {
+                $db->table('clases_programadas')->emptyTable();
+            } catch (\Throwable $e) {
+                log_message('error', 'Error al vaciar clases previas: ' . $e->getMessage());
+            }
+        }
+
         $json_decodificado = null;
         $rutaCacheJson = ROOTPATH . 'scripts_python' . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
 
