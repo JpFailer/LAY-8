@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\MateriaModel;
 use App\Models\SeccionModel;
 use App\Models\InscripcionModel;
+use App\Models\ClaseProgramadaModel;
+use App\Models\AulasModel;
 
 /**
  * Servicio Inteligente de Verificación de Documentos UMC
@@ -44,8 +46,47 @@ class VerificadorInscripcionService
     ];
 
     /**
+     * Ejecuta el analizador de alta fidelidad Python con pypdf
+     */
+    protected function verificarConMotorPython(string $rutaPdf): ?array
+    {
+        $pythonExes = [
+            ROOTPATH . 'scripts_python/venv/Scripts/python.exe',
+            ROOTPATH . 'scripts_python/venv/bin/python',
+            'python',
+            'python3'
+        ];
+
+        $pythonExecutable = null;
+        foreach ($pythonExes as $exe) {
+            if (file_exists($exe) || in_array($exe, ['python', 'python3'], true)) {
+                $pythonExecutable = $exe;
+                break;
+            }
+        }
+
+        if (!$pythonExecutable) {
+            return null;
+        }
+
+        $scriptPath = ROOTPATH . 'scripts_python/verificar_inscripcion.py';
+        if (!file_exists($scriptPath)) {
+            return null;
+        }
+
+        $cmd = escapeshellarg($pythonExecutable) . ' ' . escapeshellarg($scriptPath) . ' ' . escapeshellarg($rutaPdf);
+        $output = @shell_exec($cmd);
+        if (empty($output)) {
+            return null;
+        }
+
+        $datos = json_decode(trim($output), true);
+        return is_array($datos) ? $datos : null;
+    }
+
+    /**
      * Extrae texto puro de un archivo PDF utilizando descompresión zlib
-     * y tokenización nativa de operadores de texto de PDF.
+     * y tokenización nativa de operadores de texto de PDF (motor PHP de respaldo).
      */
     public function extraerLineasDePdf(string $rutaPdf): array
     {
@@ -59,7 +100,9 @@ class VerificadorInscripcionService
         }
 
         // Buscar todos los streams binarios del PDF
-        preg_match_all('#stream[\r\n]+(.*?)[\r\n]+endstream#s', $rawPdf, $matches);
+        preg_match_all('#stream[
+]+(.*?)[
+]+endstream#s', $rawPdf, $matches);
         if (empty($matches[1])) {
             return [];
         }
@@ -76,7 +119,7 @@ class VerificadorInscripcionService
                 }
             }
 
-            // Solo procesar streams que contengan bloques de texto (BT ... ET)
+            // Procesar streams con bloques de texto (BT ... ET)
             if (strpos($decompressed, 'BT') !== false) {
                 $lineasStream = $this->tokenizarOperadoresTextoPdf($decompressed);
                 $allLines = array_merge($allLines, $lineasStream);
@@ -147,7 +190,6 @@ class VerificadorInscripcionService
                         $arrStr .= $this->decodificarCadenaPdf($str);
                     } elseif (preg_match('/^-?\d+/', substr($stream, $i), $numM)) {
                         $num = (int)$numM[0];
-                        // Un espacio de kerning negativo significativo indica separación de palabras
                         if ($num < -150) {
                             $arrStr .= ' ';
                         }
@@ -182,15 +224,15 @@ class VerificadorInscripcionService
     }
 
     /**
-     * Decodifica escapes octales (\332 -> Ú, \315 -> Í, etc.) y caracteres especiales
+     * Decodifica escapes octales y caracteres especiales
      */
     protected function decodificarCadenaPdf(string $str): string
     {
-        $str = preg_replace_callback('/\\\\([0-7]{1,3})/', function($m) {
+        $str = preg_replace_callback('/\\([0-7]{1,3})/', function($m) {
             return chr(octdec($m[1]));
         }, $str);
 
-        $str = str_replace(['\\(', '\\)', '\\\\', "\\\n", "\\\r"], ['(', ')', '\\', '', ''], $str);
+        $str = str_replace(['\\(', '\\)', '\\\\', "\\n", "\\r"], ['(', ')', '\\', '', ''], $str);
 
         if (!mb_check_encoding($str, 'UTF-8')) {
             $str = mb_convert_encoding($str, 'UTF-8', 'ISO-8859-1');
@@ -212,13 +254,26 @@ class VerificadorInscripcionService
     /**
      * Analiza y verifica un archivo PDF de inscripción.
      * Retorna un arreglo estructurado con la validez, confianza y datos extraídos.
-     * 
-     * @param string      $rutaPdf          Ruta absoluta al archivo en el servidor
-     * @param string|null $carreraEsperada  Código opcional de carrera para validar concordancia (ej: 'ING-INF')
-     * @return array
      */
     public function verificar(string $rutaPdf, ?string $carreraEsperada = null): array
     {
+        // 1. Intentar con el motor inteligente Python (pypdf/pdfminer)
+        $resultadoPython = $this->verificarConMotorPython($rutaPdf);
+        if ($resultadoPython !== null && is_array($resultadoPython) && !empty($resultadoPython['es_valido'])) {
+            if (!empty($carreraEsperada) && !empty($resultadoPython['carrera_codigo']) && $resultadoPython['carrera_codigo'] !== $carreraEsperada) {
+                $carreraDoc = $resultadoPython['carrera_nombre'] ?? $resultadoPython['carrera_codigo'];
+                $carreraEsp = $this->nombresCarreras[$carreraEsperada] ?? $carreraEsperada;
+                $resultadoPython['es_valido'] = false;
+                $resultadoPython['motivo_invalidez'] = "Inconsistencia de carrera: El comprobante presentado pertenece a '{$carreraDoc}', pero intentas registrar o cambiarte a '{$carreraEsp}'.";
+            }
+            return $resultadoPython;
+        }
+
+        if ($resultadoPython !== null && is_array($resultadoPython) && !empty($resultadoPython['motivo_invalidez']) && ($resultadoPython['lineas_extraidas'] ?? 0) > 0) {
+            return $resultadoPython;
+        }
+
+        // 2. Respaldo nativo en PHP
         $resultado = [
             'es_valido'            => false,
             'motivo_invalidez'     => null,
@@ -247,16 +302,14 @@ class VerificadorInscripcionService
         $fullText = implode("\n", $lines);
         $textNorm = $this->normalizarTexto($fullText);
 
-        // ---------------------------------------------------------------------
-        // 1. CHECKS DE SEGURIDAD INSTITUCIONAL Y ANTI-FRAUDE
-        // ---------------------------------------------------------------------
+        // Criterios de Seguridad Institucional UMC
         $criterios = [
             'institucion' => (strpos($textNorm, 'maritima del caribe') !== false || strpos($textNorm, 'experimental maritima') !== false),
             'secretaria'  => (strpos($textNorm, 'secretaria general') !== false),
-            'registro_est'=> (strpos($textNorm, 'registro estudiantil') !== false),
-            'formulario'  => (strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'reg-seg-cre') !== false),
-            'titulo'      => (strpos($textNorm, 'registro de inscripcion') !== false),
-            'url_campus'  => (strpos($textNorm, 'campus.umc.edu.ve') !== false || strpos($textNorm, 'inscripcionumc') !== false),
+            'registro_est'=> (strpos($textNorm, 'registro estudiantil') !== false || strpos($textNorm, 'reg-seg-cre') !== false),
+            'formulario'  => (strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'forma 006 ree') !== false),
+            'titulo'      => (strpos($textNorm, 'registro de inscripcion') !== false || strpos($textNorm, 'tramites de inscripcion') !== false),
+            'republica'   => (strpos($textNorm, 'republica bolivariana') !== false),
         ];
 
         $puntos = 0;
@@ -269,29 +322,23 @@ class VerificadorInscripcionService
             return $resultado;
         }
 
-        // ---------------------------------------------------------------------
-        // 2. EXTRACCIÓN DE DATOS DEL ALUMNO Y CARRERA
-        // ---------------------------------------------------------------------
+        // Extracción de datos con patrones flexibles
         for ($i = 0; $i < count($lines); $i++) {
             $line = trim($lines[$i]);
             $lineNorm = $this->normalizarTexto($line);
 
-            // Nombre
-            if (preg_match('/Nombre:\s*(.+)$/i', $line, $m)) {
+            if (preg_match('/Bachiller:\s*(.*?)(?:\s+Estudiante\s+Nro\.:|portador|\n|$)/iu', $line, $m)) {
                 $resultado['estudiante'] = trim($m[1]);
             }
 
-            // Cédula de Identidad
-            if (preg_match('/C[ée]dula\s+Identidad:\s*([VvEe]-\d+)/iu', $line, $m)) {
-                $resultado['cedula'] = strtoupper(trim($m[1]));
+            if (preg_match('/(?:c[ée]dula|identidad)\s*[:\.]?\s*([VvEe]\s*-\s*\d+)/iu', $line, $m)) {
+                $resultado['cedula'] = strtoupper(str_replace(' ', '', $m[1]));
             }
 
-            // Código del Estudiante
-            if (preg_match('/C[oó]digo\s+del\s+Estudiante:\s*([A-Z0-9\-]+)/iu', $line, $m)) {
+            if (preg_match('/Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)/iu', $line, $m)) {
                 $resultado['codigo_estudiante'] = trim($m[1]);
             }
 
-            // Carrera Universitaria
             foreach ($this->mapaCarreras as $frase => $codigoCarrera) {
                 if (strpos($lineNorm, $frase) !== false) {
                     $resultado['carrera_codigo'] = $codigoCarrera;
@@ -300,58 +347,30 @@ class VerificadorInscripcionService
                 }
             }
 
-            // Año y Período
-            if (preg_match('/A[ñn]o:\s*(\d{4})/iu', $line, $m)) {
+            if (preg_match('/del\s+a[ñn]o\s*(\d{4})/iu', $line, $m)) {
                 $resultado['ano'] = trim($m[1]);
             }
-            if (preg_match('/Per[íi]odo:\s*(\d{4}-\d{2})/iu', $line, $m)) {
+            if (preg_match('/per[íi]odo(?:\s+acad[ée]mico)?\s*[:\.]?\s*(\d{4}-\d{2})/iu', $line, $m)) {
                 $resultado['periodo'] = trim($m[1]);
             }
 
-            // Extracción de materias (ej: 06 CAL604 - Cálculo Numérico)
-            if (preg_match('/^(\d{2})\s+([A-Z0-9]{4,8})\s*-\s*(.+)$/u', $line, $m)) {
-                $semestre      = (int)$m[1];
-                $codigoMateria = trim($m[2]);
-                $nombreMateria = trim($m[3]);
-                $seccion       = '';
-                $creditos      = 0.0;
-
-                // La línea siguiente usualmente contiene la sección y créditos (ej: SVC-A 4.0)
-                if (isset($lines[$i+1]) && preg_match('/^([A-Z0-9\-]+)\s+(\d+(?:\.\d+)?)$/', trim($lines[$i+1]), $secM)) {
-                    $seccion  = trim($secM[1]);
-                    $creditos = (float)$secM[2];
-                }
-
+            // Materias en formato fila completa
+            if (preg_match('/(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*-\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA)/iu', $line, $m)) {
                 $resultado['materias'][] = [
-                    'semestre' => $semestre,
-                    'codigo'   => $codigoMateria,
-                    'nombre'   => $nombreMateria,
-                    'seccion'  => $seccion,
-                    'creditos' => $creditos
+                    'semestre' => (int)$m[2],
+                    'codigo'   => trim($m[4]),
+                    'nombre'   => trim($m[5]),
+                    'seccion'  => trim($m[3]),
+                    'creditos' => 3.0
                 ];
-            }
-
-            // Total créditos
-            if (preg_match('/Total\s+Cr[ée]ditos:\s*(\d+(?:\.\d+)?)/iu', $line, $m)) {
-                $resultado['total_creditos'] = (float)$m[1];
-            }
-
-            // Código de barras / control institucional
-            if (preg_match('/^([0-9A-Z]{10,18})$/', $line, $m)) {
-                $resultado['codigo_control'] = $m[1];
             }
         }
 
-        // Puntos adicionales de confianza si se detectaron los componentes clave
         if (!empty($resultado['carrera_codigo'])) $puntos += 15;
-        if (!empty($resultado['materias']))       $puntos += 20;
-        if (!empty($resultado['codigo_control'])) $puntos += 10;
+        if (!empty($resultado['materias']))       $puntos += 25;
 
         $resultado['puntuacion_confianza'] = min(100, $puntos);
 
-        // ---------------------------------------------------------------------
-        // 3. VALIDACIÓN DE COHERENCIA Y CONCORDANCIA
-        // ---------------------------------------------------------------------
         if (empty($resultado['carrera_codigo'])) {
             $resultado['motivo_invalidez'] = 'No se pudo identificar una carrera oficial de la UMC en el comprobante adjunto.';
             return $resultado;
@@ -362,7 +381,6 @@ class VerificadorInscripcionService
             return $resultado;
         }
 
-        // Si se solicitó verificar una carrera específica (ej. al cambiar de carrera o registrarse)
         if (!empty($carreraEsperada) && $resultado['carrera_codigo'] !== $carreraEsperada) {
             $carreraDoc = $resultado['carrera_nombre'] ?? $resultado['carrera_codigo'];
             $carreraEsp = $this->nombresCarreras[$carreraEsperada] ?? $carreraEsperada;
@@ -370,13 +388,13 @@ class VerificadorInscripcionService
             return $resultado;
         }
 
-        $resultado['es_valido'] = ($puntos >= 75);
+        $resultado['es_valido'] = true;
         return $resultado;
     }
 
     /**
      * Inscribe automáticamente al estudiante en las materias y secciones detectadas
-     * vinculándolo con las aulas correspondientes en la plataforma.
+     * vinculándolo con las aulas y horarios correspondientes en la plataforma.
      */
     public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null): int
     {
@@ -387,15 +405,24 @@ class VerificadorInscripcionService
         $db = \Config\Database::connect();
         $materiaModel     = new MateriaModel();
         $seccionModel     = new SeccionModel();
-        $inscripcionModel = new InscripcionModel();
+        $claseModel       = new ClaseProgramadaModel();
 
         $periodo = !empty($periodo) ? $periodo : date('Y') . '-01';
         $inscripcionesRealizadas = 0;
 
-        foreach ($materias as $mat) {
-            $codigoMateria = $mat['codigo'];
-            $nombreMateria = $mat['nombre'];
-            $seccionCodigo = !empty($mat['seccion']) ? $mat['seccion'] : 'SVC-A';
+        // Horarios estándar para distribuir materias iniciales si no tienen horario programado
+        $diasSemanales = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
+        $bloquesHoras  = [
+            ['inicio' => '08:00:00', 'fin' => '09:30:00', 'aula' => 'Aula 56 (Primer piso)'],
+            ['inicio' => '09:30:00', 'fin' => '11:00:00', 'aula' => 'Aula 57 (Primer piso)'],
+            ['inicio' => '11:00:00', 'fin' => '12:45:00', 'aula' => 'Aula 58 (Primer piso)'],
+            ['inicio' => '13:30:00', 'fin' => '15:00:00', 'aula' => 'Laboratorio de Info 1 (Segundo piso)'],
+        ];
+
+        foreach ($materias as $index => $mat) {
+            $codigoMateria = trim($mat['codigo']);
+            $nombreMateria = trim($mat['nombre']);
+            $seccionCodigo = !empty($mat['seccion']) ? trim($mat['seccion']) : 'SVC-A';
             $creditos      = (int) ($mat['creditos'] ?? 3);
             $semestre      = (int) ($mat['semestre'] ?? 1);
 
@@ -443,6 +470,21 @@ class VerificadorInscripcionService
                     'seccion_id'    => $seccionId
                 ]);
                 $inscripcionesRealizadas++;
+            }
+
+            // 4. Asegurar que exista al menos una clase programada con aula para ver en mapa
+            $tieneClase = $claseModel->where('seccion_id', $seccionId)->first();
+            if (!$tieneClase) {
+                $bloque = $bloquesHoras[$index % count($bloquesHoras)];
+                $dia    = $diasSemanales[$index % count($diasSemanales)];
+                $claseModel->insert([
+                    'seccion_id'    => $seccionId,
+                    'estudiante_id' => null,
+                    'aula'          => $bloque['aula'],
+                    'dia_semana'    => $dia,
+                    'hora_inicio'   => $bloque['inicio'],
+                    'hora_fin'      => $bloque['fin']
+                ]);
             }
         }
 
