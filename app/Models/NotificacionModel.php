@@ -22,6 +22,7 @@ class NotificacionModel extends Model
         'mensaje',
         'modalidad',
         'enlace_virtual',
+        'enlace_accion',
         'leido',
         'created_at'
     ];
@@ -31,7 +32,7 @@ class NotificacionModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = '';
 
-    // Row-Level Security: Solo obtiene las notificaciones que pertenezcan al estudiante
+    // Row-Level Security: Obtiene las notificaciones que pertenezcan al usuario
     public function obtenerParaEstudiante(int $estudianteId, int $limite = 20)
     {
         return $this->where('estudiante_id', $estudianteId)
@@ -46,11 +47,19 @@ class NotificacionModel extends Model
                     ->countAllResults();
     }
 
-    // Row-Level Security: Solo marca leída si el ID pertenece al estudiante
+    // Row-Level Security: Marca leída si el ID pertenece al usuario
     public function marcarComoLeida(int $notificacionId, int $estudianteId): bool
     {
         return $this->where('id', $notificacionId)
                     ->where('estudiante_id', $estudianteId)
+                    ->set(['leido' => 1])
+                    ->update();
+    }
+
+    public function marcarTodasComoLeidas(int $estudianteId): bool
+    {
+        return $this->where('estudiante_id', $estudianteId)
+                    ->where('leido', 0)
                     ->set(['leido' => 1])
                     ->update();
     }

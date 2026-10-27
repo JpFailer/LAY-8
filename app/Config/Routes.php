@@ -40,6 +40,14 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     
     // Panel interno / Dashboard
     $routes->get('/dashboard', 'Home::index'); 
+    
+    // Feed y Tablón de Noticias Comunitario UMC
+    $routes->post('/api/feed/publicar', 'FeedController::publicar');
+    $routes->post('/api/feed/toggle-like/(:num)', 'FeedController::toggleLike/$1');
+    $routes->post('/api/feed/comentar/(:num)', 'FeedController::comentar/$1');
+    $routes->get('/api/feed/comentarios/(:num)', 'FeedController::comentarios/$1');
+    $routes->post('/api/feed/eliminar/(:num)', 'FeedController::eliminar/$1');
+    $routes->post('/api/notificaciones/marcar-todas-leidas', 'FeedController::marcarTodasNotificaciones'); 
     $routes->get('/ajustes', 'Home::ajustes'); 
     
     // Aulas (Vista principal del menú lateral)
