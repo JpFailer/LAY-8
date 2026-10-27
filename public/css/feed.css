@@ -1,0 +1,1480 @@
+/* ==========================================================================
+   FEED / INICIO INTERACTIVO - LAY-8 (ESTILOS Y ANIMACIONES)
+   ========================================================================== */
+
+/* Contenedor Principal del Feed */
+.feed-dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 28px;
+    width: 100%;
+    margin-top: 15px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1080px) {
+    .feed-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   1. TARJETA DE BIENVENIDA / ENCABEZADO
+   -------------------------------------------------------------------------- */
+.feed-welcome-banner {
+    background: linear-gradient(135deg, #1c53b0 0%, #1e40af 50%, #0369a1 100%);
+    border-radius: 20px;
+    padding: 26px 30px;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 25px -5px rgba(28, 83, 176, 0.25);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 24px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.feed-welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.welcome-info-col h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.welcome-info-col p {
+    font-family: 'Hind', sans-serif;
+    font-size: 0.98rem;
+    margin: 0;
+    color: #e0e7ff;
+    line-height: 1.5;
+}
+
+.welcome-meta-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.welcome-chip {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+}
+
+.welcome-badge-icon {
+    font-size: 3.8rem;
+    color: rgba(255, 255, 255, 0.25);
+    transform: rotate(-10deg);
+    animation: floatIconSlow 4s ease-in-out infinite;
+}
+
+@keyframes floatIconSlow {
+    0%, 100% { transform: translateY(0px) rotate(-10deg); }
+    50% { transform: translateY(-6px) rotate(-5deg); }
+}
+
+/* --------------------------------------------------------------------------
+   2. MI JORNADA DE HOY (CLASES DEL DÍA)
+   -------------------------------------------------------------------------- */
+.seccion-card-feed {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 26px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.seccion-card-feed:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.card-header-feed {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-header-feed h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-header-feed h3 i {
+    color: #2563eb;
+    font-size: 1.35rem;
+}
+
+.pill-dia-actual {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Lista de clases de hoy */
+.lista-clases-hoy {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.clase-item-feed {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.clase-item-feed:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.clase-item-feed.en-curso {
+    background: #f0fdf4;
+    border-color: #86efac;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+}
+
+.clase-item-feed.en-curso::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: #10b981;
+}
+
+.clase-item-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.clase-horario-pill {
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-align: center;
+    min-width: 95px;
+}
+
+.clase-item-feed.en-curso .clase-horario-pill {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.clase-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.clase-titulo-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clase-materia-nombre {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.badge-secc {
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+.badge-en-curso-pulse {
+    background: #10b981;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    animation: pulseBadge 1.8s infinite;
+}
+
+@keyframes pulseBadge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.clase-aula-info {
+    font-size: 0.84rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-ubicar-mapa-feed {
+    background: #ffffff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-ubicar-mapa-feed:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    transform: scale(1.03);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+/* Estado Vacío de Clases (Día libre) */
+.empty-jornada-box {
+    text-align: center;
+    padding: 36px 20px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 16px;
+    border: 1px dashed #cbd5e1;
+}
+
+.empty-icon-jornada {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    margin: 0 auto 16px;
+    animation: floatIconSlow 3.5s ease-in-out infinite;
+}
+
+.empty-jornada-box h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+}
+
+.empty-jornada-box p {
+    font-family: 'Hind', sans-serif;
+    font-size: 0.95rem;
+    color: #64748b;
+    max-width: 460px;
+    margin: 0 auto 20px;
+    line-height: 1.6;
+}
+
+.empty-actions-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-empty-jornada-cta {
+    background: #1c53b0;
+    color: #ffffff;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.86rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-empty-jornada-cta:hover {
+    background: #1e40af;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(28, 83, 176, 0.25);
+}
+
+.btn-empty-jornada-secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.86rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-empty-jornada-secondary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
+   3. FORMULARIO PARA PUBLICAR COMUNICADOS (DOCENTES Y ADMINS)
+   -------------------------------------------------------------------------- */
+.composer-noticia-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 26px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border-left: 4px solid #2563eb;
+    animation: fadeInUp 0.7s ease-out;
+}
+
+.composer-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.composer-header-row i {
+    color: #2563eb;
+    font-size: 1.35rem;
+}
+
+.composer-header-row h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.form-publicar-noticia {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.composer-input-titulo {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0f172a;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.composer-input-titulo:focus,
+.composer-textarea-cuerpo:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.composer-textarea-cuerpo {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-family: 'Hind', sans-serif;
+    font-size: 0.92rem;
+    color: #1e293b;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 85px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.composer-bottom-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 6px;
+}
+
+.composer-select-categoria {
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+.checkbox-fijar-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    color: #475569;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-publicar-comunicado {
+    background: linear-gradient(135deg, #1c53b0, #2563eb);
+    color: #ffffff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.btn-publicar-comunicado:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   4. TABLÓN DE NOTICIAS Y COMUNICADOS UNIVERSITARIOS
+   -------------------------------------------------------------------------- */
+.seccion-tablon-muro {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.noticia-muro-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.noticia-muro-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+    border-color: #cbd5e1;
+}
+
+.noticia-muro-card.fijada {
+    border-color: #fde047;
+    background: linear-gradient(180deg, #fffbeb 0%, #ffffff 70px);
+}
+
+.noticia-muro-card.fijada::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #eab308, #facc15);
+}
+
+.noticia-top-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.autor-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.autor-avatar-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+
+.autor-datos-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.autor-nombre-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autor-nombre-txt {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.badge-rol-autor {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.badge-docente {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-admin {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-estudiante {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.noticia-fecha-txt {
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.noticia-tags-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tag-aviso-fijado {
+    background: #fef08a;
+    color: #854d0e;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chip-categoria-noticia {
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.chip-urgente {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+.chip-academico {
+    background: #e0e7ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+}
+
+.chip-evento {
+    background: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.noticia-cuerpo-contenido {
+    margin-bottom: 18px;
+}
+
+.noticia-titulo-txt {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    line-height: 1.35;
+}
+
+.noticia-texto-p {
+    font-family: 'Hind', sans-serif;
+    font-size: 0.95rem;
+    color: #334155;
+    line-height: 1.68;
+    white-space: pre-line;
+    margin: 0;
+}
+
+/* Barra de Acciones de la Noticia (Me Gusta y Comentarios) */
+.noticia-acciones-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn-accion-interactiva {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 7px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s ease;
+}
+
+.btn-accion-interactiva:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.btn-like-noticia i {
+    font-size: 1.15rem;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-like-noticia.dio-like {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #e11d48;
+}
+
+.btn-like-noticia.dio-like i {
+    color: #e11d48;
+    transform: scale(1.2);
+    animation: heartBounce 0.4s ease;
+}
+
+@keyframes heartBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1.2); }
+}
+
+.btn-comentarios-toggle.abierto {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.btn-eliminar-post {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1.15rem;
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.btn-eliminar-post:hover {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+/* --------------------------------------------------------------------------
+   5. SECCIÓN DE COMENTARIOS E HILOS ESTILO REDDIT (ANIDAMIENTO)
+   -------------------------------------------------------------------------- */
+.seccion-hilos-comentarios {
+    margin-top: 16px;
+    padding-top: 18px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: slideDownComments 0.3s ease-out;
+}
+
+@keyframes slideDownComments {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Input para nuevo comentario principal */
+.caja-nuevo-comentario-flex {
+    display: flex;
+    gap: 10px;
+}
+
+.input-nuevo-comentario {
+    flex-grow: 1;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-family: 'Hind', sans-serif;
+    color: #1e293b;
+    background: #f8fafc;
+    transition: all 0.2s;
+}
+
+.input-nuevo-comentario:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.btn-enviar-comentario {
+    background: #1c53b0;
+    color: #ffffff;
+    border: none;
+    padding: 0 18px;
+    border-radius: 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-enviar-comentario:hover {
+    background: #1e40af;
+    transform: translateY(-1px);
+}
+
+/* Lista de comentarios */
+.lista-hilos-contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* Ítem de comentario individual */
+.comentario-item-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comentario-burbuja {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 14px;
+    padding: 12px 14px;
+    position: relative;
+    transition: background 0.2s;
+}
+
+.comentario-burbuja:hover {
+    background: #f1f5f9;
+}
+
+.comentario-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.avatar-comentario {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.nombre-comentarista {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.rol-badge-comentario {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.tiempo-comentario {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-left: auto;
+}
+
+.texto-comentario-p {
+    font-family: 'Hind', sans-serif;
+    font-size: 0.88rem;
+    color: #334155;
+    line-height: 1.5;
+    margin: 0;
+    word-break: break-word;
+}
+
+.btn-responder-comentario {
+    background: transparent;
+    border: none;
+    color: #2563eb;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0 0 0;
+    transition: color 0.2s;
+}
+
+.btn-responder-comentario:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* Hilos anidados / Respuestas estilo Reddit */
+.hilo-respuestas-anidadas {
+    margin-left: 20px;
+    padding-left: 14px;
+    border-left: 2px solid #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.caja-respuesta-inline {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    animation: fadeInInline 0.25s ease-out;
+}
+
+@keyframes fadeInInline {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.input-respuesta-inline {
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: #1e293b;
+    background: #ffffff;
+}
+
+.btn-enviar-respuesta-inline {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 0 14px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   6. COLUMNA DERECHA / WIDGETS LATERALES
+   -------------------------------------------------------------------------- */
+.columna-lateral-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.widget-lateral-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    animation: fadeInUp 0.7s ease-out;
+}
+
+.widget-lateral-box h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.widget-lateral-box h3 i {
+    color: #2563eb;
+    font-size: 1.25rem;
+}
+
+/* Lista de aportes recientes de biblioteca */
+.lista-mini-aportes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mini-aporte-item {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.25s ease;
+}
+
+.mini-aporte-item:hover {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    transform: translateX(3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+.mini-aporte-icono {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.mini-icon-pdf {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.mini-icon-doc {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.mini-icon-otro {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.mini-aporte-detalles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.mini-aporte-titulo {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-aporte-sub {
+    font-size: 0.74rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-mini-descargar {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.btn-mini-descargar:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.link-ver-todo-biblioteca {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #2563eb;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.link-ver-todo-biblioteca:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* Accesos Rápidos Universitarios */
+.grid-accesos-rapidos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.btn-acceso-rapido {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.btn-acceso-rapido:hover {
+    background: #ffffff;
+    border-color: #93c5fd;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.1);
+}
+
+.icono-acceso-rapido {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.45rem;
+}
+
+.btn-acceso-rapido span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* --------------------------------------------------------------------------
+   7. APARTADO DE NOTIFICACIONES (BARRA SUPERIOR DERECHA)
+   -------------------------------------------------------------------------- */
+.notif-topbar-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-campana-notif {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.btn-campana-notif:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.badge-notif-contador {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #ffffff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 0 0 2px #1c53b0;
+    animation: pulseBadge 2s infinite;
+}
+
+/* Dropdown Flotante de Notificaciones */
+.dropdown-notificaciones-box {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 360px;
+    max-width: 90vw;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.2), 0 8px 16px -4px rgba(15, 23, 42, 0.1);
+    border: 1px solid #e2e8f0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideDownNotif 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@keyframes slideDownNotif {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notif-box-header {
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notif-box-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notif-box-title i {
+    color: #2563eb;
+    font-size: 1.15rem;
+}
+
+.btn-marcar-leidas-top {
+    background: transparent;
+    border: none;
+    color: #2563eb;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-marcar-leidas-top:hover {
+    text-decoration: underline;
+}
+
+.notif-box-body {
+    max-height: 380px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.notif-item-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: background 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.notif-item-row:hover {
+    background: #f8fafc;
+}
+
+.notif-item-row.no-leida {
+    background: #eff6ff;
+}
+
+.notif-item-row.no-leida:hover {
+    background: #dbeafe;
+}
+
+.notif-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notif-icon-like {
+    background: #fee2e2;
+    color: #e11d48;
+}
+
+.notif-icon-comentario {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.notif-icon-clase {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.notif-icon-general {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+
+.notif-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+}
+
+.notif-item-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.notif-item-msg {
+    font-size: 0.78rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.notif-item-time {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    margin-top: 3px;
+}
+
+.notif-vacio {
+    text-align: center;
+    padding: 30px 20px;
+    color: #94a3b8;
+}
+
+.notif-vacio i {
+    font-size: 2rem;
+    color: #cbd5e1;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.notif-vacio p {
+    font-size: 0.84rem;
+    margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   8. COMPATIBILIDAD CON MODO OSCURO (DARK MODE)
+   -------------------------------------------------------------------------- */
+.dark-mode .seccion-card-feed,
+.dark-mode .composer-noticia-card,
+.dark-mode .noticia-muro-card,
+.dark-mode .widget-lateral-box,
+.dark-mode .dropdown-notificaciones-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .card-header-feed,
+.dark-mode .noticia-top-meta,
+.dark-mode .noticia-acciones-bar,
+.dark-mode .notif-box-header {
+    border-color: #334155 !important;
+}
+
+.dark-mode .card-header-feed h3,
+.dark-mode .composer-header-row h3,
+.dark-mode .noticia-titulo-txt,
+.dark-mode .widget-lateral-box h3,
+.dark-mode .autor-nombre-txt,
+.dark-mode .mini-aporte-titulo,
+.dark-mode .btn-acceso-rapido span,
+.dark-mode .notif-box-title,
+.dark-mode .notif-item-title {
+    color: #f8fafc !important;
+}
+
+.dark-mode .clase-item-feed,
+.dark-mode .comentario-burbuja,
+.dark-mode .mini-aporte-item,
+.dark-mode .btn-acceso-rapido,
+.dark-mode .btn-accion-interactiva,
+.dark-mode .composer-select-categoria,
+.dark-mode .notif-box-header {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+.dark-mode .noticia-texto-p,
+.dark-mode .texto-comentario-p,
+.dark-mode .clase-aula-info,
+.dark-mode .mini-aporte-sub,
+.dark-mode .notif-item-msg {
+    color: #cbd5e1 !important;
+}
+
+.dark-mode .clase-materia-nombre {
+    color: #f1f5f9 !important;
+}
+
+.dark-mode .clase-horario-pill {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+.dark-mode .btn-ubicar-mapa-feed,
+.dark-mode .btn-mini-descargar {
+    background: #0f172a !important;
+    border-color: #3b82f6 !important;
+    color: #60a5fa !important;
+}
+
+.dark-mode .composer-input-titulo,
+.dark-mode .composer-textarea-cuerpo,
+.dark-mode .input-nuevo-comentario,
+.dark-mode .input-respuesta-inline {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+.dark-mode .noticia-muro-card.fijada {
+    background: linear-gradient(180deg, rgba(234, 179, 8, 0.1) 0%, #1e293b 80px) !important;
+    border-color: #ca8a04 !important;
+}
+
+.dark-mode .notif-item-row.no-leida {
+    background: rgba(37, 99, 235, 0.15) !important;
+}
+
+.dark-mode .notif-item-row {
+    border-color: #334155 !important;
+}
+
+/* Animación de entrada genérica */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

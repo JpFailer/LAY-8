@@ -23,7 +23,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=11')?>">
+  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
+  <link rel="stylesheet" href="<?= base_url('css/feed.css?v=' . time())?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
@@ -73,8 +74,36 @@
         </a>
       </div>
 
-      <!-- Contenedor del perfil clickeable -->
-      <div class="perfil-contenedor user-menu-container" onclick="toggleMenu()">
+      <div class="barra-superior-derecha" style="display: flex; align-items: center; gap: 14px;">
+        <!-- Campana de Notificaciones -->
+        <div class="notif-topbar-wrapper" id="notif-topbar-wrapper">
+          <button type="button" class="btn-campana-notif" id="btn-campana-notif" onclick="toggleDropdownNotificaciones(event)" title="Notificaciones">
+            <i class="bx bx-bell"></i>
+            <span class="badge-notif-contador" id="badge-notif-count" style="display: none;">0</span>
+          </button>
+
+          <!-- Dropdown Flotante de Notificaciones -->
+          <div class="dropdown-notificaciones-box" id="dropdown-notif-box" style="display: none;">
+            <div class="notif-box-header">
+              <div class="notif-box-title">
+                <i class="bx bx-bell"></i>
+                <span>Notificaciones</span>
+              </div>
+              <button type="button" class="btn-marcar-leidas-top" onclick="marcarTodasNotificacionesLeidas(event)">
+                Marcar leídas
+              </button>
+            </div>
+            <div class="notif-box-body" id="notif-items-lista">
+              <div class="notif-vacio">
+                <i class="bx bx-check-double"></i>
+                <p>Estás al día con tus notificaciones.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenedor del perfil clickeable -->
+        <div class="perfil-contenedor user-menu-container" onclick="toggleMenu()">
         <span class="nombre-usuario"><?= esc($userNombreCompleto) ?></span>
         <div class="avatar-trigger">
           <?php if ($userFoto): ?>
@@ -98,6 +127,7 @@
             <i class="bx bx-cog" style="margin-right: 6px;"></i> Ajustes
           </a>
         </div>
+      </div>
       </div>
     </header>
 
@@ -126,6 +156,7 @@
       <div class="sidebar-footer">
         <a href="<?= base_url('logout')?>" class="logout-btn" title="Cerrar Sesión">
           <i class="bx bx-log-out"></i>
+          <span>Cerrar sesión</span>
         </a>
       </div>
     </aside>
@@ -321,5 +352,139 @@
   </div>
 
   <script src="<?= base_url('js/main.js?v=11')?>"></script>
+
+  <!-- Scripts de Notificaciones en Tiempo Real -->
+  <script>
+    const BASE_URL_NOTIF = '<?= base_url() ?>/';
+
+    function toggleDropdownNotificaciones(e) {
+      if (e) e.stopPropagation();
+      const box = document.getElementById('dropdown-notif-box');
+      if (!box) return;
+
+      const isHidden = (box.style.display === 'none' || box.style.display === '');
+      box.style.display = isHidden ? 'flex' : 'none';
+
+      // Cerrar menú de perfil si está abierto
+      const menuPerfil = document.getElementById('dropdown-perfil');
+      if (menuPerfil) menuPerfil.classList.remove('mostrar');
+
+      if (isHidden) {
+        cargarNotificacionesTop();
+      }
+    }
+
+    function cargarNotificacionesTop() {
+      fetch(BASE_URL_NOTIF + 'api/notificaciones')
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.success) return;
+          actualizarBadgeConteo(data.no_leidas || 0);
+
+          const container = document.getElementById('notif-items-lista');
+          if (!container) return;
+
+          if (!data.notificaciones || data.notificaciones.length === 0) {
+            container.innerHTML = `
+              <div class="notif-vacio">
+                <i class="bx bx-check-double"></i>
+                <p>No tienes notificaciones pendientes.</p>
+              </div>`;
+            return;
+          }
+
+          let html = '';
+          data.notificaciones.forEach(n => {
+            let iconClass = 'notif-icon-general';
+            let iconBx = 'bx-bell';
+
+            if (n.tipo === 'like') {
+              iconClass = 'notif-icon-like';
+              iconBx = 'bxs-heart';
+            } else if (n.tipo === 'comentario' || n.tipo === 'respuesta') {
+              iconClass = 'notif-icon-comentario';
+              iconBx = 'bx-comment-detail';
+            } else if (n.tipo === 'clase_proxima' || n.tipo === 'clase_hoy') {
+              iconClass = 'notif-icon-clase';
+              iconBx = 'bx-time-five';
+            }
+
+            const noLeidaClass = (parseInt(n.leido) === 0) ? 'no-leida' : '';
+            const enlace = n.enlace_accion ? (BASE_URL_NOTIF + n.enlace_accion) : '#';
+
+            html += `
+              <a href="${enlace}" class="notif-item-row ${noLeidaClass}" onclick="marcarNotifLeida(${n.id})">
+                <div class="notif-item-icon ${iconClass}">
+                  <i class="bx ${iconBx}"></i>
+                </div>
+                <div class="notif-item-content">
+                  <span class="notif-item-title">${n.titulo || 'Notificación'}</span>
+                  <span class="notif-item-msg">${n.mensaje || ''}</span>
+                  <span class="notif-item-time">${n.created_at || ''}</span>
+                </div>
+              </a>`;
+          });
+
+          container.innerHTML = html;
+        })
+        .catch(err => console.error('Error cargando notificaciones:', err));
+    }
+
+    function actualizarBadgeConteo(conteo) {
+      const badge = document.getElementById('badge-notif-count');
+      if (!badge) return;
+      if (conteo > 0) {
+        badge.innerText = conteo > 99 ? '99+' : conteo;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function marcarNotifLeida(id) {
+      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-leida/' + id, { method: 'POST' })
+        .then(() => {
+          cargarConteoNotificaciones();
+        })
+        .catch(() => {});
+    }
+
+    function marcarTodasNotificacionesLeidas(e) {
+      if (e) e.stopPropagation();
+      fetch(BASE_URL_NOTIF + 'api/notificaciones/marcar-todas-leidas', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+          actualizarBadgeConteo(0);
+          cargarNotificacionesTop();
+        })
+        .catch(err => console.error(err));
+    }
+
+    function cargarConteoNotificaciones() {
+      fetch(BASE_URL_NOTIF + 'api/notificaciones/conteo')
+        .then(r => r.json())
+        .then(data => {
+          if (data && typeof data.no_leidas !== 'undefined') {
+            actualizarBadgeConteo(data.no_leidas);
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Cerrar al hacer clic fuera
+    document.addEventListener('click', function(e) {
+      const box = document.getElementById('dropdown-notif-box');
+      const btn = document.getElementById('btn-campana-notif');
+      if (box && btn && !box.contains(e.target) && !btn.contains(e.target)) {
+        box.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarConteoNotificaciones();
+      setInterval(cargarConteoNotificaciones, 30000); // Polling cada 30s
+    });
+  </script>
+
 </body>
 </html>
