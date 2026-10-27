@@ -26,22 +26,31 @@ def normalizar(texto):
 def limpiar_nombre_materia(nombre_raw):
     if not nombre_raw:
         return ""
+    # Eliminar estatus de materia si quedó pegado al final
+    nombre = re.sub(r'\s+E\s*N\s+CURSO\b.*$', '', nombre_raw, flags=re.IGNORECASE)
+    nombre = re.sub(r'\s+(?:APROBADA|INSCRITA|CURSANDO)\b.*$', '', nombre, flags=re.IGNORECASE)
+
     reglas = [
-        (r'M[\ufffd\?]?ndez', 'Méndez'),
-        (r'C[\ufffd\?]?lculo', 'Cálculo'),
-        (r'Num[\ufffd\?]?rico', 'Numérico'),
-        (r'F[\ufffd\?]?sica', 'Física'),
-        (r'Programaci[\ufffd\?]?n', 'Programación'),
-        (r'Inform[\ufffd\?]?tica', 'Informática'),
-        (r'Ingenier[\ufffd\?]?a', 'Ingeniería'),
-        (r'Administraci[\ufffd\?]?n', 'Administración'),
+        (r'M[\ufffd\?é]?\s*ndez', 'Méndez'),
+        (r'C[\ufffd\?á]?\s*lculo', 'Cálculo'),
+        (r'Num[\ufffd\?é]?\s*rico', 'Numérico'),
+        (r'F[\ufffd\?íi]?\s*sica', 'Física'),
+        (r'Programaci[\ufffd\?óo]?\s*n', 'Programación'),
+        (r'Inform[\ufffd\?áa]?\s*tica', 'Informática'),
+        (r'Ingenier[\ufffd\?íi]?\s*a', 'Ingeniería'),
+        (r'Administraci[\ufffd\?óo]?\s*n', 'Administración'),
         (r'Segur\s+idad', 'Seguridad'),
-        (r'Estad[\ufffd\?]?stica', 'Estadística'),
-        (r'Electr[\ufffd\?]?nica', 'Electrónica'),
-        (r'M[\ufffd\?]?todos', 'Métodos'),
-        (r'Q[\ufffd\?]?mica', 'Química')
+        (r'Estad[\ufffd\?íi]?\s*stica', 'Estadística'),
+        (r'Electr[\ufffd\?óo]?\s*nica', 'Electrónica'),
+        (r'M[\ufffd\?é]?\s*todos', 'Métodos'),
+        (r'Q[\ufffd\?ú]?\s*mica', 'Química'),
+        (r'Decisi[\ufffd\?óo]?\s*n', 'Decisión'),
+        (r'Tecnolog[\ufffd\?íi]?\s*a', 'Tecnología'),
+        (r'Reparaci[\ufffd\?óo]?\s*n', 'Reparación'),
+        (r'Teor[\ufffd\?íi]?\s*as', 'Teorías'),
+        (r'T[\ufffd\?é]?\s*cnicas', 'Técnicas'),
+        (r'Ingl[\ufffd\?é]?\s*s', 'Inglés'),
     ]
-    nombre = nombre_raw
     for pat, rep in reglas:
         nombre = re.sub(pat, rep, nombre, flags=re.IGNORECASE)
     nombre = re.sub(r'[\ufffd\?]+', '', nombre)
@@ -51,16 +60,16 @@ def limpiar_nombre_persona(nombre_raw):
     if not nombre_raw:
         return ""
     reglas = [
-        (r'M[\ufffd\?]?ndez', 'Méndez'),
-        (r'Gonz[\ufffd\?]?lez', 'González'),
-        (r'P[\ufffd\?]?rez', 'Pérez'),
-        (r'S[\ufffd\?]?nchez', 'Sánchez'),
-        (r'Rodr[\ufffd\?]?guez', 'Rodríguez'),
-        (r'Mart[\ufffd\?]?nez', 'Martínez'),
-        (r'Hern[\ufffd\?]?ndez', 'Hernández'),
-        (r'Garc[\ufffd\?]?a', 'García'),
-        (r'L[\ufffd\?]?pez', 'López'),
-        (r'D[\ufffd\?]?az', 'Díaz')
+        (r'M[\ufffd\?é]?\s*ndez', 'Méndez'),
+        (r'Gonz[\ufffd\?á]?\s*lez', 'González'),
+        (r'P[\ufffd\?é]?\s*rez', 'Pérez'),
+        (r'S[\ufffd\?á]?\s*nchez', 'Sánchez'),
+        (r'Rodr[\ufffd\?í]?\s*guez', 'Rodríguez'),
+        (r'Mart[\ufffd\?í]?\s*nez', 'Martínez'),
+        (r'Hern[\ufffd\?á]?\s*ndez', 'Hernández'),
+        (r'Garc[\ufffd\?í]?\s*a', 'García'),
+        (r'L[\ufffd\?ó]?\s*pez', 'López'),
+        (r'D[\ufffd\?í]?\s*az', 'Díaz')
     ]
     nombre = nombre_raw
     for pat, rep in reglas:
@@ -73,6 +82,7 @@ def procesar_pdf(pdf_path):
         "es_valido": False,
         "motivo_invalidez": None,
         "puntuacion_confianza": 0,
+        "formato_detectado": "DESCONOCIDO",
         "estudiante": None,
         "cedula": None,
         "codigo_estudiante": None,
@@ -81,7 +91,13 @@ def procesar_pdf(pdf_path):
         "ano": None,
         "periodo": None,
         "total_creditos": 0.0,
+        "total_creditos_declarado": None,
         "codigo_control": None,
+        "control_code_valido": None,
+        "codigo_cedula_coincide": None,
+        "suma_creditos_coincide": None,
+        "sellos_detectados": False,
+        "alertas_seguridad": [],
         "materias": [],
         "lineas_extraidas": 0
     }
@@ -119,8 +135,15 @@ def procesar_pdf(pdf_path):
     lineas = [l.strip() for l in texto_completo.splitlines() if l.strip()]
     resultado["lineas_extraidas"] = len(lineas)
     texto_norm = normalizar(texto_completo)
+    texto_espacios = re.sub(r'[ \t]+', ' ', texto_completo)
 
-    # 2. Criterios de Seguridad Institucional UMC
+    # 2. Identificación de Variante de Formato Oficial UMC
+    if "forma 006 ree" in texto_norm or "articulo 90" in texto_norm or "cumplidos los tramites de inscripcion" in texto_norm:
+        resultado["formato_detectado"] = "FORMA_006_REE"
+    elif "reg-seg-cre-upe-002" in texto_norm or "upe-002" in texto_norm or "planilla_umc.jsp" in texto_norm or "registro de inscripcion" in texto_norm:
+        resultado["formato_detectado"] = "PLANILLA_WEB_UPE002"
+
+    # 3. Criterios de Seguridad Institucional UMC
     puntos = 0
     criterios = {
         "maritima": ("maritima del caribe" in texto_norm or "experimental maritima" in texto_norm),
@@ -133,15 +156,18 @@ def procesar_pdf(pdf_path):
 
     for k, ok in criterios.items():
         if ok:
-            puntos += 15
+            puntos += 10
 
-    if puntos < 45:
+    if puntos < 30:
         resultado["motivo_invalidez"] = "El documento suministrado no posee las marcas de agua, membretes ni encabezados institucionales de la Universidad Marítima del Caribe (UMC)."
         return resultado
 
-    # 3. Extracción de Datos del Estudiante
-    texto_espacios = re.sub(r'[ \t]+', ' ', texto_completo)
+    # Detección de sellos institucionales
+    if "(sello)" in texto_norm or "coordinacion de registro estudiantil" in texto_norm:
+        resultado["sellos_detectados"] = True
+        puntos += 10
 
+    # 4. Extracción de Datos del Estudiante
     # Estudiante / Nombre Completo
     m_est = re.search(r'Nombre\s*:\s*([^\n\r]+?)(?:\s+Programa\s+de|\s+C[eé\?]+dula|\r|\n|$)', texto_espacios, re.IGNORECASE)
     if not m_est:
@@ -151,19 +177,19 @@ def procesar_pdf(pdf_path):
     if m_est:
         resultado["estudiante"] = limpiar_nombre_persona(m_est.group(1))
 
-    # Código de Estudiante
-    m_cod = re.search(r'C[oó\?]+digo(?:\s+del)?\s+Estudiante\s*[:\.]?\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
-    if not m_cod:
-        m_cod = re.search(r'Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
-    if m_cod:
-        resultado["codigo_estudiante"] = m_cod.group(1).strip()
-
     # Cédula de Identidad
     m_ced = re.search(r'C[eé\?]+dula(?:\s+(?:de\s+)?Identidad)?\s*[:\.]?\s*([VvEe]\s*-\s*\d+)', texto_espacios, re.IGNORECASE)
     if not m_ced:
         m_ced = re.search(r'\b([VvEe]\s*-\s*\d{6,9})\b', texto_espacios)
     if m_ced:
         resultado["cedula"] = re.sub(r'\s+', '', m_ced.group(1)).upper()
+
+    # Código de Estudiante
+    m_cod = re.search(r'C[oó\?]+digo(?:\s+del)?\s+Estudiante\s*[:\.]?\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
+    if not m_cod:
+        m_cod = re.search(r'Estudiante\s+Nro\.?:\s*([A-Za-z0-9\-]+)', texto_espacios, re.IGNORECASE)
+    if m_cod:
+        resultado["codigo_estudiante"] = m_cod.group(1).strip()
 
     # Período y Año
     m_ano = re.search(r'A[ñn\?]+o\s*[:\.]?\s*([0-9]{4})', texto_espacios, re.IGNORECASE)
@@ -180,10 +206,11 @@ def procesar_pdf(pdf_path):
     elif resultado["ano"]:
         resultado["periodo"] = f"{resultado['ano']}-01"
 
-    # Total Créditos
+    # Total Créditos Declarado en el comprobante
     m_tot = re.search(r'Total\s+Cr[eé\?]+ditos\s*[:\.]?\s*(\d+(?:\.\d+)?)', texto_espacios, re.IGNORECASE)
     if m_tot:
-        resultado["total_creditos"] = float(m_tot.group(1))
+        resultado["total_creditos_declarado"] = float(m_tot.group(1))
+        resultado["total_creditos"] = resultado["total_creditos_declarado"]
 
     # Carrera Universitaria
     mapa_carreras = {
@@ -215,10 +242,10 @@ def procesar_pdf(pdf_path):
                 resultado["carrera_nombre"] = nom
                 break
 
-    # 4. Extracción de Materias
+    # 5. Extracción de Materias
     materias_encontradas = []
 
-    # Formato A: Oficial UMC UPE-002 fila completa
+    # Formato A: Fila completa (Web JSP: Semestre Codigo - Nombre Seccion Creditos)
     # Ej: 06 CAL604 - Cálculo Numérico SVC-A 4.0
     patron_upe002 = re.compile(
         r'^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s+([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)\s*$',
@@ -226,9 +253,9 @@ def procesar_pdf(pdf_path):
     )
     for m in patron_upe002.finditer(texto_completo):
         semestre = int(m.group(1)) if m.group(1) else 1
-        codigo = m.group(2).strip()
+        codigo = m.group(2).strip().upper()
         nombre_limpio = limpiar_nombre_materia(m.group(3).strip())
-        seccion = m.group(4).strip()
+        seccion = m.group(4).strip().upper()
         creditos = float(m.group(5))
 
         materias_encontradas.append({
@@ -247,9 +274,9 @@ def procesar_pdf(pdf_path):
                 m_next = re.match(r'^([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)$', lineas[idx + 1])
                 if m_next:
                     semestre = int(m_ind.group(1)) if m_ind.group(1) else 1
-                    codigo = m_ind.group(2).strip()
+                    codigo = m_ind.group(2).strip().upper()
                     nombre_limpio = limpiar_nombre_materia(m_ind.group(3).strip())
-                    seccion = m_next.group(1).strip()
+                    seccion = m_next.group(1).strip().upper()
                     creditos = float(m_next.group(2))
                     materias_encontradas.append({
                         "semestre": semestre,
@@ -259,7 +286,8 @@ def procesar_pdf(pdf_path):
                         "creditos": creditos
                     })
 
-    # Formato C: Histórico con estados (EN CURSO, APROBADA, etc.)
+    # Formato C: Histórico / Certificado Oficial (Forma 006 REE)
+    # Ej: 2026 - 2026-01 04 SVC-A LAF422 - Laboratorio de Física II EN CURSO
     if not materias_encontradas:
         patron_hist = re.compile(
             r'(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*[-–]\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA|REPROBADA|CURSANDO)',
@@ -267,15 +295,24 @@ def procesar_pdf(pdf_path):
         )
         for m in patron_hist.finditer(texto_espacios):
             semestre = int(m.group(2))
-            seccion = m.group(3).strip()
-            codigo = m.group(4).strip()
+            seccion = m.group(3).strip().upper()
+            codigo = m.group(4).strip().upper()
             nom_limpio = limpiar_nombre_materia(m.group(5).strip())
+
+            # En la UMC, el último dígito del código de materia representa sus unidades de crédito
+            # Ej: LAF422 -> 2 UC, CAL604 -> 4 UC, PRO633 -> 3 UC, SSI502 -> 2 UC
+            credito_estimado = 3.0
+            if len(codigo) >= 6 and codigo[-1].isdigit():
+                dig = int(codigo[-1])
+                if 1 <= dig <= 6:
+                    credito_estimado = float(dig)
+
             materias_encontradas.append({
                 "semestre": semestre,
                 "codigo": codigo,
                 "nombre": nom_limpio,
                 "seccion": seccion,
-                "creditos": 3.0
+                "creditos": credito_estimado
             })
 
     resultado["materias"] = materias_encontradas
@@ -283,12 +320,92 @@ def procesar_pdf(pdf_path):
     if resultado["total_creditos"] == 0.0 and materias_encontradas:
         resultado["total_creditos"] = round(sum(m["creditos"] for m in materias_encontradas), 1)
 
+    # 6. FILTROS DE SEGURIDAD Y PREVENCIÓN DE FRAUDE AVANZADOS (UMC)
+
+    # A. Verificación de Código de Estudiante vs Cédula
+    if resultado["codigo_estudiante"] and resultado["cedula"]:
+        num_cod = re.sub(r'\D', '', resultado["codigo_estudiante"])
+        num_ced = re.sub(r'\D', '', resultado["cedula"])
+        if num_cod and num_ced:
+            if num_cod == num_ced:
+                resultado["codigo_cedula_coincide"] = True
+                puntos += 15
+            else:
+                resultado["codigo_cedula_coincide"] = False
+                resultado["motivo_invalidez"] = (
+                    f"Inconsistencia de seguridad: El Código de Estudiante institucional ('{resultado['codigo_estudiante']}') "
+                    f"no coincide con la Cédula de Identidad ('{resultado['cedula']}'). Documento presuntamente adulterado."
+                )
+                return resultado
+
+    # B. Verificación de Código de Control Criptográfico UMC (Para Planilla Web JSP)
+    # Patrón: 3 dígitos (cola de cédula) + inicial apellido + código institucional UMC (020302311)
+    control_codes = re.findall(r'\b(\d{3}[A-Za-z]\d{6,12})\b', texto_completo)
+    if control_codes:
+        resultado["codigo_control"] = control_codes[0].upper()
+        if resultado["cedula"] and resultado["estudiante"]:
+            ced_tail = re.sub(r'\D', '', resultado["cedula"])[-3:]
+            # Obtener inicial del primer apellido
+            primer_apellido = resultado["estudiante"].strip().split()[0]
+            apellido_norm = normalizar(primer_apellido)
+            apellido_inicial = apellido_norm[0].upper() if apellido_norm else ''
+
+            prefijo_esperado = f"{ced_tail}{apellido_inicial}"
+            if resultado["codigo_control"].startswith(prefijo_esperado):
+                resultado["control_code_valido"] = True
+                puntos += 20
+            else:
+                resultado["control_code_valido"] = False
+                resultado["alertas_seguridad"].append(
+                    f"Código de control UMC inconsistente: se esperaba prefijo '{prefijo_esperado}', pero se encontró '{resultado['codigo_control'][:4]}'."
+                )
+                resultado["motivo_invalidez"] = (
+                    f"Alerta de fraude institucional: El código de control de seguridad ({resultado['codigo_control']}) "
+                    f"no coincide con la cédula ni con el apellido del estudiante ({primer_apellido}). Documento alterado."
+                )
+                return resultado
+
+    # C. Cuadratura Matemática de Créditos
+    if resultado["total_creditos_declarado"] is not None and materias_encontradas:
+        suma_calculada = round(sum(m["creditos"] for m in materias_encontradas), 1)
+        if abs(suma_calculada - resultado["total_creditos_declarado"]) < 0.1:
+            resultado["suma_creditos_coincide"] = True
+            puntos += 10
+        else:
+            resultado["suma_creditos_coincide"] = False
+            resultado["alertas_seguridad"].append(
+                f"Inconsistencia matemática en créditos: Declarados={resultado['total_creditos_declarado']}, Suma={suma_calculada}."
+            )
+            # Si la discrepancia es severa (> 4 créditos)
+            if abs(suma_calculada - resultado["total_creditos_declarado"]) > 4.0:
+                resultado["motivo_invalidez"] = (
+                    f"Inconsistencia matemática de créditos: El documento declara {resultado['total_creditos_declarado']} UC, "
+                    f"pero la suma de las materias inscritas da {suma_calculada} UC. Documento inconsistente."
+                )
+                return resultado
+
+    # D. Verificación de Carrera vs Prefijo de Código de Estudiante
+    if resultado["codigo_estudiante"] and resultado["carrera_codigo"]:
+        prefijos_carrera = {
+            'ING-INF': 'INGINF',
+            'ING-MAR': 'INGMAR',
+            'ING-AMB': 'INGAMB',
+            'ADM': 'ADM',
+            'TUR': 'TUR'
+        }
+        prefijo_esperado = prefijos_carrera.get(resultado["carrera_codigo"])
+        if prefijo_esperado and not resultado["codigo_estudiante"].upper().startswith(prefijo_esperado):
+            resultado["alertas_seguridad"].append(
+                f"Discrepancia en código de estudiante: Prefijo '{resultado['codigo_estudiante']}' no corresponde a la carrera {resultado['carrera_codigo']}."
+            )
+
+    # 7. Evaluación Final de Validez y Puntuación
     if resultado["carrera_codigo"]:
-        puntos += 15
+        puntos += 10
     if resultado["materias"]:
-        puntos += 25
-    if resultado["estudiante"]:
         puntos += 15
+    if resultado["estudiante"]:
+        puntos += 10
 
     resultado["puntuacion_confianza"] = min(100, puntos)
 

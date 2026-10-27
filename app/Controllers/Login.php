@@ -115,6 +115,27 @@ class Login extends BaseController
             ]);
         }
 
+        if ($usuario['rol'] === 'admin') {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Por motivos estrictos de seguridad institucional, las cuentas de Administrador no pueden restablecer credenciales mediante este formulario. Debes acceder a la consola del servidor.'
+            ]);
+        }
+
+        if ($usuario['rol'] === 'profesor') {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Las cuentas de personal docente no poseen Registro de Inscripción estudiantil. Para restablecer el acceso a tu cuenta docente, contacta a la Administración Universitaria de LAY-8 con tu carnet institucional.'
+            ]);
+        }
+
+        if (($usuario['estado_cuenta'] ?? 'activo') === 'baneado') {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => 'Esta cuenta se encuentra actualmente suspendida o inhabilitada.'
+            ]);
+        }
+
         return $this->response->setJSON([
             'exito' => true,
             'usuario_id' => (int) $usuario['id'],
@@ -180,9 +201,15 @@ class Login extends BaseController
 
         // Validar concordancia de titular para evitar que suban el documento de otro estudiante
         if (!empty($analisis['estudiante'])) {
-            $nombreDoc     = mb_strtolower(trim($analisis['estudiante']));
-            $primerNombre  = mb_strtolower(trim($usuario['primer_nombre']));
-            $apellidos     = mb_strtolower(trim($usuario['apellidos']));
+            $norm = function(string $s): string {
+                $s = mb_strtolower(trim($s), 'UTF-8');
+                $r = ['á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u', 'ñ'=>'n', 'ü'=>'u'];
+                return strtr($s, $r);
+            };
+
+            $nombreDoc     = $norm($analisis['estudiante']);
+            $primerNombre  = $norm($usuario['primer_nombre']);
+            $apellidos     = $norm($usuario['apellidos']);
 
             $coincide = (strpos($nombreDoc, $primerNombre) !== false) || (strpos($nombreDoc, $apellidos) !== false);
             if (!$coincide) {

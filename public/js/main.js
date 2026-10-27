@@ -119,6 +119,20 @@ function seleccionarCarreraEditar(codigo) {
             }
         }
     });
+
+    // Activar validación requerida de contraseña y documento solo si se cambia de carrera
+    const carreraInicial = document.getElementById('carrera-inicial-perfil');
+    const inputPass = document.getElementById('input-pass-perfil');
+    const inputFile = document.querySelector('#modal-editar-perfil input[name="planilla_inscripcion"]');
+    if (carreraInicial && inputPass) {
+        if (codigo !== carreraInicial.value) {
+            inputPass.setAttribute('required', 'required');
+            if (inputFile) inputFile.setAttribute('required', 'required');
+        } else {
+            inputPass.removeAttribute('required');
+            if (inputFile) inputFile.removeAttribute('required');
+        }
+    }
 }
 
 function previsualizarFotoPerfil(input) {

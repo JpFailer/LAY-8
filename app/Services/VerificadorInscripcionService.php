@@ -49,9 +49,10 @@ class VerificadorInscripcionService
      */
     protected function verificarConMotorPython(string $rutaPdf): ?array
     {
+        $rootPath = defined('ROOTPATH') ? ROOTPATH : realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR;
         $pythonExes = [
-            ROOTPATH . 'scripts_python/venv/Scripts/python.exe',
-            ROOTPATH . 'scripts_python/venv/bin/python',
+            $rootPath . 'scripts_python/venv/Scripts/python.exe',
+            $rootPath . 'scripts_python/venv/bin/python',
             'python',
             'python3'
         ];
@@ -82,7 +83,7 @@ class VerificadorInscripcionService
             return null;
         }
 
-        $scriptPath = ROOTPATH . 'scripts_python/verificar_inscripcion.py';
+        $scriptPath = $rootPath . 'scripts_python/verificar_inscripcion.py';
         if (!file_exists($scriptPath)) {
             return null;
         }
@@ -266,20 +267,30 @@ class VerificadorInscripcionService
      */
     public function limpiarNombreMateria(string $nombre): string
     {
+        // Eliminar estatus de materia si quedó pegado al final
+        $nombre = preg_replace('/\s+E\s*N\s+CURSO\b.*$/iu', '', $nombre);
+        $nombre = preg_replace('/\s+(?:APROBADA|INSCRITA|CURSANDO)\b.*$/iu', '', $nombre);
+
         $reglas = [
-            '/M[\x{fffd}\?]?ndez/iu'         => 'Méndez',
-            '/C[\x{fffd}\?]?lculo/iu'        => 'Cálculo',
-            '/Num[\x{fffd}\?]?rico/iu'       => 'Numérico',
-            '/F[\x{fffd}\?]?sica/iu'         => 'Física',
-            '/Programaci[\x{fffd}\?]?n/iu'   => 'Programación',
-            '/Inform[\x{fffd}\?]?tica/iu'    => 'Informática',
-            '/Ingenier[\x{fffd}\?]?a/iu'     => 'Ingeniería',
-            '/Administraci[\x{fffd}\?]?n/iu' => 'Administración',
-            '/Segur\s+idad/iu'               => 'Seguridad',
-            '/Estad[\x{fffd}\?]?stica/iu'    => 'Estadística',
-            '/Electr[\x{fffd}\?]?nica/iu'    => 'Electrónica',
-            '/M[\x{fffd}\?]?todos/iu'        => 'Métodos',
-            '/Q[\x{fffd}\?]?mica/iu'         => 'Química',
+            '/M[\x{fffd}\?é]?\s*ndez/iu'         => 'Méndez',
+            '/C[\x{fffd}\?á]?\s*lculo/iu'        => 'Cálculo',
+            '/Num[\x{fffd}\?é]?\s*rico/iu'       => 'Numérico',
+            '/F[\x{fffd}\?íi]?\s*sica/iu'        => 'Física',
+            '/Programaci[\x{fffd}\?óo]?\s*n/iu'  => 'Programación',
+            '/Inform[\x{fffd}\?áa]?\s*tica/iu'   => 'Informática',
+            '/Ingenier[\x{fffd}\?íi]?\s*a/iu'    => 'Ingeniería',
+            '/Administraci[\x{fffd}\?óo]?\s*n/iu'=> 'Administración',
+            '/Segur\s+idad/iu'                   => 'Seguridad',
+            '/Estad[\x{fffd}\?íi]?\s*stica/iu'   => 'Estadística',
+            '/Electr[\x{fffd}\?óo]?\s*nica/iu'   => 'Electrónica',
+            '/M[\x{fffd}\?é]?\s*todos/iu'        => 'Métodos',
+            '/Q[\x{fffd}\?ú]?\s*mica/iu'         => 'Química',
+            '/Decisi[\x{fffd}\?óo]?\s*n/iu'      => 'Decisión',
+            '/Tecnolog[\x{fffd}\?íi]?\s*a/iu'    => 'Tecnología',
+            '/Reparaci[\x{fffd}\?óo]?\s*n/iu'    => 'Reparación',
+            '/Teor[\x{fffd}\?íi]?\s*as/iu'       => 'Teorías',
+            '/T[\x{fffd}\?é]?\s*cnicas/iu'       => 'Técnicas',
+            '/Ingl[\x{fffd}\?é]?\s*s/iu'         => 'Inglés',
         ];
 
         foreach ($reglas as $pat => $rep) {
@@ -350,20 +361,27 @@ class VerificadorInscripcionService
 
         // 2. Respaldo nativo en PHP
         $resultado = [
-            'es_valido'            => false,
-            'motivo_invalidez'     => null,
-            'puntuacion_confianza' => 0,
-            'estudiante'           => null,
-            'cedula'               => null,
-            'codigo_estudiante'    => null,
-            'carrera_codigo'       => null,
-            'carrera_nombre'       => null,
-            'ano'                  => null,
-            'periodo'              => null,
-            'total_creditos'       => 0.0,
-            'codigo_control'       => null,
-            'materias'             => [],
-            'lineas_extraidas'     => 0,
+            'es_valido'                 => false,
+            'motivo_invalidez'          => null,
+            'puntuacion_confianza'      => 0,
+            'formato_detectado'         => 'DESCONOCIDO',
+            'estudiante'                => null,
+            'cedula'                    => null,
+            'codigo_estudiante'         => null,
+            'carrera_codigo'            => null,
+            'carrera_nombre'            => null,
+            'ano'                       => null,
+            'periodo'                   => null,
+            'total_creditos'            => 0.0,
+            'total_creditos_declarado'  => null,
+            'codigo_control'            => null,
+            'control_code_valido'       => null,
+            'codigo_cedula_coincide'    => null,
+            'suma_creditos_coincide'    => null,
+            'sellos_detectados'         => false,
+            'alertas_seguridad'         => [],
+            'materias'                  => [],
+            'lineas_extraidas'          => 0,
         ];
 
         $lines = $this->extraerLineasDePdf($rutaPdf);
@@ -376,8 +394,17 @@ class VerificadorInscripcionService
 
         $fullText = implode("\n", $lines);
         $textNorm = $this->normalizarTexto($fullText);
+        $fullTextSpaces = preg_replace('/[ \t]+/', ' ', implode(' ', $lines));
+
+        // Identificación de Variante de Formato Oficial UMC
+        if (strpos($textNorm, 'forma 006 ree') !== false || strpos($textNorm, 'articulo 90') !== false || strpos($textNorm, 'cumplidos los tramites de inscripcion') !== false) {
+            $resultado['formato_detectado'] = 'FORMA_006_REE';
+        } elseif (strpos($textNorm, 'reg-seg-cre-upe-002') !== false || strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'planilla_umc.jsp') !== false || strpos($textNorm, 'registro de inscripcion') !== false) {
+            $resultado['formato_detectado'] = 'PLANILLA_WEB_UPE002';
+        }
 
         // Criterios de Seguridad Institucional UMC
+        $puntos = 0;
         $criterios = [
             'institucion' => (strpos($textNorm, 'maritima del caribe') !== false || strpos($textNorm, 'experimental maritima') !== false),
             'secretaria'  => (strpos($textNorm, 'secretaria general') !== false),
@@ -387,19 +414,22 @@ class VerificadorInscripcionService
             'republica'   => (strpos($textNorm, 'republica bolivariana') !== false || strpos($textNorm, 'venezuela') !== false),
         ];
 
-        $puntos = 0;
         foreach ($criterios as $check => $cumple) {
-            if ($cumple) $puntos += 15;
+            if ($cumple) $puntos += 10;
         }
 
-        if ($puntos < 45) {
+        if ($puntos < 30) {
             $resultado['motivo_invalidez'] = 'El documento suministrado no posee las marcas de agua, membretes ni encabezados institucionales de la Universidad Marítima del Caribe (UMC).';
             return $resultado;
         }
 
-        // Extracción de datos del estudiante con patrones flexibles UMC
-        $fullTextSpaces = preg_replace('/[ \t]+/', ' ', implode(' ', $lines));
+        // Detección de sellos institucionales
+        if (strpos($textNorm, '(sello)') !== false || strpos($textNorm, 'coordinacion de registro estudiantil') !== false) {
+            $resultado['sellos_detectados'] = true;
+            $puntos += 10;
+        }
 
+        // Extracción de datos del estudiante con patrones flexibles UMC
         // 1. Nombre completo
         if (preg_match('/Nombre\s*:\s*([^,]+?)(?=\s+Programa\s+de|\s+C[eé]dula|\s+A[ñn]o|$)/iu', $fullTextSpaces, $m)) {
             $resultado['estudiante'] = $this->limpiarNombrePersona(trim($m[1]));
@@ -408,7 +438,9 @@ class VerificadorInscripcionService
         }
 
         // 2. Cédula
-        if (preg_match('/(?:c[ée]dula|identidad)\s*[:\.]?\s*([VvEe]\s*-\s*\d+)/iu', $fullTextSpaces, $m)) {
+        if (preg_match('/(?:c[ée]dula(?:\s+(?:de\s+)?identidad)?|identidad)\s*[:\.]?\s*([VvEe]\s*-\s*\d+)/iu', $fullTextSpaces, $m)) {
+            $resultado['cedula'] = strtoupper(str_replace(' ', '', $m[1]));
+        } elseif (preg_match('/\b([VvEe]\s*-\s*\d{6,9})\b/u', $fullTextSpaces, $m)) {
             $resultado['cedula'] = strtoupper(str_replace(' ', '', $m[1]));
         }
 
@@ -425,9 +457,10 @@ class VerificadorInscripcionService
             $resultado['periodo'] = trim($m[1]);
         }
 
-        // 5. Total créditos
+        // 5. Total créditos declarado
         if (preg_match('/total\s+cr[eé]ditos\s*[:\.]?\s*(\d+(?:\.\d+)?)/iu', $fullTextSpaces, $m)) {
-            $resultado['total_creditos'] = (float)$m[1];
+            $resultado['total_creditos_declarado'] = (float)$m[1];
+            $resultado['total_creditos'] = $resultado['total_creditos_declarado'];
         }
 
         // 6. Programa de Formación / Carrera Universitaria
@@ -452,7 +485,6 @@ class VerificadorInscripcionService
             }
         }
 
-
         // Extracción de materias (Formato A: Fila completa / Formato B: Dos líneas / Formato C: Histórico)
         for ($i = 0; $i < count($lines); $i++) {
             $line = trim($lines[$i]);
@@ -462,9 +494,9 @@ class VerificadorInscripcionService
             if (preg_match('/^\s*(?:(\d{1,2})\s+)?([A-Za-z0-9]{4,8})\s*[-–]\s*(.+?)\s+([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)\s*$/u', $line, $m)) {
                 $resultado['materias'][] = [
                     'semestre' => !empty($m[1]) ? (int)$m[1] : 1,
-                    'codigo'   => trim($m[2]),
+                    'codigo'   => strtoupper(trim($m[2])),
                     'nombre'   => $this->limpiarNombreMateria(trim($m[3])),
-                    'seccion'  => trim($m[4]),
+                    'seccion'  => strtoupper(trim($m[4])),
                     'creditos' => (float)$m[5]
                 ];
                 continue;
@@ -477,9 +509,9 @@ class VerificadorInscripcionService
                     if (preg_match('/^([A-Za-z0-9\-]+)\s+(\d+(?:\.\d+)?)$/u', $nextLine, $m2)) {
                         $resultado['materias'][] = [
                             'semestre' => !empty($m1[1]) ? (int)$m1[1] : 1,
-                            'codigo'   => trim($m1[2]),
+                            'codigo'   => strtoupper(trim($m1[2])),
                             'nombre'   => $this->limpiarNombreMateria(trim($m1[3])),
-                            'seccion'  => trim($m2[1]),
+                            'seccion'  => strtoupper(trim($m2[1])),
                             'creditos' => (float)$m2[2]
                         ];
                         $i++;
@@ -490,12 +522,20 @@ class VerificadorInscripcionService
 
             // Formato C: Histórico con estados (EN CURSO, APROBADA, INSCRITA)
             if (preg_match('/(\d{4}\s*-\s*\d{4}-\d{2})\s+(\d{1,2})\s+([A-Z0-9\-]+)\s+([A-Z0-9]{4,8})\s*[-–]\s*(.+?)\s+(?:E\s*N\s+CURSO|APROBADA|INSCRITA)/iu', $line, $m)) {
+                $cod = strtoupper(trim($m[4]));
+                $cred = 3.0;
+                if (strlen($cod) >= 6 && ctype_digit(substr($cod, -1))) {
+                    $d = (int)substr($cod, -1);
+                    if ($d >= 1 && $d <= 6) {
+                        $cred = (float)$d;
+                    }
+                }
                 $resultado['materias'][] = [
                     'semestre' => (int)$m[2],
-                    'codigo'   => trim($m[4]),
+                    'codigo'   => $cod,
                     'nombre'   => $this->limpiarNombreMateria(trim($m[5])),
-                    'seccion'  => trim($m[3]),
-                    'creditos' => 3.0
+                    'seccion'  => strtoupper(trim($m[3])),
+                    'creditos' => $cred
                 ];
             }
         }
@@ -514,8 +554,87 @@ class VerificadorInscripcionService
             $resultado['total_creditos'] = round($sum, 1);
         }
 
-        if (!empty($resultado['carrera_codigo'])) $puntos += 15;
-        if (!empty($resultado['materias']))       $puntos += 25;
+        // 7. FILTROS DE SEGURIDAD Y ANTI-FRAUDE UMC
+
+        // A. Verificación de Código de Estudiante vs Cédula
+        if (!empty($resultado['codigo_estudiante']) && !empty($resultado['cedula'])) {
+            $numCod = preg_replace('/\D/', '', $resultado['codigo_estudiante']);
+            $numCed = preg_replace('/\D/', '', $resultado['cedula']);
+            if ($numCod && $numCed) {
+                if ($numCod === $numCed) {
+                    $resultado['codigo_cedula_coincide'] = true;
+                    $puntos += 15;
+                } else {
+                    $resultado['codigo_cedula_coincide'] = false;
+                    $resultado['motivo_invalidez'] = "Inconsistencia de seguridad: El Código de Estudiante institucional ('{$resultado['codigo_estudiante']}') no coincide con la Cédula de Identidad ('{$resultado['cedula']}'). Documento presuntamente adulterado.";
+                    return $resultado;
+                }
+            }
+        }
+
+        // B. Verificación de Código de Control Criptográfico UMC (Para Planilla Web JSP)
+        if (preg_match_all('/\b(\d{3}[A-Za-z]\d{6,12})\b/', $fullTextSpaces, $mCodes)) {
+            $resultado['codigo_control'] = strtoupper($mCodes[1][0]);
+            if (!empty($resultado['cedula']) && !empty($resultado['estudiante'])) {
+                $cedDigits = preg_replace('/\D/', '', $resultado['cedula']);
+                $cedTail = substr($cedDigits, -3);
+                $partesNombre = explode(' ', trim($resultado['estudiante']));
+                $primerApellido = $partesNombre[0] ?? '';
+                $apellidoNorm = $this->normalizarTexto($primerApellido);
+                $apellidoInicial = strtoupper(substr($apellidoNorm, 0, 1));
+                $prefijoEsperado = $cedTail . $apellidoInicial;
+
+                if (str_starts_with($resultado['codigo_control'], $prefijoEsperado)) {
+                    $resultado['control_code_valido'] = true;
+                    $puntos += 20;
+                } else {
+                    $resultado['control_code_valido'] = false;
+                    $resultado['alertas_seguridad'][] = "Código de control UMC inconsistente: se esperaba prefijo '{$prefijoEsperado}', pero se encontró '" . substr($resultado['codigo_control'], 0, 4) . "'.";
+                    $resultado['motivo_invalidez'] = "Alerta de fraude institucional: El código de control de seguridad ({$resultado['codigo_control']}) no coincide con la cédula ni con el apellido del estudiante ({$primerApellido}). Documento alterado.";
+                    return $resultado;
+                }
+            }
+        }
+
+        // C. Cuadratura Matemática de Créditos
+        if ($resultado['total_creditos_declarado'] !== null && !empty($resultado['materias'])) {
+            $sumaCalculada = 0.0;
+            foreach ($resultado['materias'] as $mat) {
+                $sumaCalculada += (float)($mat['creditos'] ?? 0);
+            }
+            $sumaCalculada = round($sumaCalculada, 1);
+            if (abs($sumaCalculada - $resultado['total_creditos_declarado']) < 0.1) {
+                $resultado['suma_creditos_coincide'] = true;
+                $puntos += 10;
+            } else {
+                $resultado['suma_creditos_coincide'] = false;
+                $resultado['alertas_seguridad'][] = "Inconsistencia matemática en créditos: Declarados={$resultado['total_creditos_declarado']}, Suma={$sumaCalculada}.";
+                if (abs($sumaCalculada - $resultado['total_creditos_declarado']) > 4.0) {
+                    $resultado['motivo_invalidez'] = "Inconsistencia matemática de créditos: El documento declara {$resultado['total_creditos_declarado']} UC, pero la suma de las materias inscritas da {$sumaCalculada} UC. Documento inconsistente.";
+                    return $resultado;
+                }
+            }
+        }
+
+        // D. Verificación de Carrera vs Prefijo de Código de Estudiante
+        if (!empty($resultado['codigo_estudiante']) && !empty($resultado['carrera_codigo'])) {
+            $prefijosCarrera = [
+                'ING-INF' => 'INGINF',
+                'ING-MAR' => 'INGMAR',
+                'ING-AMB' => 'INGAMB',
+                'ADM'     => 'ADM',
+                'TUR'     => 'TUR'
+            ];
+            $prefijoEsp = $prefijosCarrera[$resultado['carrera_codigo']] ?? null;
+            if ($prefijoEsp && !str_starts_with(strtoupper($resultado['codigo_estudiante']), $prefijoEsp)) {
+                $resultado['alertas_seguridad'][] = "Discrepancia en código de estudiante: Prefijo '{$resultado['codigo_estudiante']}' no corresponde a la carrera {$resultado['carrera_codigo']}.";
+            }
+        }
+
+        // Evaluación final
+        if (!empty($resultado['carrera_codigo'])) $puntos += 10;
+        if (!empty($resultado['materias']))       $puntos += 15;
+        if (!empty($resultado['estudiante']))     $puntos += 10;
 
         $resultado['puntuacion_confianza'] = min(100, $puntos);
 

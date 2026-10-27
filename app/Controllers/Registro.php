@@ -52,6 +52,17 @@ class Registro extends BaseController
             ]
         ];
 
+        // Si el usuario indicó quitar el archivo previo en la interfaz, limpiar la sesión y el archivo
+        if ($this->request->getPost('tiene_archivo_previo') === '0') {
+            if (session()->has('temp_registro_pdf')) {
+                $prev = session()->get('temp_registro_pdf');
+                if (file_exists($prev)) {
+                    @unlink($prev);
+                }
+                session()->remove(['temp_registro_pdf', 'temp_registro_pdf_nombre']);
+            }
+        }
+
         // Preservación de documento PDF cargado en caso de fallos posteriores en el paso 2
         $archivoTempInscripcion = $this->request->getFile('planilla_inscripcion');
         if ($archivoTempInscripcion && $archivoTempInscripcion->isValid() && !$archivoTempInscripcion->hasMoved()) {
@@ -59,6 +70,12 @@ class Registro extends BaseController
                 $carpetaTemp = WRITEPATH . 'uploads/temp_registro';
                 if (!is_dir($carpetaTemp)) {
                     mkdir($carpetaTemp, 0777, true);
+                }
+                if (session()->has('temp_registro_pdf')) {
+                    $prev = session()->get('temp_registro_pdf');
+                    if (file_exists($prev)) {
+                        @unlink($prev);
+                    }
                 }
                 $nombreTemp = 'temp_' . md5(session_id() . time()) . '.pdf';
                 $archivoTempInscripcion->move($carpetaTemp, $nombreTemp);
@@ -139,6 +156,13 @@ class Registro extends BaseController
             $analisis = $verificador->verificar($rutaArchivoVerificar, $carreraSeleccionada);
 
             if (!$analisis['es_valido']) {
+                if (session()->has('temp_registro_pdf')) {
+                    $p = session()->get('temp_registro_pdf');
+                    if (file_exists($p)) {
+                        @unlink($p);
+                    }
+                    session()->remove(['temp_registro_pdf', 'temp_registro_pdf_nombre']);
+                }
                 return redirect()->back()->withInput()->with('error', 'Seguridad UMC: ' . ($analisis['motivo_invalidez'] ?? 'El documento no superó los filtros de autenticidad institucional.'));
             }
 

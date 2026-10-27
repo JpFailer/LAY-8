@@ -308,12 +308,13 @@
                 <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-certificacion">
 
                 <label class="form-label-editar label-pass-confirm"><i class="bx bx-lock-alt"></i> Confirmar con tu Contraseña</label>
-                <input type="password" name="confirmar_contrasena" class="input-global input-pass-perfil" placeholder="Ingresa tu contraseña actual para autorizar" required>
+                <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global input-pass-perfil" placeholder="Ingresa tu contraseña actual solo si cambias de carrera">
               </div>
             </div>
 
             <!-- Columna Derecha: Selección de Carrera UMC -->
             <div class="modal-editar-col-der">
+              <input type="hidden" id="carrera-inicial-perfil" value="<?= esc($userCodigoCarrera) ?>">
               <div class="form-group-editar" style="margin-bottom: 0;">
                 <label class="form-label-editar"><i class="bx bx-graduation"></i> Carrera Universitaria (UMC)</label>
                 <p class="form-sublabel-editar">Selecciona tu carrera oficial en la universidad:</p>

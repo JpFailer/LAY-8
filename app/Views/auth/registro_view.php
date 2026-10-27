@@ -180,7 +180,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
           <p style="font-size: 0.82rem; color: #64748b; margin-top: -3px; margin-bottom: 8px;">
             Sube el comprobante oficial (PDF) emitido por <code>campus.umc.edu.ve</code>. El sistema certificará tu carrera y te asignará automáticamente a tus aulas.
           </p>
-          <input type="hidden" id="tiene_archivo_previo" value="<?= $tieneArchivoEnSesion ? '1' : '0' ?>">
+          <input type="hidden" id="tiene_archivo_previo" name="tiene_archivo_previo" value="<?= $tieneArchivoEnSesion ? '1' : '0' ?>">
           <input type="file" name="planilla_inscripcion" id="input_planilla_inscripcion" accept=".pdf" class="input-global" <?= ($tieneArchivoEnSesion || old('es_profesor') === 'si') ? '' : 'required' ?>>
 
           <!-- Feedback visual de archivo cargado/seleccionado -->
