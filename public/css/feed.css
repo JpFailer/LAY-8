@@ -1478,3 +1478,40 @@
         transform: translateY(0);
     }
 }
+
+/* ========================================================================= */
+/* MEJORAS DE CONTRASTE MODO OSCURO (REVISIÓN HARYERIT)                      */
+/* ========================================================================= */
+.dark-mode .nombre-comentarista,
+body.dark-mode .nombre-comentarista {
+    color: #f8fafc !important;
+}
+
+.dark-mode .empty-jornada-box,
+body.dark-mode .empty-jornada-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+.dark-mode .empty-jornada-box h4,
+body.dark-mode .empty-jornada-box h4 {
+    color: #f8fafc !important;
+}
+
+.dark-mode .empty-jornada-box p,
+body.dark-mode .empty-jornada-box p {
+    color: #94a3b8 !important;
+}
+
+.dark-mode .empty-icon-jornada,
+body.dark-mode .empty-icon-jornada {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+}
+
+.dark-mode .btn-empty-jornada-secondary,
+body.dark-mode .btn-empty-jornada-secondary {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}

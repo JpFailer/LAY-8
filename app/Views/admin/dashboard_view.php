@@ -114,6 +114,7 @@
             <thead>
               <tr>
                 <th>Docente</th>
+                <th>Cédula</th>
                 <th>Usuario / Correo</th>
                 <th>Fecha de Registro</th>
                 <th>Comprobante / Carnet</th>
@@ -125,6 +126,9 @@
                 <tr>
                   <td>
                     <strong><?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos']) ?></strong>
+                  </td>
+                  <td>
+                    <code style="background: #eff6ff; color: #1e40af; padding: 3px 7px; border-radius: 5px; font-weight: 600; font-size: 0.85rem;"><?= esc($sol['cedula'] ?? 'N/D') ?></code>
                   </td>
                   <td>
                     <div style="font-weight: 600;">@<?= esc($sol['nombre_usuario']) ?></div>
@@ -180,6 +184,7 @@
             <tr>
               <th>ID</th>
               <th>Nombre Completo</th>
+              <th>Cédula</th>
               <th>Usuario / Contacto</th>
               <th>Carrera</th>
               <th>Rol</th>
@@ -191,7 +196,15 @@
             <?php foreach ($usuarios as $u): ?>
               <tr class="fila-usuario-item" data-texto="<?= strtolower(esc($u['primer_nombre'] . ' ' . $u['apellidos'] . ' ' . $u['nombre_usuario'] . ' ' . $u['correo'] . ' ' . $u['carrera'] . ' ' . $u['rol'])) ?>">
                 <td>#<?= (int)$u['id'] ?></td>
-                <td><strong><?= esc($u['primer_nombre'] . ' ' . $u['apellidos']) ?></strong></td>
+                <td>
+                  <strong><?= esc($u['primer_nombre'] . ' ' . $u['apellidos']) ?></strong>
+                  <?php if (in_array($u['rol'], ['admin', 'administrador'])): ?>
+                    <i class="bx bxs-check-circle" style="color: #2563eb; vertical-align: middle; margin-left: 2px;" title="Administrador Verificado"></i>
+                  <?php elseif ($u['rol'] === 'profesor'): ?>
+                    <i class="bx bxs-check-circle" style="color: #10b981; vertical-align: middle; margin-left: 2px;" title="Profesor Verificado"></i>
+                  <?php endif; ?>
+                </td>
+                <td><code style="background: #eff6ff; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.84rem;"><?= esc($u['cedula'] ?? 'N/D') ?></code></td>
                 <td>
                   <div>@<?= esc($u['nombre_usuario']) ?></div>
                   <div style="font-size: 0.8rem; color: #64748b;"><?= esc($u['correo']) ?></div>
@@ -329,24 +342,34 @@
         </div>
 
         <div class="horario-upload-card">
-          <h4><i class="bx bx-cloud-upload"></i> Cargar Nuevo Horario PDF</h4>
+          <h4><i class="bx bx-calendar-event"></i> Gestión de Horarios por Carrera</h4>
           <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">
-            Al subir un nuevo PDF oficial, el sistema procesará automáticamente los bloques, detectará aulas, materias y secciones, actualizando el mapa interactivo del campus.
+            Sincroniza y procesa los documentos PDF oficiales (Formulario CGD-001) para cada carrera de la UMC. Cada carrera cuenta con su programación académica del 1er al último semestre.
           </p>
 
-          <form action="<?= base_url('api/admin/horario/actualizar') ?>" method="POST" enctype="multipart/form-data" class="form-upload-horario">
-            <?= csrf_field() ?>
-            <div class="file-drop-area">
-              <i class="bx bx-file-blank file-drop-icon"></i>
-              <span class="file-drop-msg">Arrastra tu archivo PDF o haz clic para seleccionarlo</span>
-              <input type="file" name="horario_pdf" id="horario_pdf_input" accept=".pdf" required onchange="actualizarNombreHorario(this)">
-              <div id="nombre-archivo-horario" class="archivo-seleccionado-nombre"></div>
+          <div class="carreras-horarios-summary-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+            <div style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+              <span>Programación en el Mapa</span>
+              <span class="badge-counter-active"><?= esc($horarioInfo['total_clases']) ?> clases activas</span>
             </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+              <?php if (!empty($carrerasHorarios)): ?>
+                <?php foreach ($carrerasHorarios as $cCode => $cInfo): ?>
+                  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; gap: 8px;">
+                    <i class="bx <?= esc($cInfo['icono']) ?>" style="color: <?= $cInfo['color'] ?>; font-size: 1.3rem;"></i>
+                    <div>
+                      <div style="font-size: 0.76rem; font-weight: 700; color: #1e293b;"><?= esc($cCode) ?></div>
+                      <div style="font-size: 0.72rem; color: #64748b;"><?= $cInfo['total_clases'] ?> clases</div>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </div>
+          </div>
 
-            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 15px; padding: 12px;">
-              <i class="bx bx-sync"></i> Procesar y Actualizar Horario del Mapa
-            </button>
-          </form>
+          <button type="button" class="btn-primary" onclick="abrirModalHorariosCarreras()" style="width: 100%; padding: 13px; font-weight: 600; font-size: 0.95rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);">
+            <i class="bx bx-calendar-edit" style="font-size: 1.25rem;"></i> Actualizar horarios de todas las carreras
+          </button>
         </div>
       </div>
     </div>
@@ -672,5 +695,200 @@ function confirmarEliminarAporte() {
     })
     .catch(() => alert('Error de red.'));
 }
+
+// -------------------------------------------------------------------------
+// Acciones: Modal de Actualización de Horarios de Carreras
+// -------------------------------------------------------------------------
+function abrirModalHorariosCarreras() {
+    const modal = document.getElementById('modal-actualizar-horarios-carreras');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function cerrarModalHorariosCarreras() {
+    const modal = document.getElementById('modal-actualizar-horarios-carreras');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function onArchivoCarreraSeleccionado(codCarrera, input) {
+    const file = input.files && input.files[0];
+    const btnSubir = document.getElementById('btn-subir-' + codCarrera);
+    const labelFile = document.getElementById('label-file-' + codCarrera);
+    if (file) {
+        labelFile.innerText = file.name.length > 20 ? (file.name.substring(0, 18) + '...') : file.name;
+        if (btnSubir) {
+            btnSubir.disabled = false;
+            btnSubir.style.opacity = '1';
+        }
+    } else {
+        labelFile.innerText = 'Seleccionar PDF';
+        if (btnSubir) {
+            btnSubir.disabled = true;
+            btnSubir.style.opacity = '0.6';
+        }
+    }
+}
+
+async function subirHorarioCarrera(codCarrera) {
+    const input = document.getElementById('file-horario-' + codCarrera);
+    const btnSubir = document.getElementById('btn-subir-' + codCarrera);
+    const banner = document.getElementById('banner-feedback-horarios');
+
+    if (!input || !input.files || !input.files[0]) {
+        alert('Por favor selecciona un archivo PDF de horario primero.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('horario_pdf', input.files[0]);
+    formData.append('carrera', codCarrera);
+
+    const csrfInput = document.querySelector('input[name="csrf_token_name"]') || document.querySelector('input[name="<?= csrf_token() ?>"]');
+    if (csrfInput) {
+        formData.append(csrfInput.name, csrfInput.value);
+    }
+
+    btnSubir.disabled = true;
+    btnSubir.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Procesando...';
+
+    if (banner) {
+        banner.style.display = 'block';
+        banner.style.background = '#eff6ff';
+        banner.style.color = '#1e40af';
+        banner.style.border = '1px solid #bfdbfe';
+        banner.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Leyendo semestres, horas exactas de inicio/fin, secciones y aulas de <strong>' + codCarrera + '</strong>... Esto puede tomar entre 15 y 45 segundos según la cantidad de páginas del PDF.';
+    }
+
+    try {
+        const res = await fetch('<?= base_url('api/admin/horario/actualizar') ?>', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            if (banner) {
+                banner.style.background = '#ecfdf5';
+                banner.style.color = '#065f46';
+                banner.style.border = '1px solid #a7f3d0';
+                banner.innerHTML = '<i class="bx bx-check-circle"></i> ¡Éxito! Se sincronizaron <strong>' + data.clases_cargadas + '</strong> bloques de clases para <strong>' + codCarrera + '</strong> con horas exactas en el mapa.';
+            }
+
+            const card = document.getElementById('card-horario-' + codCarrera);
+            if (card) {
+                const metaStatus = card.querySelector('.carrera-meta-status');
+                if (metaStatus) {
+                    metaStatus.innerHTML = '<span class="badge-status-ok" style="color: #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="bx bxs-check-circle"></i> <span id="conteo-clases-' + codCarrera + '">' + data.clases_cargadas + '</span> bloques sincronizados</span><span style="color: #94a3b8; margin: 0 4px;">•</span><span style="color: #64748b;" id="fecha-sync-' + codCarrera + '">' + data.fecha + '</span>';
+                }
+            }
+
+            btnSubir.innerHTML = '<i class="bx bx-check"></i> Sincronizado';
+            setTimeout(() => {
+                btnSubir.innerHTML = '<i class="bx bx-sync"></i> Procesar';
+                btnSubir.disabled = true;
+                btnSubir.style.opacity = '0.6';
+                const labelFile = document.getElementById('label-file-' + codCarrera);
+                if (labelFile) labelFile.innerText = 'Seleccionar PDF';
+                input.value = '';
+            }, 3000);
+        } else {
+            throw new Error(data.error || 'Error al procesar el horario');
+        }
+    } catch (err) {
+        if (banner) {
+            banner.style.background = '#fef2f2';
+            banner.style.color = '#991b1b';
+            banner.style.border = '1px solid #fecaca';
+            banner.innerHTML = '<i class="bx bx-error-circle"></i> Error al sincronizar: ' + err.message;
+        }
+        btnSubir.disabled = false;
+        btnSubir.innerHTML = '<i class="bx bx-sync"></i> Reintentar';
+    }
+}
+
 </script>
+
+<!-- ========================================================================= -->
+<!-- MODAL: ACTUALIZAR HORARIOS DE TODAS LAS CARRERAS -->
+<!-- ========================================================================= -->
+<div id="modal-actualizar-horarios-carreras" class="modal-carreras-overlay" style="display: none; padding: 20px; box-sizing: border-box; z-index: 100000; align-items: center; justify-content: center;">
+  <div class="modal-editar-perfil-content" style="max-width: 860px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);">
+    <div class="modal-editar-header" style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 style="color: #1e3a8a; font-size: 1.25rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <i class="bx bx-calendar-event" style="color: #2563eb;"></i> Actualizar Horarios de Todas las Carreras
+        </h3>
+        <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">
+          Sube el archivo PDF oficial (Formulario CGD-001) de cada carrera para procesar y reflejar automáticamente el día y la hora exacta de inicio y fin de todas las materias en el mapa.
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalHorariosCarreras()">&times;</button>
+    </div>
+
+    <div class="modal-editar-body" style="padding: 20px 24px;">
+      <!-- Banner informativo / éxito -->
+      <div id="banner-feedback-horarios" style="display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 500;"></div>
+
+      <!-- Lista de tarjetas de las 5 carreras -->
+      <div class="carreras-horarios-grid" style="display: flex; flex-direction: column; gap: 14px;">
+        <?php if (!empty($carrerasHorarios)): ?>
+          <?php foreach ($carrerasHorarios as $codCarrera => $cData): ?>
+            <div class="carrera-horario-card" id="card-horario-<?= $codCarrera ?>" style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #ffffff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; transition: all 0.2s ease;">
+              <!-- Info de la carrera -->
+              <div style="display: flex; align-items: center; gap: 14px; min-width: 260px;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: <?= $cData['color'] ?>15; color: <?= $cData['color'] ?>; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+                  <i class="bx <?= esc($cData['icono']) ?>"></i>
+                </div>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <h4 style="margin: 0; font-size: 1rem; color: #0f172a; font-weight: 700;"><?= esc($cData['nombre']) ?></h4>
+                    <span style="font-size: 0.72rem; font-weight: 700; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 6px;"><?= esc($codCarrera) ?></span>
+                  </div>
+                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;"><?= esc($cData['escuela']) ?></div>
+                  <div class="carrera-meta-status" style="margin-top: 5px; font-size: 0.78rem;">
+                    <?php if ($cData['total_clases'] > 0): ?>
+                      <span class="badge-status-ok" style="color: #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="bx bxs-check-circle"></i> <span id="conteo-clases-<?= $codCarrera ?>"><?= $cData['total_clases'] ?></span> bloques sincronizados
+                      </span>
+                      <span style="color: #94a3b8; margin: 0 4px;">•</span>
+                      <span style="color: #64748b;" id="fecha-sync-<?= $codCarrera ?>"><?= esc($cData['ultima_modificacion']) ?></span>
+                    <?php else: ?>
+                      <span class="badge-status-empty" style="color: #d97706; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="bx bx-time-five"></i> Sin horario cargado
+                      </span>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de subida individual -->
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <input type="file" id="file-horario-<?= $codCarrera ?>" accept=".pdf" style="display: none;" onchange="onArchivoCarreraSeleccionado('<?= $codCarrera ?>', this)">
+                <button type="button" class="btn-seleccionar-pdf" onclick="document.getElementById('file-horario-<?= $codCarrera ?>').click()" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                  <i class="bx bx-upload"></i> <span id="label-file-<?= $codCarrera ?>">Seleccionar PDF</span>
+                </button>
+                <button type="button" class="btn-subir-carrera-accion" id="btn-subir-<?= $codCarrera ?>" onclick="subirHorarioCarrera('<?= $codCarrera ?>')" style="background: <?= $cData['color'] ?>; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; opacity: 0.6;" disabled>
+                  <i class="bx bx-sync"></i> Procesar
+                </button>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+    </div>
+
+    <div class="modal-editar-footer" style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 0.8rem; color: #64748b;">Los horarios sincronizados se reflejan automáticamente en el mapa y la disponibilidad de aulas.</span>
+      <button type="button" class="btn-cancelar-modal" onclick="cerrarModalHorariosCarreras()">Cerrar Ventana</button>
+    </div>
+  </div>
+</div>
+
 <?= $this->endSection() ?>

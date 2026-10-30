@@ -171,4 +171,30 @@ class BibliotecaController extends BaseController
         return $this->response->download($rutaAbsoluta, null)
                               ->setFileName($aporte['nombre_original']);
     }
+
+    /**
+     * Visualizador nativo en línea (stream inline sin forzar descarga externa)
+     */
+    public function ver(int $id)
+    {
+        $aporteModel = new AporteBibliotecaModel();
+        $aporte = $aporteModel->find($id);
+
+        if (!$aporte) {
+            return $this->response->setStatusCode(404)->setBody('Archivo no encontrado');
+        }
+
+        $rutaAbsoluta = WRITEPATH . $aporte['ruta_archivo'];
+
+        if (!file_exists($rutaAbsoluta)) {
+            return $this->response->setStatusCode(404)->setBody('El archivo físico no se encuentra en el servidor');
+        }
+
+        $mime = mime_content_type($rutaAbsoluta) ?: 'application/pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', $mime)
+            ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($aporte['nombre_original']) . '"')
+            ->setBody(file_get_contents($rutaAbsoluta));
+    }
 }

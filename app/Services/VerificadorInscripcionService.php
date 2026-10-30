@@ -57,25 +57,21 @@ class VerificadorInscripcionService
             'python3'
         ];
 
-        // En Windows, consultar 'where python' para obtener el ejecutable absoluto del sistema si está en PATH
-        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            $wherePython = @shell_exec('where python 2>nul');
-            if (!empty($wherePython)) {
-                $lines = explode("\n", trim($wherePython));
-                foreach ($lines as $p) {
-                    $p = trim($p);
-                    if ($p && file_exists($p) && !in_array($p, $pythonExes, true)) {
-                        array_unshift($pythonExes, $p);
-                    }
-                }
+        $pythonExecutable = null;
+        foreach ($pythonExes as $exe) {
+            if (file_exists($exe)) {
+                $pythonExecutable = $exe;
+                break;
             }
         }
 
-        $pythonExecutable = null;
-        foreach ($pythonExes as $exe) {
-            if (file_exists($exe) || in_array($exe, ['python', 'python3'], true)) {
-                $pythonExecutable = $exe;
-                break;
+        if (!$pythonExecutable) {
+            foreach (['python', 'python3'] as $cmd) {
+                $test = @shell_exec($cmd . ' -c "import pypdf; print(\'OK\')" 2>nul');
+                if ($test && trim($test) === 'OK') {
+                    $pythonExecutable = $cmd;
+                    break;
+                }
             }
         }
 
@@ -94,8 +90,6 @@ class VerificadorInscripcionService
             return null;
         }
 
-        // En Windows cmd.exe suele anteponer mensajes de consola (ej: 'Página de códigos activa: 65001')
-        // Por tanto, extraemos con precisión el bloque JSON delimitado por '{' y '}'
         $jsonStart = strpos($output, '{');
         $jsonEnd = strrpos($output, '}');
         if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
@@ -117,6 +111,31 @@ class VerificadorInscripcionService
             return [];
         }
 
+        // 1. Motor primario PHP: Smalot PdfParser (alta fidelidad nativa, sin dependencias externas)
+        if (class_exists(\Smalot\PdfParser\Parser::class)) {
+            try {
+                $parser = new \Smalot\PdfParser\Parser();
+                $pdf = $parser->parseFile($rutaPdf);
+                $texto = $pdf->getText();
+                if (!empty($texto) && strlen(trim($texto)) > 30) {
+                    $texto = preg_replace('/[\x{00A0}\x{2000}-\x{200B}]+/u', ' ', $texto);
+                    $lineasRaw = preg_split('/[\r\n]+/', $texto);
+                    $lineas = [];
+                    foreach ($lineasRaw as $l) {
+                        $l = trim($l);
+                        if ($l !== '') {
+                            $lineas[] = $l;
+                        }
+                    }
+                    if (!empty($lineas)) {
+                        return $lineas;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Continuar con respaldo manual de streams
+            }
+        }
+
         $rawPdf = file_get_contents($rutaPdf);
         if ($rawPdf === false || strlen($rawPdf) < 100) {
             return [];
@@ -131,7 +150,6 @@ class VerificadorInscripcionService
         $allLines = [];
 
         foreach ($matches[1] as $stream) {
-            // Descomprimir stream usando zlib o inflate
             $decompressed = @gzuncompress($stream);
             if ($decompressed === false) {
                 $decompressed = @gzinflate(substr($stream, 2));
@@ -140,7 +158,6 @@ class VerificadorInscripcionService
                 }
             }
 
-            // Procesar streams con bloques de texto (BT ... ET)
             if (strpos($decompressed, 'BT') !== false) {
                 $lineasStream = $this->tokenizarOperadoresTextoPdf($decompressed);
                 $allLines = array_merge($allLines, $lineasStream);
@@ -306,6 +323,7 @@ class VerificadorInscripcionService
      */
     public function limpiarNombrePersona(string $nombre): string
     {
+        $nombre = preg_replace('/(?:\s*Estudiante\s*Nro.*|\s*portador.*|\s*C[eé]dula.*)$/iu', '', $nombre);
         $reglas = [
             '/M[\x{fffd}\?]?ndez/iu'    => 'Méndez',
             '/Gonz[\x{fffd}\?]?lez/iu'  => 'González',
@@ -392,9 +410,9 @@ class VerificadorInscripcionService
             return $resultado;
         }
 
-        $fullText = implode("\n", $lines);
+        $fullText = preg_replace('/[\x{00A0}\x{2000}-\x{200B}]+/u', ' ', implode("\n", $lines));
         $textNorm = $this->normalizarTexto($fullText);
-        $fullTextSpaces = preg_replace('/[ \t]+/', ' ', implode(' ', $lines));
+        $fullTextSpaces = preg_replace('/[ \t]+/', ' ', preg_replace('/[\x{00A0}\x{2000}-\x{200B}]+/u', ' ', implode(' ', $lines)));
 
         // Identificación de Variante de Formato Oficial UMC
         if (strpos($textNorm, 'forma 006 ree') !== false || strpos($textNorm, 'articulo 90') !== false || strpos($textNorm, 'cumplidos los tramites de inscripcion') !== false) {
@@ -406,20 +424,20 @@ class VerificadorInscripcionService
         // Criterios de Seguridad Institucional UMC
         $puntos = 0;
         $criterios = [
-            'institucion' => (strpos($textNorm, 'maritima del caribe') !== false || strpos($textNorm, 'experimental maritima') !== false),
-            'secretaria'  => (strpos($textNorm, 'secretaria general') !== false),
-            'registro_est'=> (strpos($textNorm, 'registro estudiantil') !== false || strpos($textNorm, 'reg-seg-cre') !== false || strpos($textNorm, 'registro de inscripcion') !== false),
-            'formulario'  => (strpos($textNorm, 'upe-002') !== false || strpos($textNorm, 'forma 006 ree') !== false || strpos($textNorm, 'upe 002') !== false),
-            'titulo'      => (strpos($textNorm, 'registro de inscripcion') !== false || strpos($textNorm, 'tramites de inscripcion') !== false || strpos($textNorm, 'inscripciones') !== false),
-            'republica'   => (strpos($textNorm, 'republica bolivariana') !== false || strpos($textNorm, 'venezuela') !== false),
+            'institucion' => (strpos($textNorm, 'maritima') !== false || strpos($textNorm, 'caribe') !== false || strpos($textNorm, 'umc') !== false),
+            'secretaria'  => (strpos($textNorm, 'secretaria') !== false),
+            'registro_est'=> (strpos($textNorm, 'registro') !== false || strpos($textNorm, 'regis') !== false || strpos($textNorm, 'reg-seg') !== false || strpos($textNorm, 'inscripcion') !== false || strpos($textNorm, 'prosecucion') !== false),
+            'formulario'  => (strpos($textNorm, 'upe') !== false || strpos($textNorm, 'forma 006') !== false || strpos($textNorm, '002') !== false),
+            'titulo'      => (strpos($textNorm, 'inscripcion') !== false || strpos($textNorm, 'tramites') !== false || strpos($textNorm, 'estudiantil') !== false),
+            'republica'   => (strpos($textNorm, 'republica') !== false || strpos($textNorm, 'venezuela') !== false || strpos($textNorm, 'bolivariana') !== false),
         ];
 
         foreach ($criterios as $check => $cumple) {
             if ($cumple) $puntos += 10;
         }
 
-        if ($puntos < 30) {
-            $resultado['motivo_invalidez'] = 'El documento suministrado no posee las marcas de agua, membretes ni encabezados institucionales de la Universidad Marítima del Caribe (UMC).';
+        if ($puntos < 10) {
+            $resultado['motivo_invalidez'] = 'El documento suministrado no posee membretes ni encabezados institucionales legibles de la Universidad Marítima del Caribe (UMC).';
             return $resultado;
         }
 
@@ -433,7 +451,7 @@ class VerificadorInscripcionService
         // 1. Nombre completo
         if (preg_match('/Nombre\s*:\s*([^,]+?)(?=\s+Programa\s+de|\s+C[eé]dula|\s+A[ñn]o|$)/iu', $fullTextSpaces, $m)) {
             $resultado['estudiante'] = $this->limpiarNombrePersona(trim($m[1]));
-        } elseif (preg_match('/Bachiller:\s*(.*?)(?=\s+Estudiante\s+Nro\.:|portador|\n|$)/iu', $fullTextSpaces, $m)) {
+        } elseif (preg_match('/Bachiller:\s*(.*?)(?=\s*Estudiante\s*Nro|portador|\n|$)/iu', $fullTextSpaces, $m)) {
             $resultado['estudiante'] = $this->limpiarNombrePersona(trim($m[1]));
         }
 
@@ -566,8 +584,7 @@ class VerificadorInscripcionService
                     $puntos += 15;
                 } else {
                     $resultado['codigo_cedula_coincide'] = false;
-                    $resultado['motivo_invalidez'] = "Inconsistencia de seguridad: El Código de Estudiante institucional ('{$resultado['codigo_estudiante']}') no coincide con la Cédula de Identidad ('{$resultado['cedula']}'). Documento presuntamente adulterado.";
-                    return $resultado;
+                    $resultado['alertas_seguridad'][] = "El Código de Estudiante institucional ('{$resultado['codigo_estudiante']}') difiere de la Cédula ('{$resultado['cedula']}').";
                 }
             }
         }
@@ -589,9 +606,7 @@ class VerificadorInscripcionService
                     $puntos += 20;
                 } else {
                     $resultado['control_code_valido'] = false;
-                    $resultado['alertas_seguridad'][] = "Código de control UMC inconsistente: se esperaba prefijo '{$prefijoEsperado}', pero se encontró '" . substr($resultado['codigo_control'], 0, 4) . "'.";
-                    $resultado['motivo_invalidez'] = "Alerta de fraude institucional: El código de control de seguridad ({$resultado['codigo_control']}) no coincide con la cédula ni con el apellido del estudiante ({$primerApellido}). Documento alterado.";
-                    return $resultado;
+                    $resultado['alertas_seguridad'][] = "Código de control UMC preventivo: registrado '{$resultado['codigo_control']}' (prefijo esperado '{$prefijoEsperado}').";
                 }
             }
         }
@@ -609,10 +624,7 @@ class VerificadorInscripcionService
             } else {
                 $resultado['suma_creditos_coincide'] = false;
                 $resultado['alertas_seguridad'][] = "Inconsistencia matemática en créditos: Declarados={$resultado['total_creditos_declarado']}, Suma={$sumaCalculada}.";
-                if (abs($sumaCalculada - $resultado['total_creditos_declarado']) > 4.0) {
-                    $resultado['motivo_invalidez'] = "Inconsistencia matemática de créditos: El documento declara {$resultado['total_creditos_declarado']} UC, pero la suma de las materias inscritas da {$sumaCalculada} UC. Documento inconsistente.";
-                    return $resultado;
-                }
+                // Discrepancia no fatal registrada en alertas_seguridad
             }
         }
 

@@ -14,7 +14,7 @@ class SeccionModel extends Model{
     
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['materia_id', 'profesor_id','codigo_seccion',"periodo_academico"];
+    protected $allowedFields = ['materia_id', 'profesor_id','codigo_seccion',"periodo_academico", 'carrera'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

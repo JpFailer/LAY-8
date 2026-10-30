@@ -13,7 +13,7 @@ class ClaseProgramadaModel extends Model{
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['seccion_id', 'estudiante_id', 'aula', 'dia_semana', 'hora_inicio', 'hora_fin'];
+    protected $allowedFields = ['seccion_id', 'estudiante_id', 'aula', 'carrera', 'dia_semana', 'hora_inicio', 'hora_fin'];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;

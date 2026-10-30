@@ -150,12 +150,19 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
 
         <div class="form-row">
           <div class="form-col">
-            <label class="form-label">Correo Electrónico</label>
-            <input type="email" name="correo" class="input-global" value="<?= old('correo') ?>" required>
+            <label class="form-label">Cédula de Identidad *</label>
+            <input type="text" name="cedula" class="input-global" placeholder="Ej: 31131073" value="<?= old('cedula') ?>" required pattern="[0-9]{6,10}" title="Ingresa entre 6 y 10 dígitos numéricos">
           </div>
           <div class="form-col">
+            <label class="form-label">Correo Electrónico *</label>
+            <input type="email" name="correo" class="input-global" value="<?= old('correo') ?>" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-col">
             <label class="form-label">Teléfono (Opc.)</label>
-            <input type="text" name="telefono" class="input-global" value="<?= old('telefono') ?>">
+            <input type="text" name="telefono" class="input-global" value="<?= old('telefono') ?>" placeholder="Ej: 04121234567">
           </div>
         </div>
 

@@ -12,6 +12,9 @@
                 var tema = localStorage.getItem('lay8_theme');
                 if (tema === 'dark') {
                     document.documentElement.classList.add('dark-mode');
+                    document.addEventListener('DOMContentLoaded', function() {
+                        document.body.classList.add('dark-mode');
+                    });
                 }
             } catch(e) {}
         })();
@@ -350,6 +353,69 @@
             background-color: #172554;
             border-left-color: #3b82f6;
             color: #93c5fd;
+        }
+    
+        /* Soporte integral de Modo Oscuro (Revisión Haryerit) */
+        body.dark-mode, html.dark-mode body {
+            background: #0b1329 !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode .contenedor-subida, html.dark-mode .contenedor-subida {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.6) !important;
+        }
+
+        body.dark-mode .header-subida h2, html.dark-mode .header-subida h2 {
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode .header-subida p, html.dark-mode .header-subida p {
+            color: #94a3b8 !important;
+        }
+
+        body.dark-mode .btn-volver, html.dark-mode .btn-volver {
+            background: #1e293b !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+        }
+
+        body.dark-mode .btn-volver:hover, html.dark-mode .btn-volver:hover {
+            background: #334155 !important;
+        }
+
+        body.dark-mode .form-label, html.dark-mode .form-label {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .input-texto, html.dark-mode .input-texto,
+        body.dark-mode .select-estilo, html.dark-mode .select-estilo {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        body.dark-mode .zona-arrastre, html.dark-mode .zona-arrastre {
+            background: #1e293b !important;
+            border-color: #475569 !important;
+        }
+
+        body.dark-mode .zona-arrastre p, html.dark-mode .zona-arrastre p {
+            color: #cbd5e1 !important;
+        }
+
+        body.dark-mode .zona-arrastre span, html.dark-mode .zona-arrastre span {
+            color: #94a3b8 !important;
+        }
+
+        body.dark-mode .tarjeta-archivo, html.dark-mode .tarjeta-archivo {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        body.dark-mode .tarjeta-archivo .nombre-archivo, html.dark-mode .tarjeta-archivo .nombre-archivo {
+            color: #f8fafc !important;
         }
     </style>
 </head>
