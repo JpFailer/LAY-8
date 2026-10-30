@@ -289,7 +289,7 @@
                   </td>
                   <td><span class="badge-categoria-tag"><?= ucfirst(esc($ap['categoria'])) ?></span></td>
                   <td>
-                    <?php $autor = $ap['autor_usuario'] ?? $ap['nombre_usuario'] ?? null; ?>
+                    <?php $autor = $ap['nombre_usuario'] ?? $ap['autor_usuario'] ?? null; ?>
                     <?php if (!empty($autor)): ?>
                       @<?= esc($autor) ?>
                     <?php else: ?>
@@ -297,7 +297,7 @@
                     <?php endif; ?>
                   </td>
                   <td><?= round(($ap['tamano_bytes'] ?? 0) / 1024, 1) ?> KB</td>
-                  <td><?= !empty($ap['fecha_subida']) ? date('d/m/Y', strtotime($ap['fecha_subida'])) : (!empty($ap['created_at']) ? date('d/m/Y', strtotime($ap['created_at'])) : 'N/D') ?></td>
+                  <td><?= !empty($ap['fecha_subida']) ? date('d/m/Y', strtotime($ap['fecha_subida'])) : (!empty($ap['created_at']) ? date('d/m/Y', strtotime($ap['created_at'])) : 'Reciente') ?></td>
                   <td style="text-align: right;">
                     <div class="acciones-btn-group">
                       <a href="<?= base_url('biblioteca/descargar/' . $ap['id']) ?>" class="btn-accion-admin btn-descargar" target="_blank" title="Descargar comprobante">

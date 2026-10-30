@@ -188,7 +188,7 @@
 </div>
 
 <script>
-    const BASE_URL = '<?= base_url() ?>';
+    const BASE_URL = '<?= rtrim(base_url(), "/") ?>/';
 
     // =========================================================================
     // 1. MOTOR DE VISTA COMPLETA, ZOOM CENTRADO Y PANNING MATEMÁTICO

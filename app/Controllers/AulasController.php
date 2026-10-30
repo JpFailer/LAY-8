@@ -195,7 +195,18 @@ class AulasController extends BaseController
             $analisis = $verificador->verificar($rutaCompleta);
 
             if ($analisis['es_valido'] && !empty($analisis['materias'])) {
-                // Es un Registro de Inscripción UMC oficial (UPE-002)
+                // Comprobación de Titularidad: Cotejo de Cédula con la cuenta del usuario en sesión
+                $usuarioModel = new \App\Models\UsuarioModel();
+                $usuario = $usuarioModel->find($usuarioId);
+                $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
+                $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
+
+                if (!empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
+                    @unlink($rutaCompleta);
+                    return redirect()->back()->with('error', "Seguridad UMC: El documento pertenece a la cédula {$cedulaPdf}, la cual no coincide con tu usuario ({$cedulaUsuario}).");
+                }
+
+                // Es un Registro de Inscripción UMC oficial (UPE-002 o Forma 006 REE)
                 $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo']);
                 @unlink($rutaCompleta);
 
@@ -207,9 +218,8 @@ class AulasController extends BaseController
             $textoCompleto = implode(' ', $textoLineas);
 
             if (preg_match('/HORARIO\s+ACAD[EÉ]MICO/i', $textoCompleto) || preg_match('/CGD-001/i', $textoCompleto)) {
-                // Ejecutar sincronización de clases de referencia
                 @unlink($rutaCompleta);
-                return redirect()->to('/aulas')->with('mensaje', '¡Horario Académico UMC detectado! Tus bloques de asignaturas han sido actualizados con éxito.');
+                return redirect()->to('/aulas')->with('error', 'El documento adjunto es un Horario Académico General institucional (CGD-001). Los horarios generales son configurados por el Administrador. Para sincronizar tus asignaturas debes subir tu Registro de Inscripción Estudiantil individual (Formato Web UPE-002 o Forma 006).');
             }
 
             @unlink($rutaCompleta);
@@ -282,9 +292,13 @@ class AulasController extends BaseController
             return redirect()->back()->with('error', 'Ya existe un bloque de clase asignado en este mismo día y horario para esta materia.');
         }
 
+        $seccionData = $db->table('secciones')->where('id', $seccionId)->get()->getRowArray();
+        $carreraBloque = $seccionData['carrera'] ?? (session('carrera') ?: 'ING-INF');
+
         $claseModel->insert([
             'seccion_id'    => $seccionId,
             'estudiante_id' => ($estaInscrito > 0) ? $usuarioId : null,
+            'carrera'       => $carreraBloque,
             'dia_semana'    => $diaSemana,
             'hora_inicio'   => $horaInicio,
             'hora_fin'      => $horaFin,
