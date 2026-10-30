@@ -674,8 +674,16 @@ class VerificadorInscripcionService
     /**
      * Inscribe automáticamente al estudiante en las materias y secciones detectadas
      * vinculándolo con las aulas y horarios correspondientes en la plataforma.
+     *
+     * @param int         $usuarioId
+     * @param array       $materias
+     * @param string|null $periodo
+     * @param bool        $reemplazarPrevias Si es true (por defecto), limpia inscripciones
+     *                                       anteriores del alumno para que el nuevo documento
+     *                                       sea el estado definitivo de su carga académica.
+     * @return int
      */
-    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null): int
+    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null, bool $reemplazarPrevias = true): int
     {
         if ($usuarioId <= 0 || empty($materias)) {
             return 0;
@@ -688,6 +696,18 @@ class VerificadorInscripcionService
 
         $periodo = !empty($periodo) ? $periodo : date('Y') . '-01';
         $inscripcionesRealizadas = 0;
+
+        // Si se solicita reemplazar previas (comportamiento oficial al actualizar semestre/carga académica):
+        // Se limpian las inscripciones anteriores del alumno y sus bloques personales para evitar acumulación
+        if ($reemplazarPrevias) {
+            $db->table('inscripciones')
+               ->where('estudiante_id', $usuarioId)
+               ->delete();
+
+            $db->table('clases_programadas')
+               ->where('estudiante_id', $usuarioId)
+               ->delete();
+        }
 
         // Horarios estándar para distribuir materias iniciales si no tienen horario programado
         $diasSemanales = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
@@ -705,25 +725,57 @@ class VerificadorInscripcionService
             $creditos      = (int) ($mat['creditos'] ?? 3);
             $semestre      = (int) ($mat['semestre'] ?? 1);
 
-            // 1. Asegurar existencia de la materia
-            $materiaExistente = $materiaModel->where('codigo_materia', $codigoMateria)->first();
+            // 1. Variantes de código (ej. 'CAL-604' y 'CAL604') para sincronizar con el Horario CGD-001
+            $codigoConGuion = preg_replace('/^([A-Z]{3})-?(\d{3})$/i', '$1-$2', $codigoMateria);
+            $codigoSinGuion = str_replace(['-', ' '], '', $codigoMateria);
+            $codigosBuscar   = array_unique([$codigoMateria, $codigoConGuion, $codigoSinGuion]);
+
+            $materiaExistente = $materiaModel->whereIn('codigo_materia', $codigosBuscar)->first();
             if (!$materiaExistente) {
                 $materiaId = $materiaModel->insert([
-                    'codigo_materia'    => $codigoMateria,
+                    'codigo_materia'    => $codigoConGuion,
                     'nombre'            => $nombreMateria,
                     'unidades_credito'  => $creditos,
                     'semestre_trayecto' => $semestre
                 ], true);
             } else {
                 $materiaId = $materiaExistente['id'];
+                if (!empty($nombreMateria) && strlen($nombreMateria) > strlen($materiaExistente['nombre'])) {
+                    $materiaModel->update($materiaId, ['nombre' => $nombreMateria]);
+                }
             }
 
             if (!$materiaId) continue;
 
-            // 2. Asegurar existencia de la sección para esa materia
+            // 2. Normalización de Sección y Período para enlazar con las clases oficiales del mapa
+            $letraSeccion = $seccionCodigo;
+            if (preg_match('/^SVC-([A-Z])(?:-.*)?$/i', $seccionCodigo, $mSec)) {
+                $letraSeccion = strtoupper($mSec[1]);
+            }
+            $seccionesBuscar = array_unique([$seccionCodigo, $letraSeccion]);
+
+            $periodosBuscar = [$periodo];
+            if (preg_match('/^(\d{4})-01$/', $periodo, $mPer)) {
+                $periodosBuscar[] = $mPer[1] . '-I';
+                $periodosBuscar[] = $mPer[1] . '-1';
+            } elseif (preg_match('/^(\d{4})-02$/', $periodo, $mPer)) {
+                $periodosBuscar[] = $mPer[1] . '-II';
+                $periodosBuscar[] = $mPer[1] . '-2';
+            } elseif (preg_match('/^(\d{4})-I$/i', $periodo, $mPer)) {
+                $periodosBuscar[] = $mPer[1] . '-01';
+            }
+
             $seccionExistente = $seccionModel->where('materia_id', $materiaId)
-                                             ->where('codigo_seccion', $seccionCodigo)
+                                             ->whereIn('codigo_seccion', $seccionesBuscar)
+                                             ->whereIn('periodo_academico', $periodosBuscar)
                                              ->first();
+
+            if (!$seccionExistente) {
+                $seccionExistente = $seccionModel->where('materia_id', $materiaId)
+                                                 ->whereIn('codigo_seccion', $seccionesBuscar)
+                                                 ->first();
+            }
+
             if (!$seccionExistente) {
                 $seccionId = $seccionModel->insert([
                     'materia_id'        => $materiaId,
@@ -751,7 +803,7 @@ class VerificadorInscripcionService
                 $inscripcionesRealizadas++;
             }
 
-            // 4. Asegurar que exista al menos una clase programada con aula para ver en mapa
+            // 4. Solo si NO existe ninguna clase programada para esta sección ni con aula asignada
             $tieneClase = $claseModel->where('seccion_id', $seccionId)->first();
             if (!$tieneClase) {
                 $bloque = $bloquesHoras[$index % count($bloquesHoras)];

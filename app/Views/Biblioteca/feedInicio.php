@@ -152,7 +152,7 @@
                     <div class="tarjeta-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                         <span class="peso-badge"><?= strtoupper($ext) ?> • <?= $pesoTexto ?></span>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <button type="button" class="btn-leer-aporte" onclick="abrirLectorAporte(<?= $aporte['id'] ?>, '<?= esc($aporte['titulo']) ?>', '<?= base_url('biblioteca/ver/' . $aporte['id']) ?>')" style="background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                            <button type="button" class="btn-leer-aporte" data-id="<?= $aporte['id'] ?>" data-titulo="<?= esc($aporte['titulo']) ?>" data-url="<?= base_url('biblioteca/ver/' . $aporte['id']) ?>" onclick="abrirLectorAporte(this.dataset.id, this.dataset.titulo, this.dataset.url)" style="background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
                                 <i class="bx bx-book-open"></i> Leer
                             </button>
                             <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="marcarAporteDescargado(<?= $aporte['id'] ?>)">
@@ -204,7 +204,7 @@
     function abrirLectorAporte(id, titulo, url) {
         document.getElementById('titulo-lector-doc').textContent = titulo;
         document.getElementById('iframe-visor-doc').src = url;
-        document.getElementById('btn-descargar-desde-visor').href = '<?= base_url('biblioteca/descargar/') ?>/' + id;
+        document.getElementById('btn-descargar-desde-visor').href = '<?= base_url('biblioteca/descargar') ?>/' + id;
         document.getElementById('modal-lector-biblioteca').style.display = 'flex';
     }
 

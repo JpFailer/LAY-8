@@ -32,7 +32,7 @@ class AporteBibliotecaModel extends Model
      */
     public function obtenerTodosConUsuario(?string $categoria = null, ?string $busqueda = null)
     {
-        $builder = $this->select('aportes_biblioteca.*, usuarios.nombre_usuario, usuarios.primer_nombre, usuarios.apellidos, usuarios.correo')
+        $builder = $this->select('aportes_biblioteca.*, usuarios.nombre_usuario, usuarios.nombre_usuario as autor_usuario, usuarios.primer_nombre, usuarios.apellidos, usuarios.correo')
                         ->join('usuarios', 'usuarios.id = aportes_biblioteca.usuario_id', 'left')
                         ->orderBy('aportes_biblioteca.fecha_subida', 'DESC');
 

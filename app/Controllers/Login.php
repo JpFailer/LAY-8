@@ -77,6 +77,7 @@ class Login extends BaseController
                 'primer_nombre'       => $usuario['primer_nombre'],
                 'apellidos'           => $usuario['apellidos'],
                 'correo'              => $usuario['correo'] ?? '',
+                'cedula'              => $usuario['cedula'] ?? '',
                 'rol'                 => $usuario['rol'],
                 'carrera'             => $usuario['carrera'] ?? 'ING-INF',
                 'estado_verificacion' => $usuario['estado_verificacion'],
@@ -200,6 +201,15 @@ class Login extends BaseController
         }
 
         // Validar concordancia de titular para evitar que suban el documento de otro estudiante
+        $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
+        $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
+        if (!empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
+            return $this->response->setJSON([
+                'exito' => false,
+                'mensaje' => "Alerta de Seguridad: La cédula del comprobante ({$cedulaPdf}) no coincide con la cédula registrada en la cuenta solicitada ({$cedulaUsuario})."
+            ]);
+        }
+
         if (!empty($analisis['estudiante'])) {
             $norm = function(string $s): string {
                 $s = mb_strtolower(trim($s), 'UTF-8');

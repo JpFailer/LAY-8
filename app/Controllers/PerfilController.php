@@ -114,6 +114,13 @@ class PerfilController extends BaseController
                 return redirect()->back()->with('error', 'Certificación denegada: ' . ($analisis['motivo_invalidez'] ?? 'El documento no superó los controles de seguridad institucionales.'));
             }
 
+            // Comprobación de Titularidad: Cotejo estricto Cédula usuario vs Cédula oficial en el PDF UMC
+            $cedulaPdfDetectada = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
+            $cedulaUsuario = preg_replace('/\D/', '', (string)($usuarioActual['cedula'] ?? ''));
+            if (!empty($cedulaPdfDetectada) && !empty($cedulaUsuario) && $cedulaPdfDetectada !== $cedulaUsuario) {
+                return redirect()->back()->with('error', "Seguridad UMC: La cédula del comprobante ({$cedulaPdfDetectada}) no coincide con la de tu cuenta ({$cedulaUsuario}).");
+            }
+
             $datosActualizar['carrera'] = $analisis['carrera_codigo'];
             session()->set('carrera', $analisis['carrera_codigo']);
 

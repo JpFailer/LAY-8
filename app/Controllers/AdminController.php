@@ -39,7 +39,7 @@ class AdminController extends BaseController
 
         // 3. Usuarios registrados (últimos 100)
         $usuarios = $this->usuarioModel
-            ->select('id, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
+            ->select('id, cedula, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
             ->orderBy('id', 'DESC')
             ->findAll(100);
 
@@ -221,7 +221,7 @@ class AdminController extends BaseController
     public function solicitudesProfesores()
     {
         $solicitudes = $this->usuarioModel
-            ->select('id, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, estado_verificacion, ruta_carnet, fecha_registro')
+            ->select('id, cedula, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, carrera, estado_verificacion, ruta_carnet, fecha_registro')
             ->where('estado_verificacion', 'pendiente')
             ->orderBy('id', 'ASC')
             ->findAll();
@@ -409,7 +409,7 @@ class AdminController extends BaseController
     public function detalleUsuario(int $id)
     {
         $usuario = $this->usuarioModel
-            ->select('id, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, estado_verificacion, ruta_carnet, estado_cuenta, motivo_baneo, baneado_en, fecha_registro, ultimo_acceso')
+            ->select('id, cedula, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, carrera, estado_verificacion, ruta_carnet, estado_cuenta, motivo_baneo, baneado_en, fecha_registro, ultimo_acceso')
             ->find($id);
 
         if (!$usuario) {
@@ -576,6 +576,8 @@ class AdminController extends BaseController
         $db = \Config\Database::connect();
         $borrarAportes = $this->request->getPost('borrar_aportes') === 'true';
 
+        $db->transStart();
+
         // 1. Limpiar notificaciones asociadas
         try {
             $db->table('notificaciones')
@@ -591,7 +593,15 @@ class AdminController extends BaseController
                ->delete();
         } catch (\Throwable $e) {}
 
-        // 3. Limpiar o anonimizar aportes de biblioteca
+        // 3. Limpiar interacciones en feed y aulas
+        try {
+            $db->table('noticias_likes')->where('usuario_id', $id)->delete();
+            $db->table('noticias_comentarios')->where('usuario_id', $id)->delete();
+            $db->table('actividades_estudiante_estado')->where('estudiante_id', $id)->delete();
+            $db->table('estados_clase_profesor')->where('profesor_id', $id)->delete();
+        } catch (\Throwable $e) {}
+
+        // 4. Limpiar o anonimizar aportes de biblioteca
         $aporteModel = new AporteBibliotecaModel();
         try {
             if ($borrarAportes) {
@@ -612,8 +622,9 @@ class AdminController extends BaseController
             }
         } catch (\Throwable $e) {}
 
-        // 4. Eliminar el usuario físicamente
+        // 5. Eliminar el usuario físicamente
         $this->usuarioModel->delete($id);
+        $db->transComplete();
 
         $this->auditoriaModel->registrar(
             $this->adminId,
