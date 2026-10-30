@@ -709,14 +709,6 @@ class VerificadorInscripcionService
                ->delete();
         }
 
-        // Horarios estándar para distribuir materias iniciales si no tienen horario programado
-        $diasSemanales = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
-        $bloquesHoras  = [
-            ['inicio' => '08:00:00', 'fin' => '09:30:00', 'aula' => 'Aula 56'],
-            ['inicio' => '09:30:00', 'fin' => '11:00:00', 'aula' => 'Aula 57'],
-            ['inicio' => '11:00:00', 'fin' => '12:45:00', 'aula' => 'Aula 58'],
-            ['inicio' => '13:30:00', 'fin' => '15:00:00', 'aula' => 'Laboratorio de Info 1'],
-        ];
 
         foreach ($materias as $index => $mat) {
             $codigoMateria = trim($mat['codigo']);
@@ -806,22 +798,6 @@ class VerificadorInscripcionService
                     'seccion_id'    => $seccionId
                 ]);
                 $inscripcionesRealizadas++;
-            }
-
-            // 4. Solo si NO existe ninguna clase programada para esta sección ni con aula asignada
-            $tieneClase = $claseModel->where('seccion_id', $seccionId)->first();
-            if (!$tieneClase) {
-                $bloque = $bloquesHoras[$index % count($bloquesHoras)];
-                $dia    = $diasSemanales[$index % count($diasSemanales)];
-                $claseModel->insert([
-                    'seccion_id'    => $seccionId,
-                    'estudiante_id' => null,
-                    'aula'          => $bloque['aula'],
-                    'carrera'       => $carreraFinal,
-                    'dia_semana'    => $dia,
-                    'hora_inicio'   => $bloque['inicio'],
-                    'hora_fin'      => $bloque['fin']
-                ]);
             }
         }
 
