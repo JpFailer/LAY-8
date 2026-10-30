@@ -402,7 +402,7 @@
           <tbody>
             <?php foreach ($auditoria as $log): ?>
               <tr>
-                <td><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></td>
+                <td><?= !empty($log['created_at']) ? date('d/m/Y H:i:s', strtotime($log['created_at'])) : 'N/D' ?></td>
                 <td>
                   <strong>@<?= esc($log['admin_username'] ?? 'Sistema') ?></strong>
                 </td>

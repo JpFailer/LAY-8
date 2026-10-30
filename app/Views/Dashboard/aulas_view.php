@@ -8,9 +8,6 @@
         <div>
             <h2 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                 <i class="bx bx-door-open"></i> Aulas y Cronograma Académico
-                <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('aulas')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.25rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                    <i class="bx bx-help-circle"></i>
-                </button>
             </h2>
         </div>
         <div class="aulas-header-acciones">
@@ -189,14 +186,14 @@
             <div class="toolbar-info">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                     <i class="bx bx-calendar-event"></i> Horario Académico Personal
-                    <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('horario')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                        <i class="bx bx-help-circle"></i>
-                    </button>
                 </h3>
             </div>
             <div class="toolbar-botones">
                 <button type="button" class="btn-imprimir-horario" onclick="window.print()">
                     <i class="bx bx-printer"></i> Imprimir Horario
+                </button>
+                <button type="button" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario()" title="Borrar todos los bloques de mi horario para empezar de nuevo">
+                    <i class="bx bx-trash" style="color: #ef4444;"></i> Limpiar Mi Horario
                 </button>
             </div>
         </div>
@@ -240,7 +237,7 @@
                                         ?>
                                         <?php if (!empty($clasesEncontradas)): ?>
                                             <?php foreach ($clasesEncontradas as $item): ?>
-                                                <div class="bloque-clase-card">
+                                                <div class="bloque-clase-card" id="bloque-card-<?= (int)$item['id'] ?>">
                                                     <div class="bloque-codigo"><?= esc($item['codigo']) ?> (<?= esc($item['seccion']) ?>)</div>
                                                     <div class="bloque-materia"><?= esc($item['materia']) ?></div>
                                                     <div class="bloque-aula">
@@ -248,12 +245,7 @@
                                                             <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>
                                                         </a>
                                                     </div>
-                                                    <?php if (!empty($item['es_personal'])): ?>
-                                                        <form method="post" action="<?= base_url('aulas/eliminar-bloque/' . $item['id']) ?>" onsubmit="return confirm('¿Eliminar este bloque personal de horario?')">
-                                                            <?= csrf_field() ?>
-                                                            <button type="submit" class="btn-borrar-bloque" title="Eliminar bloque manual">&times;</button>
-                                                        </form>
-                                                    <?php endif; ?>
+                                                    <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -275,9 +267,6 @@
             <div class="toolbar-info">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                     <i class="bx bx-list-check"></i> Cronograma de Actividades y Tareas
-                    <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('cronograma')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                        <i class="bx bx-help-circle"></i>
-                    </button>
                 </h3>
             </div>
             <div class="filtros-actividades-chips">
@@ -404,7 +393,7 @@
                 </div>
 
                 <?php if (!empty($secciones) && count($secciones) > 0): ?>
-                    <form action="<?= base_url('aulas/guardar-bloque-manual') ?>" method="post" class="formulario-estilo-lay8">
+                    <form action="<?= base_url('aulas/guardar-bloque-manual') ?>" method="post" id="formArmarHorarioManual" class="formulario-estilo-lay8">
                         <?= csrf_field() ?>
 
                         <!-- Materia (Filtrada a las inscritas por el estudiante) -->
@@ -431,21 +420,50 @@
                             </select>
                         </div>
 
-                        <!-- Bloques Oficiales UMC (Mañana, Tarde, Noche) -->
+                        <!-- Bloques Oficiales UMC (Multi-selección continua) -->
                         <div class="campo-grupo">
-                            <label for="bloque_horas"><i class="bx bx-time"></i> Bloque Horario Oficial UMC:</label>
-                            <select name="bloque_horas" id="bloque_horas" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona el intervalo de horas --</option>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <label style="margin: 0;"><i class="bx bx-time"></i> Bloques Horarios UMC (Selección Múltiple):</label>
+                                <span class="subtexto-bloques-info">Puedes marcar 2 o más bloques continuos</span>
+                            </div>
+
+                            <!-- Filtros rápidos por Turno -->
+                            <div class="selector-turnos-bloques">
+                                <button type="button" class="btn-turno-filtro activo" data-filtro-turno="todos" onclick="filtrarTurnosBloques('todos')">Todos</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Mañana" onclick="filtrarTurnosBloques('Mañana')">☀️ Mañana</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Tarde" onclick="filtrarTurnosBloques('Tarde')">⛅ Tarde</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Noche" onclick="filtrarTurnosBloques('Noche')">🌙 Noche</button>
+                            </div>
+
+                            <!-- Cuadrícula interactiva de bloques horarios -->
+                            <div class="grid-bloques-selector" id="gridBloquesSelector">
+                                <?php $bIdx = 0; ?>
                                 <?php foreach ($bloquesOficiales as $turno => $bloques): ?>
-                                    <optgroup label="Turno <?= esc($turno) ?>">
-                                        <?php foreach ($bloques as $b): ?>
-                                            <option value="<?= $b['inicio'] ?>|<?= $b['fin'] ?>">
-                                                <?= esc($b['etiqueta']) ?> (<?= esc($turno) ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
+                                    <?php foreach ($bloques as $b): ?>
+                                        <?php $bIdx++; ?>
+                                        <label class="card-bloque-check" data-turno="<?= esc($turno) ?>">
+                                            <input type="checkbox" name="bloques_horas[]" value="<?= $b['inicio'] ?>|<?= $b['fin'] ?>" class="chk-bloque-hora" onchange="actualizarResumenBloques()">
+                                            <span class="bloque-hora-badge">B<?= $bIdx ?></span>
+                                            <span class="bloque-hora-tiempo"><?= esc($b['etiqueta']) ?></span>
+                                            <span class="bloque-hora-turno"><?= esc($turno) ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
                                 <?php endforeach; ?>
-                            </select>
+                            </div>
+
+                            <!-- Barra de Resumen dinámico -->
+                            <div class="barra-resumen-bloques" id="resumenBloquesBarra" style="display: none;">
+                                <div class="info-bloques-seleccionados">
+                                    <i class="bx bx-check-circle" style="color: #16a34a; font-size: 1.25rem;"></i>
+                                    <div>
+                                        <strong id="lblTotalBloques">0 bloques</strong> seleccionados
+                                        <span class="rango-horas-calculado" id="lblRangoHoras"></span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-limpiar-seleccion-bloques" onclick="deseleccionarTodosBloques()">
+                                    <i class="bx bx-x"></i> Desmarcar
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Aula Física del Campus -->
@@ -459,8 +477,8 @@
                             </select>
                         </div>
 
-                        <button type="submit" class="btn-cta-submit">
-                            <i class="bx bx-plus-circle"></i> Agregar Bloque al Horario
+                        <button type="submit" class="btn-cta-submit" id="btnSubmitArmarHorario">
+                            <i class="bx bx-plus-circle"></i> Agregar Bloques al Horario
                         </button>
                     </form>
                 <?php else: ?>
@@ -537,7 +555,7 @@
 <script>
     const BASE_URL = '<?= base_url() ?>';
 
-    // 1. Cambio de Pestañas
+    // 1. Cambio de Pestañas y Persistencia en URL (para que no te saque de la página)
     function cambiarTabAulas(tabId) {
         document.querySelectorAll('.tab-contenido-aulas').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.filtros-categorias .btn-filtro').forEach(b => b.classList.remove('activo'));
@@ -547,6 +565,211 @@
 
         if (seccionTarget) seccionTarget.style.display = 'block';
         if (btnTarget) btnTarget.classList.add('activo');
+
+        // Persistir la pestaña en los parámetros de la URL sin recargar la página
+        try {
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tabId);
+            window.history.replaceState({}, '', url);
+        } catch (e) {}
+    }
+
+    // Inicializar pestaña activa según la URL al cargar
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabSolicitada = urlParams.get('tab');
+        if (tabSolicitada && document.getElementById('tab-seccion-' + tabSolicitada)) {
+            cambiarTabAulas(tabSolicitada);
+        }
+    });
+
+    // Filtro rápido de turnos en el selector de bloques
+    function filtrarTurnosBloques(turno) {
+        document.querySelectorAll('.selector-turnos-bloques .btn-turno-filtro').forEach(b => {
+            b.classList.toggle('activo', b.getAttribute('data-filtro-turno') === turno);
+        });
+
+        document.querySelectorAll('#gridBloquesSelector .card-bloque-check').forEach(card => {
+            if (turno === 'todos' || card.getAttribute('data-turno') === turno) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // Resumen dinámico de bloques seleccionados
+    function actualizarResumenBloques() {
+        const checked = Array.from(document.querySelectorAll('.chk-bloque-hora:checked'));
+        const barra = document.getElementById('resumenBloquesBarra');
+        const lblTotal = document.getElementById('lblTotalBloques');
+        const lblRango = document.getElementById('lblRangoHoras');
+
+        // Actualizar clase visual en cards
+        document.querySelectorAll('.card-bloque-check').forEach(c => {
+            const chk = c.querySelector('input[type="checkbox"]');
+            c.classList.toggle('seleccionado', chk && chk.checked);
+        });
+
+        if (checked.length === 0) {
+            if (barra) barra.style.display = 'none';
+            return;
+        }
+
+        if (barra) barra.style.display = 'flex';
+        if (lblTotal) lblTotal.textContent = checked.length + (checked.length === 1 ? ' bloque' : ' bloques');
+
+        // Ordenar horas seleccionadas
+        const horas = checked.map(c => {
+            const parts = c.value.split('|');
+            return { inicio: parts[0], fin: parts[1] };
+        }).sort((a, b) => a.inicio.localeCompare(b.inicio));
+
+        const minInicio = horas[0].inicio.substring(0, 5);
+        const maxFin    = horas[horas.length - 1].fin.substring(0, 5);
+
+        // Estimar minutos académicos (45m por bloque)
+        const totalMins = checked.length * 45;
+        const horasTotales = Math.floor(totalMins / 60);
+        const minsRestantes = totalMins % 60;
+        let duracionTxt = '';
+        if (horasTotales > 0) duracionTxt += horasTotales + 'h ';
+        if (minsRestantes > 0) duracionTxt += minsRestantes + 'm';
+
+        if (lblRango) {
+            lblRango.textContent = `(${minInicio} a ${maxFin} • ${duracionTxt.trim()})`;
+        }
+    }
+
+    function deseleccionarTodosBloques() {
+        document.querySelectorAll('.chk-bloque-hora').forEach(c => c.checked = false);
+        actualizarResumenBloques();
+    }
+
+    // Enviar bloques manualmente por AJAX para que el proceso sea continuo
+    const formArmar = document.getElementById('formArmarHorarioManual');
+    if (formArmar) {
+        formArmar.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const checked = this.querySelectorAll('.chk-bloque-hora:checked');
+            if (checked.length === 0) {
+                mostrarToastAulas('Por favor selecciona al menos un bloque de hora oficial.', 'error');
+                return;
+            }
+
+            const btnSubmit = document.getElementById('btnSubmitArmarHorario');
+            const origHtml = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando horario...';
+
+            try {
+                const formData = new FormData(this);
+                const resp = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    mostrarToastAulas(res.mensaje || '¡Bloques agregados con éxito!', 'exito');
+                    deseleccionarTodosBloques();
+                    const badge = document.querySelector('#tabbtn-horario .badge-conteo');
+                    if (badge && res.insertados) {
+                        badge.textContent = parseInt(badge.textContent || '0') + res.insertados;
+                    }
+                } else {
+                    mostrarToastAulas(res.error || 'Ocurrió un error al guardar.', 'error');
+                }
+            } catch (err) {
+                mostrarToastAulas('Error de red al guardar los bloques.', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origHtml;
+            }
+        });
+    }
+
+    // Eliminar bloque de horario individual (AJAX)
+    async function eliminarBloqueHorario(id, btnElem) {
+        if (!confirm('¿Deseas eliminar este bloque de clase de tu horario?')) return;
+
+        const card = btnElem ? btnElem.closest('.bloque-clase-card') : document.getElementById('bloque-card-' + id);
+        if (card) card.style.opacity = '0.35';
+
+        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
+        if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
+
+        try {
+            const resp = await fetch(BASE_URL + 'aulas/eliminar-bloque/' + id, {
+                method: 'POST',
+                headers: headers
+            });
+            const data = await resp.json();
+            if (data.success) {
+                if (card) {
+                    card.style.transition = 'all 0.25s ease';
+                    card.style.transform = 'scale(0.8)';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 250);
+                }
+                const badge = document.querySelector('#tabbtn-horario .badge-conteo');
+                if (badge) {
+                    const act = parseInt(badge.textContent || '0');
+                    if (act > 0) badge.textContent = act - 1;
+                }
+                mostrarToastAulas('Bloque eliminado correctamente.', 'exito');
+            } else {
+                if (card) card.style.opacity = '1';
+                mostrarToastAulas(data.error || 'No se pudo eliminar el bloque.', 'error');
+            }
+        } catch (e) {
+            if (card) card.style.opacity = '1';
+            mostrarToastAulas('Error de conexión al eliminar el bloque.', 'error');
+        }
+    }
+
+    // Limpiar por completo el horario del estudiante (AJAX)
+    async function confirmarLimpiarHorario() {
+        if (!confirm('¿Estás seguro de que deseas limpiar tu horario?\n\nSe eliminarán los bloques asignados para que puedas armar tus materias y horas desde cero sin clases conflictivas.')) {
+            return;
+        }
+
+        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
+        if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
+
+        try {
+            const resp = await fetch(BASE_URL + 'aulas/limpiar-horario', {
+                method: 'POST',
+                headers: headers
+            });
+            const data = await resp.json();
+            if (data.success) {
+                mostrarToastAulas(data.mensaje || '¡Horario limpiado exitosamente!', 'exito');
+                document.querySelectorAll('.bloque-clase-card').forEach(el => el.remove());
+                const badge = document.querySelector('#tabbtn-horario .badge-conteo');
+                if (badge) badge.textContent = '0';
+            } else {
+                mostrarToastAulas(data.error || 'No se pudo limpiar el horario.', 'error');
+            }
+        } catch (e) {
+            window.location.href = BASE_URL + 'aulas?tab=horario';
+        }
+    }
+
+    // Notificaciones flotantes tipo Toast
+    function mostrarToastAulas(mensaje, tipo = 'exito') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notif-aulas ${tipo}`;
+        toast.innerHTML = `<i class="bx ${tipo === 'exito' ? 'bx-check-circle' : 'bx-error-circle'}" style="font-size: 1.3rem;"></i> <span>${mensaje}</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.transition = 'all 0.3s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
     }
 
     // 2. Filtro de Actividades (Todas / Pendientes / Completadas)
@@ -630,49 +853,5 @@
 </script>
 
 
-<!-- Modal Ventanita de Ayuda / Info de Sección (Revisión Haryerit) -->
-<div id="modal-info-ayuda-seccion" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;" onclick="if(event.target === this) cerrarInfoAyudaModal()">
-  <div class="modal-editar-perfil-content" style="max-width: 440px; width: 100%; border-radius: 16px; padding: 22px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 id="titulo-ayuda-modal" style="margin: 0; font-size: 1.1rem; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-        <i class="bx bx-help-circle" style="color: #2563eb; font-size: 1.3rem;"></i> Información
-      </h3>
-      <button type="button" class="btn-cerrar-carreras" onclick="cerrarInfoAyudaModal()" style="font-size: 1.5rem; background: none; border: none; cursor: pointer; color: #64748b;">&times;</button>
-    </div>
-    <p id="texto-ayuda-modal" style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 16px 0;"></p>
-    <div style="display: flex; justify-content: flex-end;">
-      <button type="button" class="btn-modal-guardar" onclick="cerrarInfoAyudaModal()" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 8px;">Entendido</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const infoTemas = {
-    'aulas': {
-        titulo: 'Aulas y Cronograma Académico',
-        texto: 'En este módulo puedes visualizar tus materias inscritas en la UMC, consultar la programación semanal de tus clases, registrar tus próximas tareas y sincronizar tu horario oficial.'
-    },
-    'horario': {
-        titulo: 'Horario Académico Personal',
-        texto: 'Muestra la grilla oficial de la UMC estructurada en los turnos oficiales de Mañana, Tarde y Noche, indicando las asignaturas y aulas asignadas.'
-    },
-    'cronograma': {
-        titulo: 'Cronograma de Actividades y Tareas',
-        texto: 'Permite registrar y monitorear fechas límites, exámenes parciales, talleres y entregas pendientes de tus asignaturas.'
-    }
-};
-
-function mostrarInfoAyudaModal(tema) {
-    const info = infoTemas[tema];
-    if (!info) return;
-    document.getElementById('titulo-ayuda-modal').innerHTML = '<i class="bx bx-help-circle" style="color: #2563eb;"></i> ' + info.titulo;
-    document.getElementById('texto-ayuda-modal').textContent = info.texto;
-    document.getElementById('modal-info-ayuda-seccion').style.display = 'flex';
-}
-
-function cerrarInfoAyudaModal() {
-    document.getElementById('modal-info-ayuda-seccion').style.display = 'none';
-}
-</script>
 
 <?= $this->endSection() ?>

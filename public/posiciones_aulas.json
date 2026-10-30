@@ -578,5 +578,20 @@
         "aula": "Laboratorio de Ambiental (Planta Baja)",
         "coord_x": 93.77,
         "coord_y": 29.42
+    },
+    {
+        "aula": "Aula 22 (Planta Baja)",
+        "coord_x": 33.39,
+        "coord_y": 67.45
+    },
+    {
+        "aula": "Aula 23 (Planta Baja)",
+        "coord_x": 30.49,
+        "coord_y": 67.45
+    },
+    {
+        "aula": "Aula 24 (Planta Baja)",
+        "coord_x": 27.49,
+        "coord_y": 67.45
     }
 ]

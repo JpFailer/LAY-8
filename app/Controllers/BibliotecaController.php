@@ -190,7 +190,15 @@ class BibliotecaController extends BaseController
             return $this->response->setStatusCode(404)->setBody('El archivo físico no se encuentra en el servidor');
         }
 
-        $mime = mime_content_type($rutaAbsoluta) ?: 'application/pdf';
+        // Detección de tipo MIME segura y compatible con XAMPP (sin depender de fileinfo)
+        $mime = null;
+        if (function_exists('mime_content_type')) {
+            $mime = @mime_content_type($rutaAbsoluta);
+        }
+        if (empty($mime)) {
+            $ext = strtolower(pathinfo($aporte['nombre_original'] ?? $aporte['ruta_archivo'], PATHINFO_EXTENSION));
+            $mime = \Config\Mimes::guessTypeFromExtension($ext) ?: 'application/pdf';
+        }
 
         return $this->response
             ->setHeader('Content-Type', $mime)

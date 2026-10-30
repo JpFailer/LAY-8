@@ -517,9 +517,10 @@ class MapaController extends BaseController {
         $aulasModel = new AulasModel();
         $clasesModel = new ClaseProgramadaModel();
         
-        // A) AUTO-CARGA DE AULAS: Si la tabla de aulas está vacía, se llena automáticamente
+        // A) AUTO-CARGA DE AULAS: Si la tabla de aulas está vacía o faltan aulas canónicas, se llena automáticamente
         $lista_aulas = $aulasModel->findAll();
-        if (empty($lista_aulas)) {
+        $tieneAula22 = $aulasModel->where('alias_pdf', 'Aula 22')->first();
+        if (empty($lista_aulas) || !$tieneAula22) {
             (new AulasController())->importar_json();
             $lista_aulas = $aulasModel->findAll();
         }
@@ -726,7 +727,8 @@ class MapaController extends BaseController {
         $clasesModel = new ClaseProgramadaModel();
         
         $lista_aulas = $aulasModel->findAll();
-        if (empty($lista_aulas)) {
+        $tieneAula22 = $aulasModel->where('alias_pdf', 'Aula 22')->first();
+        if (empty($lista_aulas) || !$tieneAula22) {
             (new AulasController())->importar_json();
             $lista_aulas = $aulasModel->findAll();
         }

@@ -140,7 +140,7 @@ class AulasController extends BaseController
                     'hora_inicio' => $bloque['hora_inicio'],
                     'hora_fin'    => $bloque['hora_fin'],
                     'intervalo'   => $claveIntervalo,
-                    'es_personal' => !empty($bloque['estudiante_id']),
+                    'es_personal' => (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) || empty($bloque['estudiante_id']),
                 ];
             }
         }
@@ -200,14 +200,27 @@ class AulasController extends BaseController
                 $usuario = $usuarioModel->find($usuarioId);
                 $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
                 $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
+                $esAdmin = ($usuario['rol'] ?? session('rol')) === 'administrador';
 
-                if (!empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
+                if (!$esAdmin && !empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
                     @unlink($rutaCompleta);
                     return redirect()->back()->with('error', "Seguridad UMC: El documento pertenece a la cédula {$cedulaPdf}, la cual no coincide con tu usuario ({$cedulaUsuario}).");
                 }
 
+                // Autocompletar la cédula del usuario en BD si aún no la tenía
+                if (empty($cedulaUsuario) && !empty($cedulaPdf)) {
+                    $usuarioModel->update($usuarioId, ['cedula' => $cedulaPdf]);
+                    session()->set('cedula', $cedulaPdf);
+                }
+
+                // Sincronizar carrera del usuario si fue certificada en el documento oficial
+                if (!empty($analisis['carrera_codigo']) && (empty($usuario['carrera']) || $usuario['carrera'] !== $analisis['carrera_codigo'])) {
+                    $usuarioModel->update($usuarioId, ['carrera' => $analisis['carrera_codigo']]);
+                    session()->set('carrera', $analisis['carrera_codigo']);
+                }
+
                 // Es un Registro de Inscripción UMC oficial (UPE-002 o Forma 006 REE)
-                $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo']);
+                $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo'], true, $analisis['carrera_codigo'] ?? null);
                 @unlink($rutaCompleta);
 
                 return redirect()->to('/aulas')->with('mensaje', "¡Registro de Inscripción validado con éxito! Se certificaron y asignaron {$inscritas} materias/aulas a tu cuenta.");
@@ -232,110 +245,262 @@ class AulasController extends BaseController
     }
 
     /**
-     * Guarda un bloque de clase de forma manual asistida por plantilla
+     * Guarda uno o varios bloques de clase de forma manual asistida por plantilla
+     * Admite selección múltiple de bloques continuos para materias de 2 o más horas académicas
      * Regla estricta: La materia DEBE estar inscrita por el estudiante
      */
     public function guardarBloqueManual()
     {
         $usuarioId = (int) session()->get('usuario_id');
+        $rol       = session()->get('rol') ?? 'estudiante';
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+
         if (!$usuarioId) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada. Inicia sesión nuevamente.']);
+            }
             return redirect()->to('/login')->with('error', 'Sesión expirada');
         }
 
-        $seccionId   = (int) $this->request->getPost('seccion_id');
-        $diaSemana   = trim((string) $this->request->getPost('dia_semana'));
-        $bloqueHoras = trim((string) $this->request->getPost('bloque_horas')); // Formato "07:15:00|08:00:00"
-        $aula        = trim((string) $this->request->getPost('aula'));
+        $seccionId = (int) $this->request->getPost('seccion_id');
+        $diaSemana = trim((string) $this->request->getPost('dia_semana'));
+        $aula      = trim((string) $this->request->getPost('aula'));
 
-        // 1. Validar que la sección le pertenezca a las materias inscritas del alumno
+        // Puede recibir un arreglo de bloques ("bloques_horas[]") o un solo string ("bloque_horas")
+        $bloquesRaw = $this->request->getPost('bloques_horas');
+        if (empty($bloquesRaw)) {
+            $single = $this->request->getPost('bloque_horas');
+            $bloquesRaw = !empty($single) ? [$single] : [];
+        }
+        if (is_string($bloquesRaw)) {
+            $bloquesRaw = explode(',', $bloquesRaw);
+        }
+        $bloquesRaw = array_values(array_filter(array_map('trim', (array)$bloquesRaw)));
+
+        if (empty($seccionId) || empty($diaSemana) || empty($aula)) {
+            $err = 'Por favor completa todos los campos requeridos (materia, día y aula).';
+            if ($esAjax) {
+                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
+            }
+            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
+        }
+
+        if (empty($bloquesRaw)) {
+            $err = 'Por favor selecciona al menos un bloque de hora oficial de la UMC.';
+            if ($esAjax) {
+                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
+            }
+            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
+        }
+
+        // 1. Validar que la sección le pertenezca a las materias inscritas del alumno (o sea profesor/admin)
         $db = \Config\Database::connect();
         $estaInscrito = $db->table('inscripciones')
             ->where('estudiante_id', $usuarioId)
             ->where('seccion_id', $seccionId)
             ->countAllResults();
 
-        // Si es profesor, validar que sea el profesor de la sección
         $esProfesorSeccion = false;
-        if (session()->get('rol') === 'profesor') {
+        if ($rol === 'profesor') {
             $esProfesorSeccion = ($db->table('secciones')
                 ->where('id', $seccionId)
                 ->where('profesor_id', $usuarioId)
                 ->countAllResults() > 0);
         }
 
-        if ($estaInscrito === 0 && !$esProfesorSeccion) {
-            return redirect()->back()->with('error', 'Acceso restringido: Solo puedes programar horarios de materias que tengas formalmente inscritas en tu registro.');
+        if ($estaInscrito === 0 && !$esProfesorSeccion && $rol !== 'administrador') {
+            $err = 'Acceso restringido: Solo puedes programar horarios de materias que tengas formalmente inscritas en tu registro.';
+            if ($esAjax) {
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => $err]);
+            }
+            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
         }
 
-        // 2. Extraer horas de inicio y fin
-        $partesHoras = explode('|', $bloqueHoras);
-        if (count($partesHoras) !== 2) {
-            return redirect()->back()->with('error', 'Selecciona un bloque de hora oficial válido de la UMC.');
-        }
-        $horaInicio = trim($partesHoras[0]);
-        $horaFin    = trim($partesHoras[1]);
+        // Obtener datos de la sección y materia para reportes
+        $seccionData = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
 
-        if (empty($diaSemana) || empty($aula)) {
-            return redirect()->back()->with('error', 'Por favor completa el día y el aula física correspondiente.');
-        }
-
-        // 3. Insertar o registrar el bloque de clase
-        $claseModel = new ClaseProgramadaModel();
-
-        // Evitar duplicados idénticos
-        $duplicado = $claseModel->where('seccion_id', $seccionId)
-            ->where('dia_semana', $diaSemana)
-            ->where('hora_inicio', $horaInicio)
-            ->first();
-
-        if ($duplicado) {
-            return redirect()->back()->with('error', 'Ya existe un bloque de clase asignado en este mismo día y horario para esta materia.');
-        }
-
-        $seccionData = $db->table('secciones')->where('id', $seccionId)->get()->getRowArray();
         $carreraBloque = $seccionData['carrera'] ?? (session('carrera') ?: 'ING-INF');
+        $nombreMateria = $seccionData['materia'] ?? 'la asignatura';
 
-        $claseModel->insert([
-            'seccion_id'    => $seccionId,
-            'estudiante_id' => ($estaInscrito > 0) ? $usuarioId : null,
-            'carrera'       => $carreraBloque,
-            'dia_semana'    => $diaSemana,
-            'hora_inicio'   => $horaInicio,
-            'hora_fin'      => $horaFin,
-            'aula'          => $aula
-        ]);
+        // 2. Procesar cada uno de los bloques horarios seleccionados (multi-selección continua)
+        $claseModel = new ClaseProgramadaModel();
+        $insertados = 0;
+        $duplicados = 0;
 
-        return redirect()->to('/aulas')->with('mensaje', '¡Bloque de horario programado exitosamente!');
+        foreach ($bloquesRaw as $bStr) {
+            $partesHoras = explode('|', $bStr);
+            if (count($partesHoras) !== 2) {
+                continue;
+            }
+            $horaInicio = trim($partesHoras[0]);
+            $horaFin    = trim($partesHoras[1]);
+
+            // Chequeo de duplicado idéntico para este usuario o sección
+            $duplicado = $claseModel->where('seccion_id', $seccionId)
+                ->where('dia_semana', $diaSemana)
+                ->where('hora_inicio', $horaInicio)
+                ->groupStart()
+                    ->where('estudiante_id', null)
+                    ->orWhere('estudiante_id', $usuarioId)
+                ->groupEnd()
+                ->first();
+
+            if ($duplicado) {
+                $duplicados++;
+                continue;
+            }
+
+            $claseModel->insert([
+                'seccion_id'    => $seccionId,
+                'estudiante_id' => ($rol === 'administrador' || $rol === 'profesor') ? null : $usuarioId,
+                'carrera'       => $carreraBloque,
+                'dia_semana'    => $diaSemana,
+                'hora_inicio'   => $horaInicio,
+                'hora_fin'      => $horaFin,
+                'aula'          => $aula
+            ]);
+            $insertados++;
+        }
+
+        if ($insertados === 0) {
+            $err = 'Los bloques de horario seleccionados ya se encontraban registrados en tu horario para esta materia.';
+            if ($esAjax) {
+                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
+            }
+            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
+        }
+
+        $mensajeExito = "¡Se programaron con éxito {$insertados} bloque(s) de {$nombreMateria} para el día {$diaSemana} en {$aula}!";
+
+        if ($esAjax) {
+            return $this->response->setJSON([
+                'success'    => true,
+                'mensaje'    => $mensajeExito,
+                'insertados' => $insertados,
+                'dia'        => $diaSemana,
+                'aula'       => $aula,
+                'materia'    => $nombreMateria
+            ]);
+        }
+
+        return redirect()->to(base_url('aulas?tab=cargar'))->with('mensaje', $mensajeExito);
     }
 
     /**
-     * Elimina un bloque de horario personal
+     * Elimina un bloque de horario personal o asignado
      */
     public function eliminarBloqueManual(int $id)
     {
         $usuarioId = (int) session()->get('usuario_id');
         $rol       = session()->get('rol') ?? 'estudiante';
-        $claseModel = new ClaseProgramadaModel();
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
 
-        $bloque = $claseModel->find($id);
-        if (!$bloque) {
-            return redirect()->back()->with('error', 'Bloque de horario no encontrado.');
+        if (!$usuarioId) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+            }
+            return redirect()->to('/login')->with('error', 'Sesión expirada.');
         }
 
-        // Si es un bloque oficial de la universidad (estudiante_id es null), solo profesores o administradores pueden eliminarlo
-        if (empty($bloque['estudiante_id'])) {
-            if ($rol !== 'administrador' && $rol !== 'profesor') {
-                return redirect()->back()->with('error', 'No tienes permisos para eliminar bloques oficiales de horario.');
+        $claseModel = new ClaseProgramadaModel();
+        $bloque = $claseModel->find($id);
+        if (!$bloque) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Bloque de horario no encontrado.']);
             }
-        } else {
-            // Si es un bloque personal, solo el alumno que lo creó o un administrador pueden eliminarlo
-            if ((int)$bloque['estudiante_id'] !== $usuarioId && $rol !== 'administrador') {
-                return redirect()->back()->with('error', 'No tienes permisos para eliminar este bloque de clase.');
+            return redirect()->to(base_url('aulas?tab=horario'))->with('error', 'Bloque de horario no encontrado.');
+        }
+
+        $db = \Config\Database::connect();
+        $puedeEliminar = false;
+
+        if ($rol === 'administrador' || $rol === 'profesor') {
+            $puedeEliminar = true;
+        } elseif (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) {
+            $puedeEliminar = true;
+        } elseif (empty($bloque['estudiante_id'])) {
+            // Si el bloque no tiene estudiante asignado pero pertenece a una sección donde el alumno está inscrito,
+            // se le autoriza su remoción para desocupar la grilla de materias automáticas conflictivas
+            $estaInscrito = $db->table('inscripciones')
+                ->where('estudiante_id', $usuarioId)
+                ->where('seccion_id', (int)$bloque['seccion_id'])
+                ->countAllResults();
+            if ($estaInscrito > 0) {
+                $puedeEliminar = true;
             }
+        }
+
+        if (!$puedeEliminar) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para eliminar este bloque de clase.']);
+            }
+            return redirect()->to(base_url('aulas?tab=horario'))->with('error', 'No tienes permisos para eliminar este bloque de clase.');
         }
 
         $claseModel->delete($id);
-        return redirect()->to('/aulas')->with('mensaje', 'Bloque de horario eliminado.');
+
+        if ($esAjax) {
+            return $this->response->setJSON([
+                'success' => true,
+                'mensaje' => 'Bloque de horario eliminado correctamente.'
+            ]);
+        }
+
+        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', 'Bloque de horario eliminado.');
+    }
+
+    /**
+     * Limpia por completo el horario del estudiante para armarlo desde cero sin conflictos
+     */
+    public function limpiarHorarioPersonal()
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+
+        if (!$usuarioId) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+            }
+            return redirect()->to('/login')->with('error', 'Sesión expirada.');
+        }
+
+        $db = \Config\Database::connect();
+
+        // 1. Obtener las secciones del alumno
+        $inscripciones = $db->table('inscripciones')
+            ->select('seccion_id')
+            ->where('estudiante_id', $usuarioId)
+            ->get()
+            ->getResultArray();
+
+        $seccionesIds = !empty($inscripciones) ? array_column($inscripciones, 'seccion_id') : [];
+
+        // 2. Eliminar bloques personales creados por el estudiante
+        $db->table('clases_programadas')
+            ->where('estudiante_id', $usuarioId)
+            ->delete();
+
+        // 3. Eliminar bloques huérfanos / placeholders (estudiante_id IS NULL) de sus secciones
+        if (!empty($seccionesIds)) {
+            $db->table('clases_programadas')
+                ->whereIn('seccion_id', $seccionesIds)
+                ->where('estudiante_id', null)
+                ->delete();
+        }
+
+        if ($esAjax) {
+            return $this->response->setJSON([
+                'success' => true,
+                'mensaje' => '¡Tu horario semanal ha sido limpiado por completo! Ahora puedes armarlo desde cero.'
+            ]);
+        }
+
+        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', '¡Tu horario semanal ha sido limpiado por completo! Ahora puedes armarlo desde cero con tus materias y horas reales.');
     }
 
     /**

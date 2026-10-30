@@ -683,7 +683,7 @@ class VerificadorInscripcionService
      *                                       sea el estado definitivo de su carga académica.
      * @return int
      */
-    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null, bool $reemplazarPrevias = true): int
+    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null, bool $reemplazarPrevias = true, ?string $carrera = null): int
     {
         if ($usuarioId <= 0 || empty($materias)) {
             return 0;
@@ -709,14 +709,6 @@ class VerificadorInscripcionService
                ->delete();
         }
 
-        // Horarios estándar para distribuir materias iniciales si no tienen horario programado
-        $diasSemanales = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes'];
-        $bloquesHoras  = [
-            ['inicio' => '08:00:00', 'fin' => '09:30:00', 'aula' => 'Aula 56'],
-            ['inicio' => '09:30:00', 'fin' => '11:00:00', 'aula' => 'Aula 57'],
-            ['inicio' => '11:00:00', 'fin' => '12:45:00', 'aula' => 'Aula 58'],
-            ['inicio' => '13:30:00', 'fin' => '15:00:00', 'aula' => 'Laboratorio de Info 1'],
-        ];
 
         foreach ($materias as $index => $mat) {
             $codigoMateria = trim($mat['codigo']);
@@ -724,6 +716,7 @@ class VerificadorInscripcionService
             $seccionCodigo = !empty($mat['seccion']) ? trim($mat['seccion']) : 'SVC-A';
             $creditos      = (int) ($mat['creditos'] ?? 3);
             $semestre      = (int) ($mat['semestre'] ?? 1);
+            $carreraFinal  = $carrera ?? ($mat['carrera'] ?? (session('carrera') ?: 'ING-INF'));
 
             // 1. Variantes de código (ej. 'CAL-604' y 'CAL604') para sincronizar con el Horario CGD-001
             $codigoConGuion = preg_replace('/^([A-Z]{3})-?(\d{3})$/i', '$1-$2', $codigoMateria);
@@ -781,10 +774,14 @@ class VerificadorInscripcionService
                     'materia_id'        => $materiaId,
                     'profesor_id'       => null,
                     'codigo_seccion'    => $seccionCodigo,
-                    'periodo_academico' => $periodo
+                    'periodo_academico' => $periodo,
+                    'carrera'           => $carreraFinal
                 ], true);
             } else {
                 $seccionId = $seccionExistente['id'];
+                if (empty($seccionExistente['carrera']) && !empty($carreraFinal)) {
+                    $seccionModel->update($seccionId, ['carrera' => $carreraFinal]);
+                }
             }
 
             if (!$seccionId) continue;
@@ -801,21 +798,6 @@ class VerificadorInscripcionService
                     'seccion_id'    => $seccionId
                 ]);
                 $inscripcionesRealizadas++;
-            }
-
-            // 4. Solo si NO existe ninguna clase programada para esta sección ni con aula asignada
-            $tieneClase = $claseModel->where('seccion_id', $seccionId)->first();
-            if (!$tieneClase) {
-                $bloque = $bloquesHoras[$index % count($bloquesHoras)];
-                $dia    = $diasSemanales[$index % count($diasSemanales)];
-                $claseModel->insert([
-                    'seccion_id'    => $seccionId,
-                    'estudiante_id' => null,
-                    'aula'          => $bloque['aula'],
-                    'dia_semana'    => $dia,
-                    'hora_inicio'   => $bloque['inicio'],
-                    'hora_fin'      => $bloque['fin']
-                ]);
             }
         }
 

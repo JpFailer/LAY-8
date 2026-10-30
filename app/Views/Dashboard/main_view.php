@@ -580,11 +580,11 @@
 
           </h4>
 
-          <div class="ajuste-item" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
+          <div class="ajuste-item">
 
             <div class="ajuste-info">
 
-              <div class="ajuste-titulo" style="font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+              <div class="ajuste-titulo">
 
                 <i class="bx bx-moon" id="icono-tema-visual"></i> Modo Oscuro
 
@@ -695,27 +695,16 @@
             </div>
 
             <!-- Certificación Oficial UMC para Cambio de Carrera -->
-
-            <div class="editar-seguridad-box" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 14px; margin-bottom: 16px;">
-
-              <label class="form-label-editar label-seguridad" style="color: #1e40af; font-weight: 700;">
-
+            <div class="editar-seguridad-box">
+              <label class="form-label-editar label-seguridad">
                 <i class="bx bx-shield-quarter"></i> Certificación UMC para Cambio de Carrera
-
               </label>
-
-              <p class="form-sublabel-editar" style="font-size: 0.8rem; margin: 4px 0 10px 0; color: #3b82f6;">
-
+              <p class="form-sublabel-editar">
                 Si cambias de carrera, adjunta tu <strong>Registro de Inscripción oficial (PDF)</strong> emitido por <code>campus.umc.edu.ve</code>:
-
               </p>
-
-              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global" style="background: white; margin-bottom: 12px;">
-
-              <label class="form-label-editar" style="font-size: 0.82rem; font-weight: 600; color: #1e3a8a;"><i class="bx bx-lock-alt"></i> Contraseña actual (solo para confirmar cambios de carrera):</label>
-
+              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable" style="margin-bottom: 12px;">
+              <label class="form-label-editar label-pass-seguridad"><i class="bx bx-lock-alt"></i> Contraseña actual (solo para confirmar cambios de carrera):</label>
               <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global" placeholder="Tu contraseña actual">
-
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -741,66 +730,61 @@
   </div>
 
   <!-- Modal Interactivo de Editar Perfil (Solo Foto y Apariencia Pública - Revisión Haryerit) -->
-
+  <!-- Modal Interactivo de Editar Perfil (Ajustador y Recortador 1:1 con Zoom y Desplazamiento - Revisión Haryerit) -->
   <div id="modal-editar-perfil" class="modal-carreras-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalEditarPerfil()">
-
-    <div class="modal-editar-perfil-content" style="max-width: 440px; border-radius: 18px;">
-
+    <div class="modal-editar-perfil-content" style="max-width: 440px; width: 100%; border-radius: 18px; overflow: hidden;">
       <div class="modal-editar-header">
-
-        <h3><i class="bx bx-camera"></i> Foto de Perfil</h3>
-
+        <h3 style="display: flex; align-items: center; gap: 8px;"><i class="bx bx-crop"></i> Foto de Perfil</h3>
         <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalEditarPerfil()" title="Cerrar">&times;</button>
-
       </div>
 
-      <form action="<?= base_url('perfil/actualizar') ?>" method="post" enctype="multipart/form-data" class="modal-editar-form">
-
+      <form action="<?= base_url('perfil/actualizar') ?>" method="post" enctype="multipart/form-data" class="modal-editar-form" id="form-editar-perfil" onsubmit="prepararEnvioAvatar(event)">
         <?= csrf_field() ?>
+        <input type="hidden" name="foto_recortada" id="input-foto-recortada" value="">
 
-        <div class="modal-editar-body" style="padding: 26px 20px; text-align: center;">
-
-          <p class="form-sublabel-editar" style="font-size: 0.88rem; color: #64748b; margin-bottom: 18px;">
-
-            Personaliza la imagen visible de tu cuenta para la comunidad universitaria de LAY-8:
-
+        <div class="modal-editar-body" style="padding: 22px 20px; text-align: center;">
+          <p class="form-sublabel-editar" style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">
+            Ajusta tu foto al encuadre circular 1:1. Puedes arrastrar para centrar y usar el deslizador para hacer zoom:
           </p>
 
-          <div style="display: inline-block; position: relative; margin-bottom: 16px;">
+          <!-- Visor / Canvas 1:1 con Arrastre interactivo -->
+          <div class="avatar-cropper-container" style="position: relative; width: 200px; height: 200px; margin: 0 auto 14px auto;">
+            <canvas id="canvas-avatar-cropper" width="200" height="200" style="width: 200px; height: 200px; border-radius: 50%; cursor: grab; background: #0f172a; border: 3px solid #3b82f6; box-shadow: 0 8px 24px rgba(0,0,0,0.18); display: block; touch-action: none;"></canvas>
+            <div id="avatar-guia-drag" style="position: absolute; inset: 0; border-radius: 50%; pointer-events: none; border: 1.5px dashed rgba(255,255,255,0.4); opacity: 0; transition: opacity 0.2s ease;"></div>
+          </div>
 
-            <img src="<?= !empty($userFoto) ? base_url($userFoto) : base_url('img/usuario.png') ?>" id="preview-foto-modal" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #3b82f6; box-shadow: 0 6px 16px rgba(0,0,0,0.15);" alt="Foto">
-
+          <!-- Controles de Zoom -->
+          <div id="cropper-controles-zoom" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 260px; margin: 0 auto;">
+              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(-0.1)" title="Reducir zoom" style="background: #e2e8f0; border: none; border-radius: 8px; width: 32px; height: 32px; font-weight: 700; cursor: pointer; color: #334155; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bx bx-zoom-out"></i>
+              </button>
+              <input type="range" id="slider-zoom-avatar" min="1" max="3" step="0.02" value="1" oninput="cambiarZoomSlider(this.value)" style="flex: 1; accent-color: #2563eb; cursor: pointer;">
+              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(0.1)" title="Aumentar zoom" style="background: #e2e8f0; border: none; border-radius: 8px; width: 32px; height: 32px; font-weight: 700; cursor: pointer; color: #334155; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bx bx-zoom-in"></i>
+              </button>
+            </div>
+            <div style="font-size: 0.76rem; color: #64748b; margin-top: 6px;">
+              <span id="label-zoom-porcentaje">100%</span> • <i class="bx bx-move"></i> Arrastra para centrar
+            </div>
           </div>
 
           <div>
-
-            <input type="file" name="foto" id="input-foto-editar" accept="image/png, image/jpeg, image/jpg" style="display:none;" onchange="previsualizarFotoPerfil(this)">
-
-            <button type="button" class="btn-subir-cta" onclick="document.getElementById('input-foto-editar').click()" style="background: #2563eb; display: inline-flex;">
-
-              <i class="bx bx-upload"></i> Subir nueva foto
-
+            <input type="file" name="foto" id="input-foto-editar" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="cargarImagenParaRecorte(this)">
+            <button type="button" class="btn-subir-cta" onclick="document.getElementById('input-foto-editar').click()" style="background: #2563eb; display: inline-flex; align-items: center; gap: 6px;">
+              <i class="bx bx-image-add"></i> Elegir otra foto
             </button>
-
           </div>
-
         </div>
 
         <div class="modal-editar-footer" style="padding: 14px 20px;">
-
           <button type="button" class="btn-cancelar-modal" onclick="cerrarModalEditarPerfil()">Cancelar</button>
-
-          <button type="submit" class="btn-guardar-perfil"><i class="bx bx-save"></i> Guardar Foto</button>
-
+          <button type="submit" class="btn-guardar-perfil" id="btn-guardar-avatar"><i class="bx bx-save"></i> Guardar Foto</button>
         </div>
-
       </form>
-
     </div>
-
   </div>
 
-  <!-- Modal Confirmación de Cerrar Sesión (Revisión Haryerit) -->
 
   <div id="modal-confirmar-logout" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 100000;" onclick="if(event.target === this) cerrarModalLogout()">
 

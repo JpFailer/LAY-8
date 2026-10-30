@@ -1022,6 +1022,126 @@ body.dark-mode .btn-modal-guardar:hover {
     background-color: #2563eb !important;
 }
 
+
+/* ==========================================================================
+   ESTILOS ADAPTABLES MODO OSCURO (REVISIÓN HARYERIT - INPUTS Y CAJAS)
+   ========================================================================== */
+.editar-seguridad-box {
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.editar-seguridad-box .label-seguridad {
+    color: #1e40af;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+.editar-seguridad-box .form-sublabel-editar {
+    font-size: 0.82rem;
+    margin: 4px 0 12px 0;
+    color: #3b82f6;
+    line-height: 1.5;
+}
+.editar-seguridad-box .label-pass-seguridad {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+/* Modo Oscuro para Inputs Globales y Cajas */
+html.dark-mode .input-global,
+body.dark-mode .input-global,
+.dark-mode .input-global,
+html.dark-mode input.input-global,
+body.dark-mode input.input-global {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1.5px solid #334155 !important;
+}
+html.dark-mode .input-global:focus,
+body.dark-mode .input-global:focus,
+.dark-mode .input-global:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+}
+html.dark-mode .input-global::placeholder,
+body.dark-mode .input-global::placeholder,
+.dark-mode .input-global::placeholder {
+    color: #64748b !important;
+}
+html.dark-mode input[type="file"].input-global,
+body.dark-mode input[type="file"].input-global,
+.dark-mode input[type="file"].input-global {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+html.dark-mode input[type="file"]::file-selector-button,
+body.dark-mode input[type="file"]::file-selector-button,
+.dark-mode input[type="file"]::file-selector-button {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #475569 !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    margin-right: 10px !important;
+}
+html.dark-mode .editar-seguridad-box,
+body.dark-mode .editar-seguridad-box,
+.dark-mode .editar-seguridad-box {
+    background: rgba(30, 58, 138, 0.22) !important;
+    border-color: #1e40af !important;
+}
+html.dark-mode .editar-seguridad-box .label-seguridad,
+body.dark-mode .editar-seguridad-box .label-seguridad,
+.dark-mode .editar-seguridad-box .label-seguridad {
+    color: #93c5fd !important;
+}
+html.dark-mode .editar-seguridad-box .form-sublabel-editar,
+body.dark-mode .editar-seguridad-box .form-sublabel-editar,
+.dark-mode .editar-seguridad-box .form-sublabel-editar {
+    color: #94a3b8 !important;
+}
+html.dark-mode .editar-seguridad-box .label-pass-seguridad,
+body.dark-mode .editar-seguridad-box .label-pass-seguridad,
+.dark-mode .editar-seguridad-box .label-pass-seguridad {
+    color: #cbd5e1 !important;
+}
+html.dark-mode .modal-editar-perfil-content,
+body.dark-mode .modal-editar-perfil-content,
+.dark-mode .modal-editar-perfil-content {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+html.dark-mode .modal-editar-header,
+body.dark-mode .modal-editar-header,
+.dark-mode .modal-editar-header,
+html.dark-mode .modal-editar-footer,
+body.dark-mode .modal-editar-footer,
+.dark-mode .modal-editar-footer {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+html.dark-mode .btn-zoom-avatar,
+body.dark-mode .btn-zoom-avatar,
+.dark-mode .btn-zoom-avatar {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
 /* Página dedicada de Ajustes */
 .ajustes-pagina-contenedor {
     max-width: 700px;
@@ -4393,6 +4513,224 @@ body.dark-mode .admin-empty-state p {
 }
 
 /* ==========================================================================
+   SELECTOR MULTIPLE DE BLOQUES HORARIOS UMC Y HERRAMIENTAS DE HORARIO
+   ========================================================================== */
+
+.subtexto-bloques-info {
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.selector-turnos-bloques {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-turno-filtro {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-turno-filtro:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.btn-turno-filtro.activo {
+    background: #1e3a8a;
+    color: #ffffff;
+    border-color: #1e3a8a;
+}
+
+.grid-bloques-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    max-height: 230px;
+    overflow-y: auto;
+    padding: 8px 4px 4px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fafbfc;
+}
+
+.card-bloque-check {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: all 0.18s ease;
+}
+
+.card-bloque-check:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.card-bloque-check input[type="checkbox"] {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    accent-color: #2563eb;
+    cursor: pointer;
+}
+
+.card-bloque-check.seleccionado,
+.card-bloque-check:has(input[type="checkbox"]:checked) {
+    background: #eff6ff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px #2563eb;
+}
+
+.bloque-hora-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #1e40af;
+    background: #dbeafe;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+    margin-bottom: 4px;
+}
+
+.bloque-hora-tiempo {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.bloque-hora-turno {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.barra-resumen-bloques {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.info-bloques-seleccionados {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #166534;
+}
+
+.rango-horas-calculado {
+    display: block;
+    font-size: 0.78rem;
+    color: #15803d;
+    font-weight: 500;
+}
+
+.btn-limpiar-seleccion-bloques {
+    background: transparent;
+    border: 1px solid #86efac;
+    color: #166534;
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-limpiar-seleccion-bloques:hover {
+    background: #dcfce7;
+}
+
+.btn-limpiar-horario-action {
+    background: #fff1f2;
+    color: #e11d48;
+    border-color: #fecdd3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #fecdd3;
+    transition: all 0.2s ease;
+}
+
+.btn-limpiar-horario-action:hover {
+    background: #ffe4e6;
+    border-color: #fda4af;
+    color: #be123c;
+}
+
+/* Toast flotante para feedback inmediato en Aulas */
+.toast-notif-aulas {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideUpToast 0.3s ease;
+    max-width: 400px;
+}
+
+.toast-notif-aulas.exito {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.toast-notif-aulas.error {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+@keyframes slideUpToast {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
    ADAPTACIONES DE MODO OSCURO PARA AULAS / CLASSROOM
    ========================================================================== */
 
@@ -4519,6 +4857,71 @@ body.dark-mode .chip-actividad.activo {
 body.dark-mode .card-formulario-aulas {
     background: #0f172a !important;
     border-color: #334155 !important;
+}
+
+body.dark-mode .grid-bloques-selector {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .card-bloque-check {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .card-bloque-check:hover {
+    background: #334155 !important;
+}
+
+body.dark-mode .card-bloque-check.seleccionado,
+body.dark-mode .card-bloque-check:has(input[type="checkbox"]:checked) {
+    background: #1e3a8a !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 1px #60a5fa !important;
+}
+
+body.dark-mode .bloque-hora-tiempo {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .bloque-hora-turno {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .btn-turno-filtro {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .btn-turno-filtro.activo {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+body.dark-mode .barra-resumen-bloques {
+    background: #064e3b !important;
+    border-color: #059669 !important;
+}
+
+body.dark-mode .info-bloques-seleccionados {
+    color: #a7f3d0 !important;
+}
+
+body.dark-mode .rango-horas-calculado {
+    color: #6ee7b7 !important;
+}
+
+body.dark-mode .btn-limpiar-seleccion-bloques {
+    border-color: #059669 !important;
+    color: #a7f3d0 !important;
+}
+
+body.dark-mode .btn-limpiar-horario-action {
+    background: #450a0a !important;
+    border-color: #7f1d1d !important;
+    color: #fca5a5 !important;
 }
 
 body.dark-mode .card-form-header {

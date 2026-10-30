@@ -88,6 +88,15 @@ function abrirModalEditarPerfil(e) {
     if (modal) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
+        // Inicializar estudio de avatar si aún no se ha cargado imagen
+        if (!avatarImg) {
+            const avatarNav = document.querySelector('.usuario-badge img, .perfil-card-avatar, .foto-usuario');
+            const defaultAvatar = (avatarNav && avatarNav.src && !avatarNav.src.includes('data:'))
+                ? avatarNav.src
+                : (window.BASE_URL ? window.BASE_URL + 'img/usuario.png' : '/img/usuario.png');
+            initAvatarCropper(defaultAvatar);
+        }
     }
 }
 
@@ -135,17 +144,187 @@ function seleccionarCarreraEditar(codigo) {
     }
 }
 
-function previsualizarFotoPerfil(input) {
+// ==========================================================================
+// ESTUDIO Y RECORTADOR 1:1 DE AVATAR (REVISIÓN HARYERIT)
+// ==========================================================================
+let avatarImg = null;
+let avatarScale = 1.0;
+let avatarMinScale = 1.0;
+let avatarPanX = 0;
+let avatarPanY = 0;
+let avatarIsDragging = false;
+let avatarStartX = 0;
+let avatarStartY = 0;
+let avatarListenersAttached = false;
+
+function initAvatarCropper(imageSrc) {
+    const canvas = document.getElementById('canvas-avatar-cropper');
+    if (!canvas) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        avatarImg = img;
+        // Escala base para que la imagen cubra siempre el círculo 1:1 de 200x200
+        avatarMinScale = Math.max(200 / img.width, 200 / img.height);
+        avatarScale = avatarMinScale;
+
+        // Centrar imagen
+        avatarPanX = (200 - img.width * avatarScale) / 2;
+        avatarPanY = (200 - img.height * avatarScale) / 2;
+
+        const slider = document.getElementById('slider-zoom-avatar');
+        if (slider) slider.value = '1';
+
+        const label = document.getElementById('label-zoom-porcentaje');
+        if (label) label.textContent = '100%';
+
+        redibujarAvatarCanvas();
+        adjuntarListenersCropper();
+    };
+    img.src = imageSrc;
+}
+
+function redibujarAvatarCanvas() {
+    const canvas = document.getElementById('canvas-avatar-cropper');
+    if (!canvas || !avatarImg) return;
+    const ctx = canvas.getContext('2d');
+
+    const curW = avatarImg.width * avatarScale;
+    const curH = avatarImg.height * avatarScale;
+
+    // Límites para que la imagen no se salga del encuadre
+    avatarPanX = Math.min(0, Math.max(200 - curW, avatarPanX));
+    avatarPanY = Math.min(0, Math.max(200 - curH, avatarPanY));
+
+    ctx.clearRect(0, 0, 200, 200);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(100, 100, 100, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(avatarImg, avatarPanX, avatarPanY, curW, curH);
+    ctx.restore();
+}
+
+function adjuntarListenersCropper() {
+    if (avatarListenersAttached) return;
+    const canvas = document.getElementById('canvas-avatar-cropper');
+    if (!canvas) return;
+    avatarListenersAttached = true;
+
+    const guia = document.getElementById('avatar-guia-drag');
+
+    function startDrag(e) {
+        avatarIsDragging = true;
+        const pt = e.touches ? e.touches[0] : e;
+        avatarStartX = pt.clientX;
+        avatarStartY = pt.clientY;
+        canvas.style.cursor = 'grabbing';
+        if (guia) guia.style.opacity = '1';
+    }
+
+    function doDrag(e) {
+        if (!avatarIsDragging || !avatarImg) return;
+        const pt = e.touches ? e.touches[0] : e;
+        const dx = pt.clientX - avatarStartX;
+        const dy = pt.clientY - avatarStartY;
+        avatarStartX = pt.clientX;
+        avatarStartY = pt.clientY;
+        avatarPanX += dx;
+        avatarPanY += dy;
+        redibujarAvatarCanvas();
+        if (e.cancelable && e.touches) e.preventDefault();
+    }
+
+    function stopDrag() {
+        avatarIsDragging = false;
+        canvas.style.cursor = 'grab';
+        if (guia) guia.style.opacity = '0';
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', doDrag);
+    window.addEventListener('mouseup', stopDrag);
+
+    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    window.addEventListener('touchmove', doDrag, { passive: false });
+    window.addEventListener('touchend', stopDrag);
+
+    // Zoom interactivo con rueda del ratón
+    canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.06 : 0.06;
+        ajustarZoomAvatar(delta);
+    }, { passive: false });
+}
+
+function cambiarZoomSlider(multiplier) {
+    if (!avatarImg) return;
+    const newMult = Math.max(1, Math.min(3, parseFloat(multiplier)));
+    const newScale = avatarMinScale * newMult;
+
+    // Zoom centrado en (100, 100)
+    const factor = newScale / avatarScale;
+    avatarPanX = 100 - (100 - avatarPanX) * factor;
+    avatarPanY = 100 - (100 - avatarPanY) * factor;
+    avatarScale = newScale;
+
+    const label = document.getElementById('label-zoom-porcentaje');
+    if (label) label.textContent = Math.round(newMult * 100) + '%';
+
+    redibujarAvatarCanvas();
+}
+
+function ajustarZoomAvatar(delta) {
+    const slider = document.getElementById('slider-zoom-avatar');
+    if (!slider) return;
+    let val = parseFloat(slider.value) + delta;
+    val = Math.max(1, Math.min(3, val));
+    slider.value = val.toFixed(2);
+    cambiarZoomSlider(val);
+}
+
+function cargarImagenParaRecorte(input) {
     if (input.files && input.files[0]) {
+        const file = input.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
-            const preview = document.getElementById('preview-foto-modal');
-            if (preview) {
-                preview.src = e.target.result;
-            }
+            initAvatarCropper(e.target.result);
         };
-        reader.readAsDataURL(input.files[0]);
+        reader.readAsDataURL(file);
     }
+}
+
+function prepararEnvioAvatar(e) {
+    if (!avatarImg) return;
+    try {
+        // Generar un canvas de alta resolución 400x400 exactamente 1:1
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = 400;
+        exportCanvas.height = 400;
+        const expCtx = exportCanvas.getContext('2d');
+
+        const factor = 400 / 200;
+        expCtx.drawImage(
+            avatarImg,
+            avatarPanX * factor,
+            avatarPanY * factor,
+            avatarImg.width * avatarScale * factor,
+            avatarImg.height * avatarScale * factor
+        );
+
+        const dataUrl = exportCanvas.toDataURL('image/jpeg', 0.92);
+        const hiddenInput = document.getElementById('input-foto-recortada');
+        if (hiddenInput) {
+            hiddenInput.value = dataUrl;
+        }
+    } catch(err) {
+        console.warn('Error al exportar recorte de avatar:', err);
+    }
+}
+
+function previsualizarFotoPerfil(input) {
+    cargarImagenParaRecorte(input);
 }
 
 // ==========================================================================
