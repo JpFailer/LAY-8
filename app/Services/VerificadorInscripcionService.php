@@ -683,7 +683,7 @@ class VerificadorInscripcionService
      *                                       sea el estado definitivo de su carga académica.
      * @return int
      */
-    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null, bool $reemplazarPrevias = true): int
+    public function inscribirEstudianteEnMaterias(int $usuarioId, array $materias, ?string $periodo = null, bool $reemplazarPrevias = true, ?string $carrera = null): int
     {
         if ($usuarioId <= 0 || empty($materias)) {
             return 0;
@@ -724,6 +724,7 @@ class VerificadorInscripcionService
             $seccionCodigo = !empty($mat['seccion']) ? trim($mat['seccion']) : 'SVC-A';
             $creditos      = (int) ($mat['creditos'] ?? 3);
             $semestre      = (int) ($mat['semestre'] ?? 1);
+            $carreraFinal  = $carrera ?? ($mat['carrera'] ?? (session('carrera') ?: 'ING-INF'));
 
             // 1. Variantes de código (ej. 'CAL-604' y 'CAL604') para sincronizar con el Horario CGD-001
             $codigoConGuion = preg_replace('/^([A-Z]{3})-?(\d{3})$/i', '$1-$2', $codigoMateria);
@@ -781,10 +782,14 @@ class VerificadorInscripcionService
                     'materia_id'        => $materiaId,
                     'profesor_id'       => null,
                     'codigo_seccion'    => $seccionCodigo,
-                    'periodo_academico' => $periodo
+                    'periodo_academico' => $periodo,
+                    'carrera'           => $carreraFinal
                 ], true);
             } else {
                 $seccionId = $seccionExistente['id'];
+                if (empty($seccionExistente['carrera']) && !empty($carreraFinal)) {
+                    $seccionModel->update($seccionId, ['carrera' => $carreraFinal]);
+                }
             }
 
             if (!$seccionId) continue;
@@ -812,6 +817,7 @@ class VerificadorInscripcionService
                     'seccion_id'    => $seccionId,
                     'estudiante_id' => null,
                     'aula'          => $bloque['aula'],
+                    'carrera'       => $carreraFinal,
                     'dia_semana'    => $dia,
                     'hora_inicio'   => $bloque['inicio'],
                     'hora_fin'      => $bloque['fin']

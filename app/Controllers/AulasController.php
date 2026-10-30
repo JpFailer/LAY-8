@@ -200,14 +200,27 @@ class AulasController extends BaseController
                 $usuario = $usuarioModel->find($usuarioId);
                 $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
                 $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
+                $esAdmin = ($usuario['rol'] ?? session('rol')) === 'administrador';
 
-                if (!empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
+                if (!$esAdmin && !empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
                     @unlink($rutaCompleta);
                     return redirect()->back()->with('error', "Seguridad UMC: El documento pertenece a la cédula {$cedulaPdf}, la cual no coincide con tu usuario ({$cedulaUsuario}).");
                 }
 
+                // Autocompletar la cédula del usuario en BD si aún no la tenía
+                if (empty($cedulaUsuario) && !empty($cedulaPdf)) {
+                    $usuarioModel->update($usuarioId, ['cedula' => $cedulaPdf]);
+                    session()->set('cedula', $cedulaPdf);
+                }
+
+                // Sincronizar carrera del usuario si fue certificada en el documento oficial
+                if (!empty($analisis['carrera_codigo']) && (empty($usuario['carrera']) || $usuario['carrera'] !== $analisis['carrera_codigo'])) {
+                    $usuarioModel->update($usuarioId, ['carrera' => $analisis['carrera_codigo']]);
+                    session()->set('carrera', $analisis['carrera_codigo']);
+                }
+
                 // Es un Registro de Inscripción UMC oficial (UPE-002 o Forma 006 REE)
-                $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo']);
+                $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo'], true, $analisis['carrera_codigo'] ?? null);
                 @unlink($rutaCompleta);
 
                 return redirect()->to('/aulas')->with('mensaje', "¡Registro de Inscripción validado con éxito! Se certificaron y asignaron {$inscritas} materias/aulas a tu cuenta.");

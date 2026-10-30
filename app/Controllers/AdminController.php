@@ -586,9 +586,12 @@ class AdminController extends BaseController
                ->delete();
         } catch (\Throwable $e) {}
 
-        // 2. Limpiar inscripciones
+        // 2. Limpiar inscripciones y bloques de horario individuales
         try {
             $db->table('inscripciones')
+               ->where('estudiante_id', $id)
+               ->delete();
+            $db->table('clases_programadas')
                ->where('estudiante_id', $id)
                ->delete();
         } catch (\Throwable $e) {}
@@ -599,6 +602,23 @@ class AdminController extends BaseController
             $db->table('noticias_comentarios')->where('usuario_id', $id)->delete();
             $db->table('actividades_estudiante_estado')->where('estudiante_id', $id)->delete();
             $db->table('estados_clase_profesor')->where('profesor_id', $id)->delete();
+
+            // Limpiar actividades creadas por el usuario
+            $actividades = $db->table('actividades_clase')->select('id')->where('creado_por', $id)->get()->getResultArray();
+            if (!empty($actividades)) {
+                $actIds = array_column($actividades, 'id');
+                $db->table('actividades_estudiante_estado')->whereIn('actividad_id', $actIds)->delete();
+                $db->table('actividades_clase')->whereIn('id', $actIds)->delete();
+            }
+
+            // Limpiar noticias publicadas en el muro por el usuario
+            $noticias = $db->table('noticias_muro')->select('id')->where('autor_id', $id)->get()->getResultArray();
+            if (!empty($noticias)) {
+                $nIds = array_column($noticias, 'id');
+                $db->table('noticias_likes')->whereIn('noticia_id', $nIds)->delete();
+                $db->table('noticias_comentarios')->whereIn('noticia_id', $nIds)->delete();
+                $db->table('noticias_muro')->whereIn('id', $nIds)->delete();
+            }
         } catch (\Throwable $e) {}
 
         // 4. Limpiar o anonimizar aportes de biblioteca
