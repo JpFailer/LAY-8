@@ -146,10 +146,10 @@
                   </td>
                   <td style="text-align: right;">
                     <div class="acciones-btn-group">
-                      <button type="button" class="btn-accion-admin btn-aprobar" onclick="aprobarProfesor(<?= (int)$sol['id'] ?>, '<?= esc($sol['nombre_usuario']) ?>')">
+                      <button type="button" class="btn-accion-admin btn-aprobar" onclick="aprobarProfesor(<?= (int)$sol['id'] ?>, '<?= esc($sol['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-check"></i> Aprobar
                       </button>
-                      <button type="button" class="btn-accion-admin btn-rechazar" onclick="abrirModalDenegarProfesor(<?= (int)$sol['id'] ?>, '<?= esc($sol['nombre_usuario']) ?>')">
+                      <button type="button" class="btn-accion-admin btn-rechazar" onclick="abrirModalDenegarProfesor(<?= (int)$sol['id'] ?>, '<?= esc($sol['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-x"></i> Denegar
                       </button>
                     </div>
@@ -223,19 +223,19 @@
                 <td style="text-align: right;">
                   <div class="acciones-btn-group">
                     <?php if (($u['estado_cuenta'] ?? 'activo') === 'baneado'): ?>
-                      <button type="button" class="btn-accion-admin btn-desbanear" onclick="desbanearUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario']) ?>')">
+                      <button type="button" class="btn-accion-admin btn-desbanear" onclick="desbanearUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-undo"></i> Reactivar
                       </button>
                     <?php else: ?>
                       <?php if ($u['rol'] !== 'administrador'): ?>
-                        <button type="button" class="btn-accion-admin btn-banear" onclick="abrirModalBanear(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario']) ?>')">
+                        <button type="button" class="btn-accion-admin btn-banear" onclick="abrirModalBanear(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
                           <i class="bx bx-block"></i> Banear
                         </button>
                       <?php endif; ?>
                     <?php endif; ?>
 
                     <?php if ($u['rol'] !== 'administrador'): ?>
-                      <button type="button" class="btn-accion-admin btn-eliminar" onclick="eliminarUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario']) ?>')">
+                      <button type="button" class="btn-accion-admin btn-eliminar" onclick="eliminarUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-trash"></i>
                       </button>
                     <?php endif; ?>
@@ -303,7 +303,7 @@
                       <a href="<?= base_url('biblioteca/descargar/' . $ap['id']) ?>" class="btn-accion-admin btn-descargar" target="_blank" title="Descargar comprobante">
                         <i class="bx bx-download"></i>
                       </a>
-                      <button type="button" class="btn-accion-admin btn-eliminar" onclick="abrirModalEliminarAporte(<?= (int)$ap['id'] ?>, '<?= esc($ap['titulo']) ?>')">
+                      <button type="button" class="btn-accion-admin btn-eliminar" onclick="abrirModalEliminarAporte(<?= (int)$ap['id'] ?>, '<?= esc($ap['titulo'], 'js') ?>')">
                         <i class="bx bx-trash"></i> Eliminar
                       </button>
                     </div>

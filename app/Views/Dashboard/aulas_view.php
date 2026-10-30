@@ -159,7 +159,7 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia']) ?>')">
+                            <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
                                 <i class="bx bx-plus"></i> Tarea
                             </button>
                         </div>
@@ -245,7 +245,9 @@
                                                             <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>
                                                         </a>
                                                     </div>
-                                                    <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
+                                                    <?php if (!empty($item['es_personal']) || $rolUsuario === 'administrador' || $rolUsuario === 'profesor'): ?>
+                                                        <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -556,7 +558,14 @@
     const BASE_URL = '<?= base_url() ?>';
 
     // 1. Cambio de Pestañas y Persistencia en URL (para que no te saque de la página)
+    let bloquesModificados = false;
+
     function cambiarTabAulas(tabId) {
+        if (tabId === 'horario' && bloquesModificados) {
+            window.location.href = BASE_URL + 'aulas?tab=horario';
+            return;
+        }
+
         document.querySelectorAll('.tab-contenido-aulas').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.filtros-categorias .btn-filtro').forEach(b => b.classList.remove('activo'));
 
@@ -673,6 +682,7 @@
                 if (res.success) {
                     mostrarToastAulas(res.mensaje || '¡Bloques agregados con éxito!', 'exito');
                     deseleccionarTodosBloques();
+                    bloquesModificados = true;
                     const badge = document.querySelector('#tabbtn-horario .badge-conteo');
                     if (badge && res.insertados) {
                         badge.textContent = parseInt(badge.textContent || '0') + res.insertados;
@@ -747,9 +757,9 @@
             const data = await resp.json();
             if (data.success) {
                 mostrarToastAulas(data.mensaje || '¡Horario limpiado exitosamente!', 'exito');
-                document.querySelectorAll('.bloque-clase-card').forEach(el => el.remove());
-                const badge = document.querySelector('#tabbtn-horario .badge-conteo');
-                if (badge) badge.textContent = '0';
+                setTimeout(() => {
+                    window.location.href = BASE_URL + 'aulas?tab=horario';
+                }, 800);
             } else {
                 mostrarToastAulas(data.error || 'No se pudo limpiar el horario.', 'error');
             }

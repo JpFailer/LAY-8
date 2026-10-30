@@ -140,7 +140,7 @@ class AulasController extends BaseController
                     'hora_inicio' => $bloque['hora_inicio'],
                     'hora_fin'    => $bloque['hora_fin'],
                     'intervalo'   => $claveIntervalo,
-                    'es_personal' => (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) || empty($bloque['estudiante_id']),
+                    'es_personal' => (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId),
                 ];
             }
         }
@@ -277,13 +277,15 @@ class AulasController extends BaseController
         }
         $bloquesRaw = array_values(array_filter(array_map('trim', (array)$bloquesRaw)));
 
-        if (empty($seccionId) || empty($diaSemana) || empty($aula)) {
-            $err = 'Por favor completa todos los campos requeridos (materia, día y aula).';
+        $diasValidos = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+        if (empty($seccionId) || empty($diaSemana) || empty($aula) || !in_array($diaSemana, $diasValidos, true)) {
+            $err = 'Por favor completa todos los campos requeridos con un día de la semana válido (Lunes a Sábado).';
             if ($esAjax) {
                 return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
             }
             return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
         }
+        $aula = strip_tags($aula);
 
         if (empty($bloquesRaw)) {
             $err = 'Por favor selecciona al menos un bloque de hora oficial de la UMC.';
@@ -339,6 +341,9 @@ class AulasController extends BaseController
             }
             $horaInicio = trim($partesHoras[0]);
             $horaFin    = trim($partesHoras[1]);
+            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $horaInicio) || !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $horaFin)) {
+                continue;
+            }
 
             // Chequeo de duplicado idéntico para este usuario o sección
             $duplicado = $claseModel->where('seccion_id', $seccionId)
@@ -423,23 +428,13 @@ class AulasController extends BaseController
             $puedeEliminar = true;
         } elseif (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) {
             $puedeEliminar = true;
-        } elseif (empty($bloque['estudiante_id'])) {
-            // Si el bloque no tiene estudiante asignado pero pertenece a una sección donde el alumno está inscrito,
-            // se le autoriza su remoción para desocupar la grilla de materias automáticas conflictivas
-            $estaInscrito = $db->table('inscripciones')
-                ->where('estudiante_id', $usuarioId)
-                ->where('seccion_id', (int)$bloque['seccion_id'])
-                ->countAllResults();
-            if ($estaInscrito > 0) {
-                $puedeEliminar = true;
-            }
         }
 
         if (!$puedeEliminar) {
             if ($esAjax) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para eliminar este bloque de clase.']);
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para eliminar bloques oficiales de la universidad. Solo puedes eliminar los bloques que hayas creado manualmente.']);
             }
-            return redirect()->to(base_url('aulas?tab=horario'))->with('error', 'No tienes permisos para eliminar este bloque de clase.');
+            return redirect()->to(base_url('aulas?tab=horario'))->with('error', 'No tienes permisos para eliminar bloques oficiales de la universidad. Solo puedes eliminar los bloques que hayas creado manualmente.');
         }
 
         $claseModel->delete($id);
@@ -471,27 +466,10 @@ class AulasController extends BaseController
 
         $db = \Config\Database::connect();
 
-        // 1. Obtener las secciones del alumno
-        $inscripciones = $db->table('inscripciones')
-            ->select('seccion_id')
-            ->where('estudiante_id', $usuarioId)
-            ->get()
-            ->getResultArray();
-
-        $seccionesIds = !empty($inscripciones) ? array_column($inscripciones, 'seccion_id') : [];
-
-        // 2. Eliminar bloques personales creados por el estudiante
+        // Eliminar únicamente bloques personales creados por el estudiante (preservando los oficiales de la universidad)
         $db->table('clases_programadas')
             ->where('estudiante_id', $usuarioId)
             ->delete();
-
-        // 3. Eliminar bloques huérfanos / placeholders (estudiante_id IS NULL) de sus secciones
-        if (!empty($seccionesIds)) {
-            $db->table('clases_programadas')
-                ->whereIn('seccion_id', $seccionesIds)
-                ->where('estudiante_id', null)
-                ->delete();
-        }
 
         if ($esAjax) {
             return $this->response->setJSON([
@@ -564,7 +542,7 @@ class AulasController extends BaseController
             'ponderacion'   => $ponderacion ?: 0.00,
         ]);
 
-        return redirect()->to('/aulas')->with('mensaje', '¡Actividad agregada al cronograma con éxito!');
+        return redirect()->to(base_url('aulas?tab=cronograma'))->with('mensaje', '¡Actividad agregada al cronograma con éxito!');
     }
 
     /**
@@ -609,7 +587,7 @@ class AulasController extends BaseController
         }
 
         $actividadModel->delete($id);
-        return redirect()->to('/aulas')->with('mensaje', 'Actividad eliminada del cronograma.');
+        return redirect()->to(base_url('aulas?tab=cronograma'))->with('mensaje', 'Actividad eliminada del cronograma.');
     }
 
     /**

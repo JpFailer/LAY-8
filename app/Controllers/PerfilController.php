@@ -35,21 +35,24 @@ class PerfilController extends BaseController
             return redirect()->to(base_url('login'))->with('error', 'Sesión expirada.');
         }
         $fotoRecortada = (string) $this->request->getPost('foto_recortada');
-        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg);base64,(.+)$/', $fotoRecortada, $m)) {
+        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/s', $fotoRecortada, $m)) {
             $imgBytes = base64_decode($m[2]);
             if ($imgBytes !== false && strlen($imgBytes) <= 4 * 1024 * 1024) {
-                $ext = ($m[1] === 'png') ? 'png' : 'jpg';
-                $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
-                $dirDestino = FCPATH . 'uploads/perfiles';
-                if (!is_dir($dirDestino)) {
-                    mkdir($dirDestino, 0777, true);
+                $imgInfo = @getimagesizefromstring($imgBytes);
+                if ($imgInfo && in_array($imgInfo['mime'], ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                    $ext = ($imgInfo['mime'] === 'image/png') ? 'png' : (($imgInfo['mime'] === 'image/webp') ? 'webp' : 'jpg');
+                    $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                    $dirDestino = FCPATH . 'uploads/perfiles';
+                    if (!is_dir($dirDestino)) {
+                        mkdir($dirDestino, 0777, true);
+                    }
+                    file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
+                    $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
+                    $usuarioModel = new UsuarioModel();
+                    $usuarioModel->update($idUsuario, ['foto_perfil' => $nuevaRuta]);
+                    session()->set('foto_perfil', $nuevaRuta);
+                    return redirect()->back()->with('mensaje', 'Foto de perfil actualizada con éxito.');
                 }
-                file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
-                $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
-                $usuarioModel = new UsuarioModel();
-                $usuarioModel->update($idUsuario, ['foto_perfil' => $nuevaRuta]);
-                session()->set('foto_perfil', $nuevaRuta);
-                return redirect()->back()->with('mensaje', 'Foto de perfil actualizada con éxito.');
             }
         }
 
@@ -150,19 +153,22 @@ class PerfilController extends BaseController
 
         // Subida opcional de nueva foto de perfil (Soporte recorte 1:1 o archivo estándar)
         $fotoRecortada = (string) $this->request->getPost('foto_recortada');
-        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg);base64,(.+)$/', $fotoRecortada, $m)) {
+        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/s', $fotoRecortada, $m)) {
             $imgBytes = base64_decode($m[2]);
             if ($imgBytes !== false && strlen($imgBytes) <= 4 * 1024 * 1024) {
-                $ext = ($m[1] === 'png') ? 'png' : 'jpg';
-                $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
-                $dirDestino = FCPATH . 'uploads/perfiles';
-                if (!is_dir($dirDestino)) {
-                    mkdir($dirDestino, 0777, true);
+                $imgInfo = @getimagesizefromstring($imgBytes);
+                if ($imgInfo && in_array($imgInfo['mime'], ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                    $ext = ($imgInfo['mime'] === 'image/png') ? 'png' : (($imgInfo['mime'] === 'image/webp') ? 'webp' : 'jpg');
+                    $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                    $dirDestino = FCPATH . 'uploads/perfiles';
+                    if (!is_dir($dirDestino)) {
+                        mkdir($dirDestino, 0777, true);
+                    }
+                    file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
+                    $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
+                    $datosActualizar['foto_perfil'] = $nuevaRuta;
+                    session()->set('foto_perfil', $nuevaRuta);
                 }
-                file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
-                $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
-                $datosActualizar['foto_perfil'] = $nuevaRuta;
-                session()->set('foto_perfil', $nuevaRuta);
             }
         } else {
             $archivoFoto = $this->request->getFile('foto');

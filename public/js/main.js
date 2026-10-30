@@ -113,7 +113,7 @@ function seleccionarCarreraEditar(codigo) {
     if (input) {
         input.value = codigo;
     }
-    const opciones = document.querySelectorAll('#modal-editar-perfil .carrera-card-opcion');
+    const opciones = document.querySelectorAll('.carrera-card-opcion');
     opciones.forEach(card => {
         const check = card.querySelector('.check-radio i');
         if (card.dataset.codigo === codigo) {
@@ -132,7 +132,7 @@ function seleccionarCarreraEditar(codigo) {
     // Activar validación requerida de contraseña y documento solo si se cambia de carrera
     const carreraInicial = document.getElementById('carrera-inicial-perfil');
     const inputPass = document.getElementById('input-pass-perfil');
-    const inputFile = document.querySelector('#modal-editar-perfil input[name="planilla_inscripcion"]');
+    const inputFile = document.querySelector('input[name="planilla_inscripcion"]');
     if (carreraInicial && inputPass) {
         if (codigo !== carreraInicial.value) {
             inputPass.setAttribute('required', 'required');
