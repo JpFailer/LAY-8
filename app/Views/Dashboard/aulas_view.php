@@ -8,9 +8,6 @@
         <div>
             <h2 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                 <i class="bx bx-door-open"></i> Aulas y Cronograma Académico
-                <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('aulas')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.25rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                    <i class="bx bx-help-circle"></i>
-                </button>
             </h2>
         </div>
         <div class="aulas-header-acciones">
@@ -189,9 +186,6 @@
             <div class="toolbar-info">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                     <i class="bx bx-calendar-event"></i> Horario Académico Personal
-                    <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('horario')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                        <i class="bx bx-help-circle"></i>
-                    </button>
                 </h3>
             </div>
             <div class="toolbar-botones">
@@ -275,9 +269,6 @@
             <div class="toolbar-info">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
                     <i class="bx bx-list-check"></i> Cronograma de Actividades y Tareas
-                    <button type="button" class="btn-ayuda-seccion" onclick="mostrarInfoAyudaModal('cronograma')" title="¿Qué se hace aquí?" style="background: none; border: none; color: #64748b; font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; padding: 2px;">
-                        <i class="bx bx-help-circle"></i>
-                    </button>
                 </h3>
             </div>
             <div class="filtros-actividades-chips">
@@ -630,49 +621,5 @@
 </script>
 
 
-<!-- Modal Ventanita de Ayuda / Info de Sección (Revisión Haryerit) -->
-<div id="modal-info-ayuda-seccion" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;" onclick="if(event.target === this) cerrarInfoAyudaModal()">
-  <div class="modal-editar-perfil-content" style="max-width: 440px; width: 100%; border-radius: 16px; padding: 22px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 id="titulo-ayuda-modal" style="margin: 0; font-size: 1.1rem; color: #0f172a; display: flex; align-items: center; gap: 6px;">
-        <i class="bx bx-help-circle" style="color: #2563eb; font-size: 1.3rem;"></i> Información
-      </h3>
-      <button type="button" class="btn-cerrar-carreras" onclick="cerrarInfoAyudaModal()" style="font-size: 1.5rem; background: none; border: none; cursor: pointer; color: #64748b;">&times;</button>
-    </div>
-    <p id="texto-ayuda-modal" style="font-size: 0.9rem; color: #475569; line-height: 1.6; margin: 0 0 16px 0;"></p>
-    <div style="display: flex; justify-content: flex-end;">
-      <button type="button" class="btn-modal-guardar" onclick="cerrarInfoAyudaModal()" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 8px;">Entendido</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const infoTemas = {
-    'aulas': {
-        titulo: 'Aulas y Cronograma Académico',
-        texto: 'En este módulo puedes visualizar tus materias inscritas en la UMC, consultar la programación semanal de tus clases, registrar tus próximas tareas y sincronizar tu horario oficial.'
-    },
-    'horario': {
-        titulo: 'Horario Académico Personal',
-        texto: 'Muestra la grilla oficial de la UMC estructurada en los turnos oficiales de Mañana, Tarde y Noche, indicando las asignaturas y aulas asignadas.'
-    },
-    'cronograma': {
-        titulo: 'Cronograma de Actividades y Tareas',
-        texto: 'Permite registrar y monitorear fechas límites, exámenes parciales, talleres y entregas pendientes de tus asignaturas.'
-    }
-};
-
-function mostrarInfoAyudaModal(tema) {
-    const info = infoTemas[tema];
-    if (!info) return;
-    document.getElementById('titulo-ayuda-modal').innerHTML = '<i class="bx bx-help-circle" style="color: #2563eb;"></i> ' + info.titulo;
-    document.getElementById('texto-ayuda-modal').textContent = info.texto;
-    document.getElementById('modal-info-ayuda-seccion').style.display = 'flex';
-}
-
-function cerrarInfoAyudaModal() {
-    document.getElementById('modal-info-ayuda-seccion').style.display = 'none';
-}
-</script>
 
 <?= $this->endSection() ?>

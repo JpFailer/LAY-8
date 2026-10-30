@@ -34,6 +34,25 @@ class PerfilController extends BaseController
         if (!$idUsuario) {
             return redirect()->to(base_url('login'))->with('error', 'Sesión expirada.');
         }
+        $fotoRecortada = (string) $this->request->getPost('foto_recortada');
+        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg);base64,(.+)$/', $fotoRecortada, $m)) {
+            $imgBytes = base64_decode($m[2]);
+            if ($imgBytes !== false && strlen($imgBytes) <= 4 * 1024 * 1024) {
+                $ext = ($m[1] === 'png') ? 'png' : 'jpg';
+                $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                $dirDestino = FCPATH . 'uploads/perfiles';
+                if (!is_dir($dirDestino)) {
+                    mkdir($dirDestino, 0777, true);
+                }
+                file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
+                $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
+                $usuarioModel = new UsuarioModel();
+                $usuarioModel->update($idUsuario, ['foto_perfil' => $nuevaRuta]);
+                session()->set('foto_perfil', $nuevaRuta);
+                return redirect()->back()->with('mensaje', 'Foto de perfil actualizada con éxito.');
+            }
+        }
+
 
         $validacion = $this->validate([
             'foto' => [
@@ -129,15 +148,32 @@ class PerfilController extends BaseController
             $mensajeExtra = " Carrera certificada como {$analisis['carrera_nombre']}. Se vincularon automáticamente {$aulasInscritas} nuevas aulas a tu perfil.";
         }
 
-        // Subida opcional de nueva foto de perfil
-        $archivoFoto = $this->request->getFile('foto');
-        if ($archivoFoto && $archivoFoto->isValid() && !$archivoFoto->hasMoved()) {
-            if (in_array($archivoFoto->getMimeType(), ['image/png', 'image/jpeg', 'image/jpg']) && $archivoFoto->getSize() <= 2048 * 1024) {
-                $nombreAleatorio = $archivoFoto->getRandomName();
-                $archivoFoto->move(FCPATH . 'uploads/perfiles', $nombreAleatorio);
+        // Subida opcional de nueva foto de perfil (Soporte recorte 1:1 o archivo estándar)
+        $fotoRecortada = (string) $this->request->getPost('foto_recortada');
+        if (!empty($fotoRecortada) && preg_match('/^data:image\/(png|jpeg|jpg);base64,(.+)$/', $fotoRecortada, $m)) {
+            $imgBytes = base64_decode($m[2]);
+            if ($imgBytes !== false && strlen($imgBytes) <= 4 * 1024 * 1024) {
+                $ext = ($m[1] === 'png') ? 'png' : 'jpg';
+                $nombreAleatorio = 'avatar_' . $idUsuario . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
+                $dirDestino = FCPATH . 'uploads/perfiles';
+                if (!is_dir($dirDestino)) {
+                    mkdir($dirDestino, 0777, true);
+                }
+                file_put_contents($dirDestino . '/' . $nombreAleatorio, $imgBytes);
                 $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
                 $datosActualizar['foto_perfil'] = $nuevaRuta;
                 session()->set('foto_perfil', $nuevaRuta);
+            }
+        } else {
+            $archivoFoto = $this->request->getFile('foto');
+            if ($archivoFoto && $archivoFoto->isValid() && !$archivoFoto->hasMoved()) {
+                if (in_array($archivoFoto->getMimeType(), ['image/png', 'image/jpeg', 'image/jpg']) && $archivoFoto->getSize() <= 2048 * 1024) {
+                    $nombreAleatorio = $archivoFoto->getRandomName();
+                    $archivoFoto->move(FCPATH . 'uploads/perfiles', $nombreAleatorio);
+                    $nuevaRuta = 'uploads/perfiles/' . $nombreAleatorio;
+                    $datosActualizar['foto_perfil'] = $nuevaRuta;
+                    session()->set('foto_perfil', $nuevaRuta);
+                }
             }
         }
 

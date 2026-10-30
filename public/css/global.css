@@ -1022,6 +1022,126 @@ body.dark-mode .btn-modal-guardar:hover {
     background-color: #2563eb !important;
 }
 
+
+/* ==========================================================================
+   ESTILOS ADAPTABLES MODO OSCURO (REVISIÓN HARYERIT - INPUTS Y CAJAS)
+   ========================================================================== */
+.editar-seguridad-box {
+    background: #eff6ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.editar-seguridad-box .label-seguridad {
+    color: #1e40af;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+.editar-seguridad-box .form-sublabel-editar {
+    font-size: 0.82rem;
+    margin: 4px 0 12px 0;
+    color: #3b82f6;
+    line-height: 1.5;
+}
+.editar-seguridad-box .label-pass-seguridad {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+/* Modo Oscuro para Inputs Globales y Cajas */
+html.dark-mode .input-global,
+body.dark-mode .input-global,
+.dark-mode .input-global,
+html.dark-mode input.input-global,
+body.dark-mode input.input-global {
+    background-color: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1.5px solid #334155 !important;
+}
+html.dark-mode .input-global:focus,
+body.dark-mode .input-global:focus,
+.dark-mode .input-global:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+}
+html.dark-mode .input-global::placeholder,
+body.dark-mode .input-global::placeholder,
+.dark-mode .input-global::placeholder {
+    color: #64748b !important;
+}
+html.dark-mode input[type="file"].input-global,
+body.dark-mode input[type="file"].input-global,
+.dark-mode input[type="file"].input-global {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+html.dark-mode input[type="file"]::file-selector-button,
+body.dark-mode input[type="file"]::file-selector-button,
+.dark-mode input[type="file"]::file-selector-button {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #475569 !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    margin-right: 10px !important;
+}
+html.dark-mode .editar-seguridad-box,
+body.dark-mode .editar-seguridad-box,
+.dark-mode .editar-seguridad-box {
+    background: rgba(30, 58, 138, 0.22) !important;
+    border-color: #1e40af !important;
+}
+html.dark-mode .editar-seguridad-box .label-seguridad,
+body.dark-mode .editar-seguridad-box .label-seguridad,
+.dark-mode .editar-seguridad-box .label-seguridad {
+    color: #93c5fd !important;
+}
+html.dark-mode .editar-seguridad-box .form-sublabel-editar,
+body.dark-mode .editar-seguridad-box .form-sublabel-editar,
+.dark-mode .editar-seguridad-box .form-sublabel-editar {
+    color: #94a3b8 !important;
+}
+html.dark-mode .editar-seguridad-box .label-pass-seguridad,
+body.dark-mode .editar-seguridad-box .label-pass-seguridad,
+.dark-mode .editar-seguridad-box .label-pass-seguridad {
+    color: #cbd5e1 !important;
+}
+html.dark-mode .modal-editar-perfil-content,
+body.dark-mode .modal-editar-perfil-content,
+.dark-mode .modal-editar-perfil-content {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+html.dark-mode .modal-editar-header,
+body.dark-mode .modal-editar-header,
+.dark-mode .modal-editar-header,
+html.dark-mode .modal-editar-footer,
+body.dark-mode .modal-editar-footer,
+.dark-mode .modal-editar-footer {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+html.dark-mode .btn-zoom-avatar,
+body.dark-mode .btn-zoom-avatar,
+.dark-mode .btn-zoom-avatar {
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
 /* Página dedicada de Ajustes */
 .ajustes-pagina-contenedor {
     max-width: 700px;
