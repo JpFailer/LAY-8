@@ -289,14 +289,15 @@
                   </td>
                   <td><span class="badge-categoria-tag"><?= ucfirst(esc($ap['categoria'])) ?></span></td>
                   <td>
-                    <?php if (!empty($ap['autor_usuario'])): ?>
-                      @<?= esc($ap['autor_usuario']) ?>
+                    <?php $autor = $ap['autor_usuario'] ?? $ap['nombre_usuario'] ?? null; ?>
+                    <?php if (!empty($autor)): ?>
+                      @<?= esc($autor) ?>
                     <?php else: ?>
                       <span style="color: #94a3b8;">Desvinculado</span>
                     <?php endif; ?>
                   </td>
                   <td><?= round(($ap['tamano_bytes'] ?? 0) / 1024, 1) ?> KB</td>
-                  <td><?= date('d/m/Y', strtotime($ap['created_at'])) ?></td>
+                  <td><?= !empty($ap['fecha_subida']) ? date('d/m/Y', strtotime($ap['fecha_subida'])) : (!empty($ap['created_at']) ? date('d/m/Y', strtotime($ap['created_at'])) : 'N/D') ?></td>
                   <td style="text-align: right;">
                     <div class="acciones-btn-group">
                       <a href="<?= base_url('biblioteca/descargar/' . $ap['id']) ?>" class="btn-accion-admin btn-descargar" target="_blank" title="Descargar comprobante">
@@ -401,7 +402,7 @@
           <tbody>
             <?php foreach ($auditoria as $log): ?>
               <tr>
-                <td><?= date('d/m/Y H:i:s', strtotime($log['created_at'])) ?></td>
+                <td><?= !empty($log['created_at']) ? date('d/m/Y H:i:s', strtotime($log['created_at'])) : 'N/D' ?></td>
                 <td>
                   <strong>@<?= esc($log['admin_username'] ?? 'Sistema') ?></strong>
                 </td>
