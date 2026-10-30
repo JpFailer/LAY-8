@@ -29,6 +29,7 @@ $routes->get('biblioteca', 'BibliotecaController::index');
 $routes->get('biblioteca/subir', 'BibliotecaController::formularioSubir');
 $routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
 $routes->get('biblioteca/descargar/(:num)', 'BibliotecaController::descargar/$1');
+$routes->get('biblioteca/ver/(:num)', 'BibliotecaController::ver/$1');
 
 // Mapa interactivo y Aulas
 $routes->get('mapa', 'MapaController::mostrar_mapa');
@@ -85,10 +86,13 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Rutas exclusivas para el Administrador (Filtro Admin)
     $routes->group('', ['filter' => 'admin'], static function ($routes) {
         // Vista Principal del Panel de Administración
+        $routes->get('admin', 'AdminController::index');
         $routes->get('/admin', 'AdminController::index');
+        $routes->get('admin/index', 'AdminController::index');
 
         // Dashboard y Métricas
         $routes->post('/api/admin/horario/actualizar', 'AdminController::actualizarHorarioPdf');
+        $routes->post('/api/admin/horario/actualizar-carrera', 'AdminController::actualizarHorarioPdf');
         $routes->get('/api/admin/metricas', 'AdminController::metricas');
 
         // Gestión de Profesores (Aprobación, Denegación y Revocación)

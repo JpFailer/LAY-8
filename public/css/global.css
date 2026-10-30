@@ -625,23 +625,39 @@ h1, h2, h3, h4, h5, h6 {
    MODO OSCURO (DARK MODE) Y SISTEMA DE AJUSTES
    ========================================================================== */
 
-/* Variables para transiciones suaves */
-body, .barra-superior, .sidebar, .content-box, .dropdown-menu, .card-global, .modal-ajustes-content {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+html {
+    background-color: #ededed;
+}
+
+html.dark-mode {
+    color-scheme: dark;
+    background-color: #0b1120 !important;
 }
 
 /* Reglas Generales de Modo Oscuro */
-html.dark-mode, body.dark-mode {
+html.dark-mode, 
+body.dark-mode, 
+html.dark-mode body {
     background: #0f172a !important;
     background: linear-gradient(180deg, #0b1120 70%, #1e293b 100%) !important;
     background-attachment: fixed !important;
     color: #e2e8f0 !important;
 }
 
+html.dark-mode .barra-superior,
 body.dark-mode .barra-superior {
     background-color: #0c1427 !important;
     border-bottom: 1px solid #1e293b;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark-mode .content-box,
+body.dark-mode .content-box {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-left: none;
+    border-top: none;
+    box-shadow: none !important;
 }
 
 body.dark-mode .sidebar {
@@ -4577,4 +4593,775 @@ body.dark-mode .checkbox-terminos-label {
 }
 body.dark-mode .checkbox-terminos-label a {
     color: #60a5fa !important;
+}
+
+
+/* =========================================================================
+   MAPA INTERACTIVO: ARQUITECTURA DE VISTA COMPLETA, ZOOM Y PINES CON LOGOS
+   ========================================================================= */
+
+.mapa-dashboard-contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.mapa-filtros-carrera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.btn-filtro-carrera {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+}
+
+.btn-filtro-carrera:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #1e3a8a;
+}
+
+.btn-filtro-carrera.activo {
+    background: #1e3a8a;
+    color: #ffffff;
+    border-color: #1e3a8a;
+    box-shadow: 0 3px 8px rgba(30, 58, 138, 0.3);
+}
+
+.btn-filtro-carrera.activo i {
+    color: #ffffff !important;
+}
+
+.leyenda-mapa-moderna {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.leyenda-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+}
+
+.leyenda-titulo-seccion {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.item-leyenda-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    color: #334155;
+    font-weight: 500;
+}
+
+.mini-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    color: #ffffff;
+}
+
+.mini-badge.mini-verde { background: #10b981; }
+.mini-badge.mini-roja { background: #ef4444; }
+.mini-badge.mini-amarilla { background: #f59e0b; }
+.mini-badge.mini-azul { background: #3b82f6; }
+
+/* Contenedor del Mapa */
+.contenedor-mapa {
+    position: relative;
+    width: 100%;
+    height: 72vh;
+    min-height: 520px;
+    max-height: 780px;
+    margin: 0 auto;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.2);
+    background: #0f172a;
+    border: 1px solid #cbd5e1;
+}
+
+.contenedor-mapa.is-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    z-index: 999999 !important;
+}
+
+.mapa-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+}
+
+.mapa-viewport.is-dragging {
+    cursor: grabbing !important;
+}
+
+.mapa-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1920px;
+    transform-origin: 0 0;
+    will-change: transform;
+    transition: transform 0.04s linear;
+}
+
+.mapa-canvas.animar-zoom {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.imagen-mapa {
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    background: #fdfdfc;
+    border-radius: 8px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+}
+
+/* Pines de aulas interactivos */
+.pin-contenedor {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    transform: translate(-50%, -50%) scale(var(--pin-scale, 1));
+    transform-origin: center center;
+    cursor: pointer;
+    z-index: 20;
+    transition: opacity 0.25s ease, transform 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pin-contenedor:hover {
+    transform: translate(-50%, -50%) scale(calc(var(--pin-scale, 1) * 1.35)) !important;
+    z-index: 99 !important;
+}
+
+/* Modo Vista General (LOD - Level of Detail) */
+.mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-libre {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* En vista general, las ocupadas y próximas se muestran claramente */
+.mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-ocupada,
+.mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-proxima {
+    opacity: 0.95;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* Filtro de carreras activo */
+.mapa-canvas.filtro-activo .pin-contenedor {
+    opacity: 0.15 !important;
+    pointer-events: none !important;
+    transition: opacity 0.25s ease;
+}
+
+.mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    z-index: 50 !important;
+}
+
+.mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado .pin-badge {
+    box-shadow: 0 0 0 3px #ffffff, 0 0 16px rgba(37, 99, 235, 0.85);
+}
+
+/* Forzar mostrar todos los pines si el usuario lo activa */
+.mapa-canvas.forzar-ver-pines .pin-contenedor {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+}
+
+/* Forzar ocultar todos los pines */
+.mapa-canvas.forzar-ocultar-pines .pin-contenedor {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* Insignia circular del pin */
+.pin-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    color: #ffffff;
+    position: relative;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.pin-badge i {
+    font-size: 1.05rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Pin Verde: Aula Libre */
+.pin-badge.pin-verde {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.5), 0 0 0 2px #ffffff;
+}
+
+/* Pin Rojo: Aula Ocupada con Logo de Carrera */
+.pin-badge.pin-roja {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.65), 0 0 0 2px #ffffff;
+}
+
+.pin-badge.pin-roja::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(239, 68, 68, 0.85);
+    animation: pin-pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    pointer-events: none;
+}
+
+@keyframes pin-pulse-ring {
+    0% { transform: scale(0.9); opacity: 1; }
+    70% { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Pin Amarillo: Próxima clase */
+.pin-badge.pin-amarilla {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.5), 0 0 0 2px #ffffff;
+}
+
+/* Pin Azul: Fuera de servicio */
+.pin-badge.pin-azul {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.5), 0 0 0 2px #ffffff;
+}
+
+/* Tooltip elegante al pasar el cursor */
+.pin-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 9px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    z-index: 1000;
+}
+
+.pin-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent;
+}
+
+.pin-contenedor:hover .pin-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.pin-tooltip-title {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pin-tooltip-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.pin-tooltip-badge.tag-verde { background: rgba(16, 185, 129, 0.25); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.pin-tooltip-badge.tag-roja { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+.pin-tooltip-badge.tag-amarilla { background: rgba(245, 158, 11, 0.25); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4); }
+.pin-tooltip-badge.tag-azul { background: rgba(59, 130, 246, 0.25); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+
+.pin-tooltip-detail {
+    color: #cbd5e1;
+    font-size: 0.72rem;
+}
+
+/* Barra flotante de controles de zoom (+, 100%, -, ojo, fullscreen) */
+.mapa-zoom-controls {
+    position: absolute;
+    right: 18px;
+    bottom: 84px;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+    border: 1px solid #cbd5e1;
+    overflow: hidden;
+}
+
+.btn-mapa-zoom {
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3a8a;
+    font-size: 1.25rem;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.btn-mapa-zoom:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.btn-mapa-zoom:active {
+    background: #dbeafe;
+}
+
+.btn-mapa-zoom + .btn-mapa-zoom {
+    border-top: 1px solid #e2e8f0;
+}
+
+.zoom-indicator-text {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+/* Indicador de ayuda en la esquina inferior izquierda */
+.mapa-hint-bar {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 90;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: opacity 0.4s ease;
+}
+
+/* =========================================================================
+   WIDGET FLOTANTE DE AYUDA / GUÍA DE APARTADO (ESQUINA INFERIOR DERECHA)
+   ========================================================================= */
+
+.guia-apartado-widget {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    z-index: 9990;
+    font-family: var(--fuente-cuerpo, 'Hind', sans-serif);
+}
+
+/* Botón disparador (mini cuadro con símbolo de sugerencia / duda) */
+.guia-apartado-btn {
+    width: 46px;
+    height: 46px;
+    background: #ffffff;
+    border: 1.5px solid #2563eb;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    user-select: none;
+    outline: none;
+    color: #1e3a8a;
+}
+
+.guia-apartado-btn:hover,
+.guia-apartado-widget.is-open .guia-apartado-btn {
+    background: #1e3a8a;
+    color: #ffffff;
+    border-color: #1e3a8a;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(30, 58, 138, 0.35);
+}
+
+.guia-icono-principal {
+    font-size: 1.55rem;
+    line-height: 1;
+    transition: transform 0.22s ease;
+}
+
+.guia-apartado-btn:hover .guia-icono-principal {
+    transform: rotate(12deg);
+}
+
+/* Indicador de punto pulsante */
+.guia-dot-pulso {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 11px;
+    height: 11px;
+    background: #3b82f6;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+    animation: guia-pulso-anim 2s infinite;
+}
+
+@keyframes guia-pulso-anim {
+    0% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+    70% { transform: scale(1.1); opacity: 0.9; box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+    100% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+/* Tarjeta desplegable con la descripción detallada */
+.guia-apartado-card {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    right: 0;
+    width: 350px;
+    max-width: calc(100vw - 36px);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.96);
+    transform-origin: bottom right;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                visibility 0.22s;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 10000;
+}
+
+/* Al posicionar el cursor O al darle clic */
+.guia-apartado-widget:hover .guia-apartado-card,
+.guia-apartado-widget.is-open .guia-apartado-card {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Cabecera de la tarjeta */
+.guia-card-header {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+.guia-header-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    border: 1px solid #bfdbfe;
+}
+
+.guia-header-titles {
+    flex: 1;
+    min-width: 0;
+}
+
+.guia-tag-modulo {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #2563eb;
+    margin-bottom: 2px;
+}
+
+.guia-card-title {
+    font-family: var(--fuente-titulos, 'Montserrat', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.guia-btn-cerrar {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.guia-btn-cerrar:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Cuerpo de la tarjeta */
+.guia-card-body {
+    padding: 16px;
+    max-height: 360px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.guia-card-desc {
+    font-size: 0.84rem;
+    color: #334155;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Sección de tips y funciones rápidas */
+.guia-tips-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.guia-tips-titulo {
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.guia-tip-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #334155;
+    line-height: 1.38;
+}
+
+.guia-tip-item i {
+    font-size: 0.98rem;
+    color: #2563eb;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.guia-tip-item b {
+    color: #0f172a;
+}
+
+/* Pie de la tarjeta */
+.guia-card-footer {
+    padding: 9px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.73rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.guia-card-footer i {
+    color: #f59e0b;
+    font-size: 0.95rem;
+}
+
+/* Compatibilidad con Modo Oscuro */
+body.dark-mode .guia-apartado-btn {
+    background: #1e293b;
+    border-color: #3b82f6;
+    color: #93c5fd;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .guia-apartado-btn:hover,
+body.dark-mode .guia-apartado-widget.is-open .guia-apartado-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #60a5fa;
+}
+
+body.dark-mode .guia-apartado-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .guia-card-header {
+    background: #0f172a;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode .guia-header-icon-box {
+    background: #1e293b;
+    color: #60a5fa;
+    border-color: #2563eb;
+}
+
+body.dark-mode .guia-card-title {
+    color: #f8fafc;
+}
+
+body.dark-mode .guia-tag-modulo {
+    color: #60a5fa;
+}
+
+body.dark-mode .guia-btn-cerrar {
+    color: #94a3b8;
+}
+
+body.dark-mode .guia-btn-cerrar:hover {
+    background: #334155;
+    color: #ffffff;
+}
+
+body.dark-mode .guia-card-desc {
+    color: #cbd5e1;
+}
+
+body.dark-mode .guia-tips-box {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode .guia-tips-titulo {
+    color: #94a3b8;
+}
+
+body.dark-mode .guia-tip-item {
+    color: #cbd5e1;
+}
+
+body.dark-mode .guia-tip-item b {
+    color: #f8fafc;
+}
+
+body.dark-mode .guia-card-footer {
+    background: #0f172a;
+    border-top-color: #334155;
+    color: #94a3b8;
 }

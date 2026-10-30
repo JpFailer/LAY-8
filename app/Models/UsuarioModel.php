@@ -13,6 +13,7 @@ class UsuarioModel extends Model
     protected $protectFields    = true;
 
     protected $allowedFields = [
+        'cedula',
         'primer_nombre',
         'segundo_nombre',
         'apellidos',
@@ -42,12 +43,13 @@ class UsuarioModel extends Model
      */
     public function obtenerUsuariosFiltrados(array $filtros = [], int $limite = 20, int $offset = 0): array
     {
-        $builder = $this->select('id, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, carrera, estado_verificacion, ruta_carnet, estado_cuenta, motivo_baneo, baneado_en, fecha_registro, ultimo_acceso, foto_perfil');
+        $builder = $this->select('id, cedula, primer_nombre, segundo_nombre, apellidos, nombre_usuario, correo, telefono, rol, carrera, estado_verificacion, ruta_carnet, estado_cuenta, motivo_baneo, baneado_en, fecha_registro, ultimo_acceso, foto_perfil');
 
         if (!empty($filtros['buscar'])) {
             $termino = trim($filtros['buscar']);
             $builder->groupStart()
                     ->like('nombre_usuario', $termino)
+                    ->orLike('cedula', $termino)
                     ->orLike('correo', $termino)
                     ->orLike('primer_nombre', $termino)
                     ->orLike('apellidos', $termino)

@@ -220,10 +220,12 @@ function aplicarTema(tema) {
         document.documentElement.classList.add('dark-mode');
         document.body.classList.add('dark-mode');
         localStorage.setItem('lay8_theme', 'dark');
+        document.cookie = "lay8_theme=dark; path=/; max-age=31536000; SameSite=Lax";
     } else {
         document.documentElement.classList.remove('dark-mode');
         document.body.classList.remove('dark-mode');
         localStorage.setItem('lay8_theme', 'light');
+        document.cookie = "lay8_theme=light; path=/; max-age=31536000; SameSite=Lax";
     }
 
     // Actualizar todos los switches en la pantalla
@@ -245,7 +247,10 @@ function aplicarTema(tema) {
 
 function inicializarModoOscuro() {
     const temaForzadoClaro = document.body && document.body.dataset.temaDefault === 'light';
-    let temaGuardado = localStorage.getItem('lay8_theme') || 'light';
+    let temaGuardado = localStorage.getItem('lay8_theme');
+    if (!temaGuardado) {
+        temaGuardado = document.documentElement.classList.contains('dark-mode') ? 'dark' : 'light';
+    }
     if (temaForzadoClaro && localStorage.getItem('lay8_auth_override') !== 'true') {
         temaGuardado = 'light';
     }

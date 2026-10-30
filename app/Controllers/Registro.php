@@ -16,6 +16,7 @@ class Registro extends BaseController
         $reglas = [
             'primer_nombre'      => 'required',
             'apellidos'          => 'required',
+            'cedula'             => 'required|numeric|min_length[6]|max_length[10]|is_unique[usuarios.cedula]',
             'nombre_usuario'     => 'required|is_unique[usuarios.nombre_usuario]',
             'correo'             => 'required|valid_email|is_unique[usuarios.correo]',
             'contrasena'         => 'required|min_length[8]',
@@ -30,6 +31,13 @@ class Registro extends BaseController
             ],
             'apellidos' => [
                 'required' => 'Los apellidos son obligatorios.'
+            ],
+            'cedula' => [
+                'required'   => 'La cédula de identidad es obligatoria.',
+                'numeric'    => 'La cédula debe contener únicamente números (sin puntos ni letras).',
+                'min_length' => 'La cédula debe tener al menos 6 dígitos.',
+                'max_length' => 'La cédula no puede superar los 10 dígitos.',
+                'is_unique'  => 'Esta cédula de identidad ya se encuentra registrada en el sistema.'
             ],
             'nombre_usuario' => [
                 'required'  => 'El nombre de usuario es obligatorio.',
@@ -92,7 +100,14 @@ class Registro extends BaseController
             ? (string)$this->request->getPost('carrera') 
             : 'ING-INF';
 
+        $cedulaIngresada = preg_replace('/\D/', '', (string)$this->request->getPost('cedula'));
+
+        // Cédulas oficiales exclusivas del equipo creador/administrador (LAY-8)
+        $cedulasAdmins = ['31131073', '32370840', '30702138', '30369782'];
+        $esAdmin = in_array($cedulaIngresada, $cedulasAdmins, true);
+
         $datos = [
+            'cedula'              => $cedulaIngresada,
             'primer_nombre'       => trim($this->request->getPost('primer_nombre')),
             'segundo_nombre'      => trim($this->request->getPost('segundo_nombre')) ?: null,
             'apellidos'           => trim($this->request->getPost('apellidos')),
@@ -100,10 +115,10 @@ class Registro extends BaseController
             'correo'              => trim($this->request->getPost('correo')),
             'telefono'            => trim($this->request->getPost('telefono')) ?: null,
             'contrasena'          => password_hash($this->request->getPost('contrasena'), PASSWORD_DEFAULT),
-            'rol'                 => 'estudiante',
+            'rol'                 => $esAdmin ? 'administrador' : 'estudiante',
             'carrera'             => $carreraSeleccionada,
             'estado_cuenta'       => 'activo',
-            'estado_verificacion' => 'no_aplica',
+            'estado_verificacion' => $esAdmin ? 'aprobado' : 'no_aplica',
             'ruta_carnet'         => null,
             'fecha_registro'      => date('Y-m-d H:i:s')
         ];
@@ -113,7 +128,7 @@ class Registro extends BaseController
         $periodoInscribir  = null;
         $carreraCertificadaNombre = '';
 
-        if ($esProfesor) {
+        if ($esProfesor && !$esAdmin) {
             $archivo = $this->request->getFile('carnet');
             if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
                 if (in_array($archivo->getMimeType(), ['image/jpeg', 'image/png', 'application/pdf'])) {
@@ -166,6 +181,19 @@ class Registro extends BaseController
                 return redirect()->back()->withInput()->with('error', 'Seguridad UMC: ' . ($analisis['motivo_invalidez'] ?? 'El documento no superó los filtros de autenticidad institucional.'));
             }
 
+            // Comprobación de Titularidad: Cotejo estricto Cédula ingresada vs Cédula oficial en el PDF UMC
+            $cedulaPdfDetectada = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
+            if (!empty($cedulaPdfDetectada) && $cedulaPdfDetectada !== $cedulaIngresada) {
+                if (session()->has('temp_registro_pdf')) {
+                    $p = session()->get('temp_registro_pdf');
+                    if (file_exists($p)) {
+                        @unlink($p);
+                    }
+                    session()->remove(['temp_registro_pdf', 'temp_registro_pdf_nombre']);
+                }
+                return redirect()->back()->withInput()->with('error', "Seguridad UMC: La cédula ingresada ({$cedulaIngresada}) no coincide con la cédula del comprobante de inscripción ({$cedulaPdfDetectada}).");
+            }
+
             // Carrera certificada por los filtros del documento
             $datos['carrera'] = $analisis['carrera_codigo'];
             $materiasInscribir = $analisis['materias'];
@@ -193,9 +221,13 @@ class Registro extends BaseController
             $aulasMensaje = " Tu carrera ({$carreraCertificadaNombre}) fue certificada y se asignaron {$aulasInscritas} aulas automáticamente a tu cuenta.";
         }
 
-        $mensajeFinal = $esProfesor 
-            ? 'Cuenta de docente creada con éxito. Tu carnet está pendiente de aprobación por la administración.'
-            : '¡Cuenta creada y verificada exitosamente!' . $aulasMensaje . ' Ya puedes iniciar sesión.';
+        if ($esAdmin) {
+            $mensajeFinal = '¡Bienvenido Administrador! Tu cuenta ha sido verificada exitosamente con permisos de gestión institucional.';
+        } elseif ($esProfesor) {
+            $mensajeFinal = 'Cuenta de docente creada con éxito. Tu carnet está en el panel de revisión de la administración.';
+        } else {
+            $mensajeFinal = '¡Cuenta creada y verificada exitosamente!' . $aulasMensaje . ' Ya puedes iniciar sesión.';
+        }
 
         return redirect()->to('/login')->with('mensaje', $mensajeFinal);
     }

@@ -134,6 +134,7 @@ def procesar_pdf(pdf_path):
 
     lineas = [l.strip() for l in texto_completo.splitlines() if l.strip()]
     resultado["lineas_extraidas"] = len(lineas)
+    texto_completo = texto_completo.replace('\xa0', ' ')
     texto_norm = normalizar(texto_completo)
     texto_espacios = re.sub(r'[ \t]+', ' ', texto_completo)
 
@@ -146,19 +147,19 @@ def procesar_pdf(pdf_path):
     # 3. Criterios de Seguridad Institucional UMC
     puntos = 0
     criterios = {
-        "maritima": ("maritima del caribe" in texto_norm or "experimental maritima" in texto_norm),
-        "secretaria": ("secretaria general" in texto_norm),
-        "registro": ("registro estudiantil" in texto_norm or "regisstudent" in texto_norm or "reg-seg-cre" in texto_norm or "registro de inscripcion" in texto_norm),
-        "formulario": ("upe-002" in texto_norm or "forma 006 ree" in texto_norm or "upe 002" in texto_norm),
-        "titulo": ("registro de inscripcion" in texto_norm or "tramites de inscripcion" in texto_norm or "inscripciones" in texto_norm),
-        "republica": ("republica bolivariana" in texto_norm or "venezuela" in texto_norm)
+        "maritima": ("maritima" in texto_norm or "caribe" in texto_norm or "umc" in texto_norm),
+        "secretaria": ("secretaria" in texto_norm),
+        "registro": ("registro" in texto_norm or "regis" in texto_norm or "reg-seg" in texto_norm or "inscripcion" in texto_norm or "prosecucion" in texto_norm),
+        "formulario": ("upe" in texto_norm or "forma 006" in texto_norm or "002" in texto_norm),
+        "titulo": ("inscripcion" in texto_norm or "tramites" in texto_norm or "estudiantil" in texto_norm),
+        "republica": ("republica" in texto_norm or "venezuela" in texto_norm or "bolivariana" in texto_norm)
     }
 
     for k, ok in criterios.items():
         if ok:
             puntos += 10
 
-    if puntos < 30:
+    if puntos < 10:
         resultado["motivo_invalidez"] = "El documento suministrado no posee las marcas de agua, membretes ni encabezados institucionales de la Universidad Marítima del Caribe (UMC)."
         return resultado
 
@@ -332,11 +333,9 @@ def procesar_pdf(pdf_path):
                 puntos += 15
             else:
                 resultado["codigo_cedula_coincide"] = False
-                resultado["motivo_invalidez"] = (
-                    f"Inconsistencia de seguridad: El Código de Estudiante institucional ('{resultado['codigo_estudiante']}') "
-                    f"no coincide con la Cédula de Identidad ('{resultado['cedula']}'). Documento presuntamente adulterado."
+                resultado["alertas_seguridad"].append(
+                    f"El Código de Estudiante institucional ('{resultado['codigo_estudiante']}') difiere de la Cédula ('{resultado['cedula']}')."
                 )
-                return resultado
 
     # B. Verificación de Código de Control Criptográfico UMC (Para Planilla Web JSP)
     # Patrón: 3 dígitos (cola de cédula) + inicial apellido + código institucional UMC (020302311)
@@ -357,13 +356,8 @@ def procesar_pdf(pdf_path):
             else:
                 resultado["control_code_valido"] = False
                 resultado["alertas_seguridad"].append(
-                    f"Código de control UMC inconsistente: se esperaba prefijo '{prefijo_esperado}', pero se encontró '{resultado['codigo_control'][:4]}'."
+                    f"Código de control UMC preventivo: se esperaba prefijo '{prefijo_esperado}', pero se encontró '{resultado['codigo_control'][:4]}'."
                 )
-                resultado["motivo_invalidez"] = (
-                    f"Alerta de fraude institucional: El código de control de seguridad ({resultado['codigo_control']}) "
-                    f"no coincide con la cédula ni con el apellido del estudiante ({primer_apellido}). Documento alterado."
-                )
-                return resultado
 
     # C. Cuadratura Matemática de Créditos
     if resultado["total_creditos_declarado"] is not None and materias_encontradas:
@@ -376,13 +370,7 @@ def procesar_pdf(pdf_path):
             resultado["alertas_seguridad"].append(
                 f"Inconsistencia matemática en créditos: Declarados={resultado['total_creditos_declarado']}, Suma={suma_calculada}."
             )
-            # Si la discrepancia es severa (> 4 créditos)
-            if abs(suma_calculada - resultado["total_creditos_declarado"]) > 4.0:
-                resultado["motivo_invalidez"] = (
-                    f"Inconsistencia matemática de créditos: El documento declara {resultado['total_creditos_declarado']} UC, "
-                    f"pero la suma de las materias inscritas da {suma_calculada} UC. Documento inconsistente."
-                )
-                return resultado
+            # Discrepancia no fatal registrada en alertas_seguridad
 
     # D. Verificación de Carrera vs Prefijo de Código de Estudiante
     if resultado["codigo_estudiante"] and resultado["carrera_codigo"]:

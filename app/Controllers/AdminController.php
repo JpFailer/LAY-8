@@ -53,13 +53,45 @@ class AdminController extends BaseController
         // 5. Historial de auditoría
         $auditoriaLogs = $this->auditoriaModel->ultimosRegistros(40);
 
-        // 6. Información del horario del mapa
+        // 6. Información del horario del mapa por carreras y general
+        $carrerasDefinidas = [
+            'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
+            'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor', 'color' => '#0284c7'],
+            'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf', 'color' => '#10b981'],
+            'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
+            'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
+        ];
+
+        $carpetaScripts = ROOTPATH . 'scripts_python';
+        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
+        $claseModel = new \App\Models\ClaseProgramadaModel();
+
+        $carrerasHorarios = [];
+        foreach ($carrerasDefinidas as $cod => $info) {
+            $rutaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . "horario_{$cod}.pdf";
+            if (!file_exists($rutaPdf) && $cod === 'ING-INF') {
+                $rutaPdf = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
+            }
+
+            $existe = file_exists($rutaPdf);
+            $totalClasesCarrera = $claseModel->where('carrera', $cod)->countAllResults();
+
+            $carrerasHorarios[$cod] = array_merge($info, [
+                'codigo'              => $cod,
+                'existe_archivo'      => $existe,
+                'tamano_kb'           => $existe ? round(filesize($rutaPdf) / 1024, 2) : 0,
+                'ultima_modificacion' => $existe ? date('d/m/Y H:i', filemtime($rutaPdf)) : 'No cargado',
+                'total_clases'        => $totalClasesCarrera,
+                'nombre_archivo'      => $existe ? basename($rutaPdf) : "horario_{$cod}.pdf"
+            ]);
+        }
+
         $rutaPdfHorario = ROOTPATH . 'scripts_python' . DIRECTORY_SEPARATOR . 'horario.pdf';
         $horarioInfo = [
             'existe_archivo'      => file_exists($rutaPdfHorario),
             'tamano_kb'           => file_exists($rutaPdfHorario) ? round(filesize($rutaPdfHorario) / 1024, 2) : 0,
             'ultima_modificacion' => file_exists($rutaPdfHorario) ? date('d/m/Y H:i', filemtime($rutaPdfHorario)) : 'No cargado',
-            'total_clases'        => (new \App\Models\ClaseProgramadaModel())->countAllResults(),
+            'total_clases'        => $claseModel->countAllResults(),
             'total_aulas'         => (new AulasModel())->countAllResults()
         ];
 
@@ -73,11 +105,12 @@ class AdminController extends BaseController
                 'solicitudes_pendientes' => count($solicitudes),
                 'total_aportes'          => count($aportes),
             ],
-            'solicitudes' => $solicitudes,
-            'usuarios'    => $usuarios,
-            'aportes'     => $aportes,
-            'auditoria'   => $auditoriaLogs,
-            'horarioInfo' => $horarioInfo
+            'solicitudes'      => $solicitudes,
+            'usuarios'         => $usuarios,
+            'aportes'          => $aportes,
+            'auditoria'        => $auditoriaLogs,
+            'horarioInfo'      => $horarioInfo,
+            'carrerasHorarios' => $carrerasHorarios
         ];
 
         return view('admin/dashboard_view', $datos);
@@ -967,48 +1000,100 @@ class AdminController extends BaseController
 
     /**
      * Permite al Administrador subir un nuevo archivo PDF oficial de horarios
-     * y re-sincronizar automáticamente la base de datos de aulas y clases para el mapa.
+     * (por carrera individual o general) y re-sincronizar automáticamente la base de datos de aulas y clases para el mapa.
      */
     public function actualizarHorarioPdf()
     {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+
         $archivo = $this->request->getFile('horario_pdf');
+        $carrera = $this->request->getPost('carrera') ?: 'ING-INF';
+        $carrerasValidas = ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR'];
+
+        if (!in_array($carrera, $carrerasValidas, true)) {
+            $carrera = 'ING-INF';
+        }
+
         if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
+            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
+                return $this->response->setJSON(['success' => false, 'error' => 'Por favor selecciona un archivo PDF de horario oficial válido.']);
+            }
             return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo PDF de horario oficial válido.');
         }
 
         if ($archivo->getClientMimeType() !== 'application/pdf') {
+            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
+                return $this->response->setJSON(['success' => false, 'error' => 'El formato del archivo debe ser exclusivamente PDF.']);
+            }
             return redirect()->to(base_url('admin'))->with('error', 'El formato del archivo debe ser exclusivamente PDF.');
         }
 
         $carpetaScripts = ROOTPATH . 'scripts_python';
-        if (!is_dir($carpetaScripts)) {
-            mkdir($carpetaScripts, 0777, true);
+        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
+        if (!is_dir($carpetaHorarios)) {
+            mkdir($carpetaHorarios, 0777, true);
         }
 
-        // Sobrescribir horario.pdf de referencia
-        $archivo->move($carpetaScripts, 'horario.pdf', true);
+        // Guardar archivo específico para la carrera
+        $nombreDestino = "horario_{$carrera}.pdf";
+        $archivo->move($carpetaHorarios, $nombreDestino, true);
+        $rutaCompletaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . $nombreDestino;
 
-        // Limpiar caché JSON para forzar lectura actualizada
-        $rutaCacheJson = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
+        // Si es ING-INF, mantener también copia en horario.pdf
+        if ($carrera === 'ING-INF') {
+            @copy($rutaCompletaPdf, $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf');
+        }
+
+        // Limpiar caché JSON de esa carrera para forzar lectura actualizada
+        $rutaCacheJson = $carpetaScripts . DIRECTORY_SEPARATOR . "horarios_procesados_{$carrera}.json";
         if (file_exists($rutaCacheJson)) {
             @unlink($rutaCacheJson);
         }
+        if ($carrera === 'ING-INF') {
+            $rutaCacheGen = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
+            if (file_exists($rutaCacheGen)) {
+                @unlink($rutaCacheGen);
+            }
+        }
+
+        // Ejecutar script Python especializado CGD-001
+        $pythonExec = file_exists($carpetaScripts . DIRECTORY_SEPARATOR . 'venv' . DIRECTORY_SEPARATOR . 'Scripts' . DIRECTORY_SEPARATOR . 'python.exe') 
+            ? '"venv\Scripts\python.exe"' 
+            : 'python';
+        
+        $comando = 'cd "' . $carpetaScripts . '" && ' . $pythonExec . ' procesar_horario_cgd001.py "' . $rutaCompletaPdf . '" ' . $carrera . ' 2>&1';
+        $salidaPython = shell_exec($comando);
 
         // Re-sincronizar bloques de clases en la base de datos
         $clasesCargadas = 0;
         try {
             $mapaController = new \App\Controllers\MapaController();
-            $clasesCargadas = $mapaController->importar_horarios_automaticamente(true);
-        } catch (\Throwable $e) {}
+            $clasesCargadas = $mapaController->importar_horarios_automaticamente(true, $carrera);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error al sincronizar clases de ' . $carrera . ': ' . $e->getMessage());
+        }
 
         $this->auditoriaModel->registrar(
             $this->adminId,
-            'actualizar_horario_mapa',
+            'actualizar_horario_carrera',
             'horario',
             null,
-            ['clases_cargadas' => $clasesCargadas, 'archivo' => $archivo->getClientName()]
+            ['carrera' => $carrera, 'clases_cargadas' => $clasesCargadas, 'archivo' => $archivo->getClientName()]
         );
 
-        return redirect()->to(base_url('admin'))->with('mensaje', "¡Horario oficial actualizado con éxito! Se sincronizaron {$clasesCargadas} bloques de clases con el mapa del campus.");
+        $mensaje = "¡Horario de {$carrera} actualizado con éxito! Se sincronizaron {$clasesCargadas} bloques de clases con horas exactas en el mapa.";
+
+        if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
+            return $this->response->setJSON([
+                'success'         => true,
+                'mensaje'         => $mensaje,
+                'carrera'         => $carrera,
+                'clases_cargadas' => $clasesCargadas,
+                'fecha'           => date('d/m/Y H:i')
+            ]);
+        }
+
+        return redirect()->to(base_url('admin'))->with('mensaje', $mensaje);
     }
 }

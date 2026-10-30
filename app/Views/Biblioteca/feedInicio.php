@@ -149,11 +149,16 @@
                         </div>
                     </div>
 
-                    <div class="tarjeta-footer">
+                    <div class="tarjeta-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                         <span class="peso-badge"><?= strtoupper($ext) ?> • <?= $pesoTexto ?></span>
-                        <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar">
-                            <i class="bx bx-download"></i> Descargar
-                        </a>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="button" class="btn-leer-aporte" onclick="abrirLectorAporte(<?= $aporte['id'] ?>, '<?= esc($aporte['titulo']) ?>', '<?= base_url('biblioteca/ver/' . $aporte['id']) ?>')" style="background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class="bx bx-book-open"></i> Leer
+                            </button>
+                            <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="marcarAporteDescargado(<?= $aporte['id'] ?>)">
+                                <i class="bx bx-download"></i> <span class="txt-btn-descarga">Descargar</span>
+                            </a>
+                        </div>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -193,6 +198,68 @@
                 });
             });
         }
+        actualizarBotonesDescargados();
     });
+
+    function abrirLectorAporte(id, titulo, url) {
+        document.getElementById('titulo-lector-doc').textContent = titulo;
+        document.getElementById('iframe-visor-doc').src = url;
+        document.getElementById('btn-descargar-desde-visor').href = '<?= base_url('biblioteca/descargar/') ?>/' + id;
+        document.getElementById('modal-lector-biblioteca').style.display = 'flex';
+    }
+
+    function cerrarLectorAporte() {
+        document.getElementById('modal-lector-biblioteca').style.display = 'none';
+        document.getElementById('iframe-visor-doc').src = '';
+    }
+
+    function marcarAporteDescargado(id) {
+        try {
+            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
+            if (!desc.includes(id)) {
+                desc.push(id);
+                localStorage.setItem('lay8_descargados', JSON.stringify(desc));
+            }
+            actualizarBotonesDescargados();
+        } catch(e) {}
+    }
+
+    function actualizarBotonesDescargados() {
+        try {
+            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
+            document.querySelectorAll('.btn-descarga-item').forEach(btn => {
+                const id = parseInt(btn.getAttribute('data-aporte-id'));
+                if (desc.includes(id)) {
+                    btn.style.background = '#10b981';
+                    btn.style.color = '#ffffff';
+                    btn.style.borderColor = '#059669';
+                    btn.innerHTML = '<i class="bx bx-check-double"></i> Guardado';
+                    btn.title = 'Ya tienes este archivo descargado en tu dispositivo';
+                }
+            });
+        } catch(e) {}
+    }
 </script>
+
+<!-- Modal Lector Nativo de la Biblioteca (Revisión Haryerit) -->
+<div id="modal-lector-biblioteca" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;" onclick="if(event.target === this) cerrarLectorAporte()">
+  <div class="modal-editar-perfil-content" style="max-width: 950px; width: 100%; height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
+    <div class="modal-editar-header" style="padding: 14px 20px; background: #1e3a8a; color: white; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; color: white; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <i class="bx bx-book-reader" style="color: #60a5fa; font-size: 1.3rem;"></i>
+        <span id="titulo-lector-doc" style="max-width: 580px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Visor de Documento</span>
+      </h3>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <a id="btn-descargar-desde-visor" href="#" class="btn-descargar" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border: none; border-radius: 6px; color: white; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+          <i class="bx bx-download"></i> Descargar
+        </a>
+        <button type="button" class="btn-cerrar-carreras" onclick="cerrarLectorAporte()" style="color: white; font-size: 1.6rem; background: none; border: none; cursor: pointer;">&times;</button>
+      </div>
+    </div>
+    <div style="flex: 1; background: #1e293b; position: relative;">
+      <iframe id="iframe-visor-doc" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+  </div>
+</div>
+
 <?= $this->endSection() ?>

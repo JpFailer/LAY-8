@@ -15,7 +15,15 @@
         $saludoMomento = ($hora >= 5 && $hora < 12) ? '¡Buenos días' : (($hora >= 12 && $hora < 19) ? '¡Buenas tardes' : '¡Buenas noches');
         $primerNombre = session()->get('primer_nombre') ?? 'Navegante';
       ?>
-      <h2><?= $saludoMomento ?>, <?= esc($primerNombre) ?>! <span style="font-size: 1.5rem;"></span></h2>
+      <h2>
+        <?= $saludoMomento ?>, <?= esc($primerNombre) ?>!
+        <?php if (in_array($userRol, ['admin', 'administrador'])): ?>
+          <i class="bx bxs-check-circle" style="color: #2563eb; font-size: 1.3rem; vertical-align: middle;" title="Administrador Verificado"></i>
+        <?php elseif ($userRol === 'profesor'): ?>
+          <i class="bx bxs-check-circle" style="color: #10b981; font-size: 1.3rem; vertical-align: middle;" title="Profesor Verificado"></i>
+        <?php endif; ?>
+        <span style="font-size: 1.5rem;"></span>
+      </h2>
       <p>Bienvenido al centro de operaciones de tu vida académica en la Universidad Marítima del Caribe.</p>
       
       <div class="welcome-meta-chips">
@@ -186,6 +194,11 @@
                   <div class="autor-datos-col">
                     <div class="autor-nombre-line">
                       <span class="autor-nombre-txt"><?= esc($autorNombre) ?></span>
+                      <?php if (in_array($rolAutor, ['admin', 'administrador'])): ?>
+                        <span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                      <?php elseif ($rolAutor === 'profesor'): ?>
+                        <span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                      <?php endif; ?>
                       <span class="badge-rol-autor <?= $badgeRolClass ?>"><?= $badgeRolTexto ?></span>
                     </div>
                     <span class="noticia-fecha-txt"><?= date('d/m/Y \a \l\a\s h:i A', strtotime($noticia['created_at'])) ?></span>
@@ -254,6 +267,11 @@
                           <div class="comentario-header-row">
                             <img src="<?= !empty($coment['foto_perfil']) ? base_url($coment['foto_perfil']) : base_url('img/usuario.png') ?>" class="avatar-comentario" alt="Avatar">
                             <span class="nombre-comentarista"><?= esc($coment['primer_nombre'] . ' ' . $coment['apellidos']) ?></span>
+                            <?php if (in_array($coment['rol'], ['admin', 'administrador'])): ?>
+                              <span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                            <?php elseif ($coment['rol'] === 'profesor'): ?>
+                              <span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                            <?php endif; ?>
                             <span class="rol-badge-comentario <?= ($coment['rol'] === 'profesor') ? 'badge-docente' : (in_array($coment['rol'], ['admin','administrador']) ? 'badge-admin' : 'badge-estudiante') ?>">
                               <?= ($coment['rol'] === 'profesor') ? 'Docente' : (in_array($coment['rol'], ['admin','administrador']) ? 'Admin' : 'Estudiante') ?>
                             </span>
@@ -280,6 +298,11 @@
                                 <div class="comentario-header-row">
                                   <img src="<?= !empty($resp['foto_perfil']) ? base_url($resp['foto_perfil']) : base_url('img/usuario.png') ?>" class="avatar-comentario" alt="Avatar">
                                   <span class="nombre-comentarista"><?= esc($resp['primer_nombre'] . ' ' . $resp['apellidos']) ?></span>
+                                  <?php if (in_array($resp['rol'], ['admin', 'administrador'])): ?>
+                                    <span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                                  <?php elseif ($resp['rol'] === 'profesor'): ?>
+                                    <span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                                  <?php endif; ?>
                                   <span class="rol-badge-comentario <?= ($resp['rol'] === 'profesor') ? 'badge-docente' : (in_array($resp['rol'], ['admin','administrador']) ? 'badge-admin' : 'badge-estudiante') ?>">
                                     <?= ($resp['rol'] === 'profesor') ? 'Docente' : (in_array($resp['rol'], ['admin','administrador']) ? 'Admin' : 'Estudiante') ?>
                                   </span>
@@ -400,21 +423,7 @@
         </div>
       </div>
 
-      <!-- WIDGET 3: IDENTIDAD / RESUMEN DEL CAMPUS -->
-      <div class="widget-lateral-box" style="background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);">
-        <h3>
-          <i class="bx bx-anchor"></i>
-          Campus Inteligente
-        </h3>
-        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
-          <p style="margin: 0 0 10px 0;">
-            <i class="bx bxs-check-circle" style="color: #10b981;"></i> <strong>Sistemas activos:</strong> Monitoreo de disponibilidad de aulas y biblioteca colaborativa sincronizados.
-          </p>
-          <div style="padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.78rem; color: #64748b;">
-            Universidad Nacional Experimental Marítima del Caribe &bull; LAY-8
-          </div>
-        </div>
-      </div>
+
 
     </aside>
 
@@ -558,12 +567,19 @@
           const badgeRolClass = (c.rol === 'profesor') ? 'badge-docente' : (['admin','administrador'].includes(c.rol) ? 'badge-admin' : 'badge-estudiante');
           const badgeRolTexto = (c.rol === 'profesor') ? 'Docente' : (['admin','administrador'].includes(c.rol) ? 'Admin' : 'Estudiante');
 
+          const checkIconBadge = (c.rol === 'profesor') 
+            ? '<span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>'
+            : (['admin','administrador'].includes(c.rol) 
+                ? '<span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>' 
+                : '');
+
           const nuevoItemHtml = `
             <div class="comentario-item-wrapper" id="comentario-item-${c.id}">
               <div class="comentario-burbuja">
                 <div class="comentario-header-row">
                   <img src="${avatarUrl}" class="avatar-comentario" alt="Avatar">
                   <span class="nombre-comentarista">${c.primer_nombre} ${c.apellidos}</span>
+                  ${checkIconBadge}
                   <span class="rol-badge-comentario ${badgeRolClass}">${badgeRolTexto}</span>
                   <span class="tiempo-comentario">Justo ahora</span>
                 </div>
@@ -634,11 +650,18 @@
           const badgeRolClass = (c.rol === 'profesor') ? 'badge-docente' : (['admin','administrador'].includes(c.rol) ? 'badge-admin' : 'badge-estudiante');
           const badgeRolTexto = (c.rol === 'profesor') ? 'Docente' : (['admin','administrador'].includes(c.rol) ? 'Admin' : 'Estudiante');
 
+          const checkIconBadgeResp = (c.rol === 'profesor') 
+            ? '<span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>'
+            : (['admin','administrador'].includes(c.rol) 
+                ? '<span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>' 
+                : '');
+
           const respuestaHtml = `
             <div class="comentario-burbuja" id="comentario-item-${c.id}">
               <div class="comentario-header-row">
                 <img src="${avatarUrl}" class="avatar-comentario" alt="Avatar">
                 <span class="nombre-comentarista">${c.primer_nombre} ${c.apellidos}</span>
+                ${checkIconBadgeResp}
                 <span class="rol-badge-comentario ${badgeRolClass}">${badgeRolTexto}</span>
                 <span class="tiempo-comentario">Justo ahora</span>
               </div>
