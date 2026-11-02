@@ -8,9 +8,7 @@
     <div>
       <div class="titulos-inline">
         <h2 class="form-titulo"><i class="bx bx-shield-quarter" style="color: #1e3a8a; vertical-align: middle;"></i> Panel de Administración</h2>
-        <span class="form-subtitulo-inline">Control central y seguridad del campus</span>
       </div>
-      <p class="form-subtitulo" style="margin-bottom: 15px;">Gestión de roles, verificación docente, moderación de publicaciones y sincronización del mapa.</p>
     </div>
 
     <div class="admin-badge-status">

@@ -7,10 +7,9 @@
     <div class="biblio-header-flex">
         <div>
             <h2><i class="bx bx-book-reader"></i> Repositorio de Materiales Académicos</h2>
-            <p>Guías, ejercicios y resúmenes compartidos por la comunidad estudiantil de la UMC.</p>
         </div>
         <a href="<?= base_url('biblioteca/subir') ?>" class="btn-subir-cta">
-            <i class="bx bx-cloud-upload"></i> + Subir Aporte
+            <i class="bx bx-cloud-upload"></i>Subir Aporte
         </a>
     </div>
 

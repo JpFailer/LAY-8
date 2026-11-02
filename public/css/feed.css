@@ -90,7 +90,7 @@
 }
 
 .welcome-badge-icon {
-    font-size: 3.8rem;
+    font-size: 4.5rem;
     color: rgba(255, 255, 255, 0.25);
     transform: rotate(-10deg);
     animation: floatIconSlow 4s ease-in-out infinite;
@@ -309,7 +309,7 @@
     padding: 36px 20px;
     background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     border-radius: 16px;
-    border: 1px dashed #cbd5e1;
+    border: 1px solid #cbd5e1;
 }
 
 .empty-icon-jornada {
@@ -367,7 +367,6 @@
 .btn-empty-jornada-cta:hover {
     background: #1e40af;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(28, 83, 176, 0.25);
 }
 
 .btn-empty-jornada-secondary {
@@ -508,12 +507,10 @@
     align-items: center;
     gap: 7px;
     transition: all 0.25s ease;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
 }
 
 .btn-publicar-comunicado:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
+    transform: translateY(-2px);;
 }
 
 /* --------------------------------------------------------------------------
@@ -573,9 +570,8 @@
 .autor-avatar-img {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #e2e8f0;
 }
 
 .autor-datos-col {
@@ -776,7 +772,6 @@
 .seccion-hilos-comentarios {
     margin-top: 16px;
     padding-top: 18px;
-    border-top: 1px dashed #e2e8f0;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -870,7 +865,7 @@
 .avatar-comentario {
     width: 26px;
     height: 26px;
-    border-radius: 8px;
+    border-radius: 50%;
     object-fit: cover;
 }
 
@@ -1141,7 +1136,6 @@
     background: #ffffff;
     border-color: #93c5fd;
     transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.1);
 }
 
 .icono-acceso-rapido {
@@ -1388,6 +1382,10 @@
     background: #1e293b !important;
     border-color: #334155 !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-mode .composer-noticia-card {
+    border-left-color: #2563eb !important;
 }
 
 .dark-mode .card-header-feed,

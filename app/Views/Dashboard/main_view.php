@@ -1502,7 +1502,7 @@
 
             'modulo'      => 'Inicio',
 
-            'titulo'      => 'Tablón Comunitario UMC',
+            'titulo'      => 'Dashboard Principal',
 
             'tag'         => 'Comunidad Universitaria',
 
@@ -1514,7 +1514,7 @@
 
             'tips'        => [
 
-                ['icono' => 'bx-edit', 'titulo' => 'Publicar en el muro', 'texto' => 'Comparte avisos, dudas académicas o novedades de tu escuela.'],
+                ['icono' => 'bx-edit', 'titulo' => 'Tablero de Noticias', 'texto' => 'Recibe avisos oficiales de los profesores y publicaciones de la comunidad universitaria.'],
 
                 ['icono' => 'bx-heart', 'titulo' => 'Reacciones y debate', 'texto' => 'Interactúa dando "Me gusta" y aportando en los comentarios de cada post.'],
 
@@ -1528,9 +1528,9 @@
 
             'modulo'      => 'Mapa UMC',
 
-            'titulo'      => 'Mapa Interactivo del Campus',
+            'titulo'      => 'Mapa UMC',
 
-            'tag'         => 'Monitoreo en Tiempo Real',
+            'tag'         => 'Mapa Interactivo',
 
             'icono'       => 'bx-map-pin',
 
@@ -1556,7 +1556,7 @@
 
             'modulo'      => 'Biblioteca',
 
-            'titulo'      => 'Biblioteca Académica Digital',
+            'titulo'      => 'Biblioteca',
 
             'tag'         => 'Recursos de Estudio',
 
@@ -1564,13 +1564,13 @@
 
             'color'       => '#7c3aed',
 
-            'descripcion' => 'Repositorio colaborativo de guías, exámenes pasados, libros y proyectos clasificados por carrera y semestre para apoyar tu preparación académica.',
+            'descripcion' => 'Repositorio colaborativo de guías, exámenes pasados, libros y recursos para apoyar tu preparación académica.',
 
             'tips'        => [
 
-                ['icono' => 'bx-search', 'titulo' => 'Filtros por carrera', 'texto' => 'Encuentra guías y libros por carrera, semestre, materia o profesor.'],
+                ['icono' => 'bx-search', 'titulo' => 'Filtros por carrera', 'texto' => 'Encuentra guías y libros por carrera, materia o autor.'],
 
-                ['icono' => 'bx-download', 'titulo' => 'Descarga inmediata', 'texto' => 'Descarga documentos en PDF para estudiar en cualquier momento.'],
+                ['icono' => 'bx-download', 'titulo' => 'Descarga inmediata', 'texto' => 'Descarga documentos en PDF para estudiar en cualquier momento, o leelos en línea.'],
 
                 ['icono' => 'bx-cloud-upload', 'titulo' => 'Compartir aportes', 'texto' => 'Sube tus propios resúmenes y material para ayudar a la comunidad.']
 
@@ -1582,9 +1582,9 @@
 
             'modulo'      => 'Aulas',
 
-            'titulo'      => 'Directorio y Programación de Aulas',
+            'titulo'      => 'Aulas Virtuales',
 
-            'tag'         => 'Gestión de Espacios',
+            'tag'         => 'Gestión de tu vida académica',
 
             'icono'       => 'bx-door-open',
 
@@ -1594,11 +1594,11 @@
 
             'tips'        => [
 
-                ['icono' => 'bx-calendar', 'titulo' => 'Horario semanal', 'texto' => 'Revisa qué asignaturas y secciones ocupan cada aula por bloque.'],
+                ['icono' => 'bx-calendar', 'titulo' => 'Horario semanal', 'texto' => 'Crea y consulta tu horario de clase, visualiza las aulas asignadas por cada bloque.'],
 
-                ['icono' => 'bx-group', 'titulo' => 'Aforo y condiciones', 'texto' => 'Verifica la capacidad máxima de estudiantes y el estado del aula.'],
+                ['icono' => 'bx-laptop-alt', 'titulo' => 'Espacios virtuales', 'texto' => 'Tus aulas virtuales asignadas, donde los profesores autorizados pueden agendar avisos o evaluaciones.'],
 
-                ['icono' => 'bx-user-voice', 'titulo' => 'Avisos docentes', 'texto' => 'Los profesores autorizados pueden agendar avisos o evaluaciones.']
+                ['icono' => 'bx-checklist', 'titulo' => 'Tareas', 'texto' => 'Lleva un control de tu cronograma académico con la creación de tareas.']
 
             ]
 
@@ -1629,54 +1629,6 @@
             ]
 
         ],
-
-        'perfil' => [
-
-            'modulo'      => 'Perfil',
-
-            'titulo'      => 'Perfil y Cuenta Universitaria',
-
-            'tag'         => 'Datos del Estudiante',
-
-            'icono'       => 'bx-user',
-
-            'color'       => '#2563eb',
-
-            'descripcion' => 'Información personal de tu cuenta, cédula de identidad, carrera inscrita, foto de avatar y conteo de aportes compartidos en la biblioteca.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-camera', 'titulo' => 'Foto de perfil', 'texto' => 'Actualiza tu foto institucional para mostrar en el tablón.'],
-
-                ['icono' => 'bx-id-card', 'titulo' => 'Verificación', 'texto' => 'Comprueba tu rol y estado de verificación en el campus.']
-
-            ]
-
-        ],
-
-        'ajustes' => [
-
-            'modulo'      => 'Ajustes',
-
-            'titulo'      => 'Configuración de la Plataforma',
-
-            'tag'         => 'Preferencias',
-
-            'icono'       => 'bx-cog',
-
-            'color'       => '#475569',
-
-            'descripcion' => 'Personaliza tu experiencia de navegación, tema visual oscuro o claro y opciones de seguridad de tu cuenta.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-moon', 'titulo' => 'Modo Oscuro', 'texto' => 'Cambia entre tema claro y tema oscuro cuando lo prefieras.'],
-
-                ['icono' => 'bx-lock-alt', 'titulo' => 'Contraseña', 'texto' => 'Actualiza tus credenciales de acceso de forma segura.']
-
-            ]
-
-        ]
 
     ];
 

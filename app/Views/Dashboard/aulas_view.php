@@ -12,10 +12,10 @@
         </div>
         <div class="aulas-header-acciones">
             <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
-                <i class="bx bx-calendar-plus"></i> + Armar / Cargar Horario
+                <i class="bx bx-calendar-plus"></i>  Armar / Cargar Horario
             </button>
             <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalNuevaActividad()">
-                <i class="bx bx-task"></i> + Nueva Tarea
+                <i class="bx bx-task"></i>  Nueva Tarea
             </button>
         </div>
     </div>
@@ -51,10 +51,7 @@
             <i class="bx bx-check-square"></i> Cronograma de Actividades
             <span class="badge-conteo" id="conteo-actividades"><?= count($actividades) ?></span>
         </button>
-
-        <button type="button" class="btn-filtro" id="tabbtn-cargar" onclick="cambiarTabAulas('cargar')">
-            <i class="bx bx-upload"></i> Cargar / Armar Horario
-        </button>
+        
     </nav>
 
     <!-- ========================================================================= -->
