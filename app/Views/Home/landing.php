@@ -696,68 +696,43 @@
             <button type="button" id="btn-verificar-recup" onclick="ejecutarVerificarCuenta()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600;">Verificar Cuenta</button>
           </div>
 
-          <!-- PASO 2: Verificación de Identidad con PDF y Nueva Contraseña -->
+          <!-- PASO 2: Verificación de Cuenta y Restablecimiento Directo -->
           <div id="recup-paso-2" style="display: none;">
-            <div style="text-align: center; margin-bottom: 12px;">
-              <div style="width: 46px; height: 46px; background: #eff6ff; color: #1e40af; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 6px auto;">
-                <i class="bx bx-shield-quarter"></i>
+            <div style="text-align: center; margin-bottom: 16px;">
+              <div style="width: 48px; height: 48px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 8px auto;">
+                <i class="bx bx-envelope"></i>
               </div>
-              <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.25rem; color: #0f172a; margin: 0 0 4px 0; font-weight: 700;">Verificación de Identidad</h3>
-              <div style="background: #f1f5f9; border-radius: 8px; padding: 4px 12px; font-size: 0.82rem; color: #1e40af; display: inline-block; font-weight: 600;" id="recup-usuario-info">
-                Usuario Verificado
-              </div>
-            </div>
-
-            <!-- AVISO DE SEGURIDAD UMC ANTI-SUPLANTACIÓN COMPACTO -->
-            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
-              <div style="display: flex; align-items: flex-start; gap: 8px;">
-                <i class="bx bx-shield-check" style="font-size: 1.4rem; color: #1e40af; flex-shrink: 0; margin-top: 1px;"></i>
-                <div style="font-size: 0.8rem; color: #1e3a8a; line-height: 1.4;">
-                  <strong style="display: block; font-size: 0.84rem; margin-bottom: 1px;">Comprobación de Titularidad Anti-Suplantación</strong>
-                  Para comprobar que eres el titular legítimo, sube tu <strong>Registro de Inscripción oficial UMC (PDF)</strong> emitido por <code>campus.umc.edu.ve</code> (válido el original o uno más reciente).
-                </div>
-              </div>
+              <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.25rem; color: #0f172a; margin: 0 0 4px 0; font-weight: 700;" id="recup-usuario-info">Cuenta Verificada</h3>
+              <p style="font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.4;" id="recup-msg-envio">
+                Hemos enviado un enlace de recuperación a tu correo electrónico registrado.
+              </p>
             </div>
 
             <div id="recup-alerta-error-2" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px;"></div>
 
             <input type="hidden" id="recup_usuario_id">
+            <input type="hidden" id="recup_token">
 
-            <!-- Campo de subida de PDF obligatorio -->
-            <div style="margin-bottom: 14px;">
-              <label style="font-size: 0.84rem; font-weight: 700; color: #1e3a8a; display: block; margin-bottom: 4px;">
-                <i class="bx bxs-file-pdf" style="color: #dc2626;"></i> Registro de Inscripción UMC (PDF) *
-              </label>
-              <input type="file" id="recup_pdf" accept=".pdf" class="input-login" style="width: 100%; box-sizing: border-box; padding: 8px 12px;" required onchange="actualizarFeedbackPdfRecup(this)">
-              
-              <!-- Feedback visual de PDF seleccionado -->
-              <div id="recup-pdf-feedback" style="display: none; align-items: center; justify-content: space-between; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 8px; padding: 6px 10px; margin-top: 6px;">
-                <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
-                  <i class="bx bxs-file-pdf" style="font-size: 1.3rem; color: #dc2626; flex-shrink: 0;"></i>
-                  <div style="display: flex; flex-direction: column; overflow: hidden;">
-                    <span id="recup-pdf-nombre" style="font-size: 0.8rem; font-weight: 600; color: #166534; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">documento.pdf</span>
-                    <span id="recup-pdf-tamano" style="font-size: 0.72rem; color: #15803d;">0 KB</span>
-                  </div>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+              <span style="display: block; font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 10px;">
+                <i class="bx bx-lock-open-alt"></i> O define tu nueva contraseña aquí directamente:
+              </span>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Nueva Contraseña *</label>
+                  <input type="password" id="recup_nueva_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Mín. 8 caracteres">
                 </div>
-                <span style="font-size: 0.72rem; font-weight: 700; background: #dcfce7; color: #166534; padding: 2px 7px; border-radius: 9999px;"><i class="bx bx-check"></i> Listo</span>
-              </div>
-            </div>
 
-            <!-- Campos de Contraseña lado a lado en 2 columnas para optimizar espacio vertical -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;">
-              <div>
-                <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Nueva Contraseña *</label>
-                <input type="password" id="recup_nueva_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Mín. 8 caracteres">
-              </div>
-
-              <div>
-                <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Confirmar Contraseña *</label>
-                <input type="password" id="recup_repetir_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Repite la contraseña">
+                <div>
+                  <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Confirmar Contraseña *</label>
+                  <input type="password" id="recup_repetir_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Repite la contraseña">
+                </div>
               </div>
             </div>
 
             <button type="button" id="btn-guardar-clave" onclick="ejecutarGuardarClave()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-              <i class="bx bx-check-shield"></i> Validar Documento y Restablecer
+              <i class="bx bx-save"></i> Guardar Nueva Contraseña
             </button>
           </div>
 
@@ -877,7 +852,11 @@
           btn.disabled = false;
           if (data.exito) {
             document.getElementById('recup_usuario_id').value = data.usuario_id;
-            document.getElementById('recup-usuario-info').innerHTML = '<i class="bx bxs-user-check"></i> ' + data.nombre + ' (' + data.rol + ' - ' + data.carrera + ')';
+            if (data.token) document.getElementById('recup_token').value = data.token;
+            document.getElementById('recup-usuario-info').innerHTML = '<i class="bx bxs-user-check"></i> ' + data.nombre;
+            if (document.getElementById('recup-msg-envio')) {
+              document.getElementById('recup-msg-envio').innerHTML = 'Enviamos un enlace seguro a <strong>' + data.correo_ofuscado + '</strong> para restablecer tu acceso.';
+            }
             document.getElementById('recup-paso-1').style.display = 'none';
             document.getElementById('recup-paso-2').style.display = 'block';
           } else {
@@ -910,24 +889,11 @@
 
       function ejecutarGuardarClave() {
         const uid = document.getElementById('recup_usuario_id').value;
+        const token = document.getElementById('recup_token') ? document.getElementById('recup_token').value : '';
         const clave = document.getElementById('recup_nueva_clave').value;
         const rep = document.getElementById('recup_repetir_clave').value;
-        const fileInput = document.getElementById('recup_pdf');
         const errBox = document.getElementById('recup-alerta-error-2');
         const btn = document.getElementById('btn-guardar-clave');
-
-        if (!fileInput.files || fileInput.files.length === 0) {
-          errBox.textContent = 'Por seguridad anti-suplantación, debes adjuntar obligatoriamente tu Registro de Inscripción UMC en formato PDF.';
-          errBox.style.display = 'block';
-          return;
-        }
-
-        const archivo = fileInput.files[0];
-        if (!archivo.name.toLowerCase().endsWith('.pdf')) {
-          errBox.textContent = 'El comprobante debe ser exclusivamente un archivo digital PDF oficial.';
-          errBox.style.display = 'block';
-          return;
-        }
 
         if (!clave || clave.length < 8) {
           errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
@@ -942,14 +908,14 @@
         }
 
         errBox.style.display = 'none';
-        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Verificando documento con motor UMC...';
+        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
         btn.disabled = true;
 
         const formData = new FormData();
         formData.append('usuario_id', uid);
+        if (token) formData.append('token', token);
         formData.append('nueva_contrasena', clave);
         formData.append('repetir_contrasena', rep);
-        formData.append('planilla_inscripcion', archivo);
 
         fetch('<?= base_url('login/restablecer-contrasena') ?>', {
           method: 'POST',
@@ -957,7 +923,7 @@
         })
         .then(r => r.json())
         .then(data => {
-          btn.innerHTML = '<i class="bx bx-check-shield"></i> Validar Documento y Restablecer';
+          btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
           btn.disabled = false;
           if (data.exito) {
             const exitoMsg = document.getElementById('recup-mensaje-exito');
@@ -965,14 +931,14 @@
             document.getElementById('recup-paso-2').style.display = 'none';
             document.getElementById('recup-paso-3').style.display = 'block';
           } else {
-            errBox.textContent = data.mensaje || 'Error al validar el documento o actualizar contraseña.';
+            errBox.textContent = data.mensaje || 'Error al actualizar contraseña.';
             errBox.style.display = 'block';
           }
         })
         .catch(err => {
-          btn.innerHTML = '<i class="bx bx-check-shield"></i> Validar Documento y Restablecer';
+          btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
           btn.disabled = false;
-          errBox.textContent = 'Ocurrió un error al verificar el comprobante en el servidor.';
+          errBox.textContent = 'Ocurrió un error en el servidor al actualizar la contraseña.';
           errBox.style.display = 'block';
         });
       }

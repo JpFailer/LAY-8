@@ -334,6 +334,16 @@
 
           <?php endif; ?>
 
+          <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+
+            <a href="<?= base_url('docente') ?>" class="dropdown-item" style="color: #059669; font-weight: 700;">
+
+              <i class="bx bx-chalkboard" style="margin-right: 6px;"></i> Panel Docente
+
+            </a>
+
+          <?php endif; ?>
+
           <a href="<?= base_url('perfil') ?>" class="dropdown-item" onclick="abrirModalPerfil(event)">
 
             <i class="bx bx-user" style="margin-right: 6px;"></i> Perfil
@@ -383,6 +393,16 @@
           <i class="bx bx-door-open" style="margin-right: 8px;"></i> Aulas
 
         </a>
+
+        <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+
+          <a href="<?= base_url('/docente'); ?>" class="<?= ($segmentoActual === 'docente') ? 'active' : '' ?>" style="color: #10b981; font-weight: 700;">
+
+            <i class="bx bx-chalkboard" style="margin-right: 8px;"></i> Panel Docente
+
+          </a>
+
+        <?php endif; ?>
 
         <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
 
@@ -702,9 +722,9 @@
               <p class="form-sublabel-editar">
                 Si cambias de carrera, adjunta tu <strong>Registro de Inscripción oficial (PDF)</strong> emitido por <code>campus.umc.edu.ve</code>:
               </p>
-              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable" style="margin-bottom: 12px;">
+              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable input-file-certificacion" style="margin-bottom: 12px;">
               <label class="form-label-editar label-pass-seguridad"><i class="bx bx-lock-alt"></i> Contraseña actual (solo para confirmar cambios de carrera):</label>
-              <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global" placeholder="Tu contraseña actual">
+              <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global input-pass-perfil" placeholder="Tu contraseña actual">
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -1184,7 +1204,7 @@
 
         html += `
 
-          <div class="card-solicitud-docente-item" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+          <div class="card-solicitud-docente-item" style="border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
 
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
 

@@ -51,7 +51,10 @@
             <i class="bx bx-check-square"></i> Cronograma de Actividades
             <span class="badge-conteo" id="conteo-actividades"><?= count($actividades) ?></span>
         </button>
-        
+
+        <button type="button" class="btn-filtro" id="tabbtn-cargar" onclick="cambiarTabAulas('cargar')">
+            <i class="bx bx-calendar-plus"></i> Armar / Cargar Horario
+        </button>
     </nav>
 
     <!-- ========================================================================= -->
@@ -189,6 +192,9 @@
                 <button type="button" class="btn-imprimir-horario" onclick="window.print()">
                     <i class="bx bx-printer"></i> Imprimir Horario
                 </button>
+                <button type="button" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario()" title="Restaurar horario oficial asignado por la universidad">
+                    <i class="bx bx-refresh" style="color: #2563eb;"></i> Restaurar Horario Oficial
+                </button>
                 <button type="button" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario()" title="Borrar todos los bloques de mi horario para empezar de nuevo">
                     <i class="bx bx-trash" style="color: #ef4444;"></i> Limpiar Mi Horario
                 </button>
@@ -242,9 +248,7 @@
                                                             <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>
                                                         </a>
                                                     </div>
-                                                    <?php if (!empty($item['es_personal']) || $rolUsuario === 'administrador' || $rolUsuario === 'profesor'): ?>
-                                                        <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
-                                                    <?php endif; ?>
+                                                    <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -315,6 +319,38 @@
                             <?php if (!empty($act['descripcion'])): ?>
                                 <p class="descripcion-actividad"><?= esc($act['descripcion']) ?></p>
                             <?php endif; ?>
+
+                            <!-- Estado de Entrega & Calificación Estudiante (Classroom) -->
+                            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <?php if (!empty($act['entrega_id'])): ?>
+                                    <span style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="bx bx-check-double"></i> Entregada <?= !empty($act['fecha_entrega_alumno']) ? date('d/m H:i', strtotime($act['fecha_entrega_alumno'])) : '' ?>
+                                    </span>
+                                    <?php if (!empty($act['entrega_archivo'])): ?>
+                                        <a href="<?= base_url('aulas/descargar-mi-entrega/' . $act['id']) ?>" style="font-size: 0.78rem; color: #2563eb; text-decoration: underline; display: inline-flex; align-items: center; gap: 3px;">
+                                            <i class="bx bx-paperclip"></i> <?= esc($act['entrega_archivo']) ?>
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if ($act['calificacion'] !== null): ?>
+                                        <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i class="bx bxs-award" style="color: #f59e0b;"></i> Calificación: <?= (float)$act['calificacion'] ?> pts
+                                        </span>
+                                        <?php if (!empty($act['feedback_profesor'])): ?>
+                                            <span style="font-size: 0.78rem; color: #475569; font-style: italic;">
+                                                Docente: "<?= esc($act['feedback_profesor']) ?>"
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span style="background: #fef3c7; color: #92400e; font-size: 0.78rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
+                                            Pendiente por calificar
+                                        </span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+
+                                <button type="button" class="btn-subir-cta" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
+                                    <i class="bx bx-upload"></i> <?= !empty($act['entrega_id']) ? 'Modificar Entrega' : 'Entregar Tarea' ?>
+                                </button>
+                            </div>
                         </div>
                         <div class="fecha-columna">
                             <span class="fecha-vencimiento <?= $estaVencida ? 'texto-vencido' : '' ?>">
@@ -546,6 +582,38 @@
 
             <button type="submit" class="btn-cta-submit">
                 <i class="bx bx-save"></i> Guardar en Cronograma
+            </button>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
+<div id="modalEntregarTarea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEntregarTarea()">
+    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 500px;">
+        <div class="modal-aula-header">
+            <h3><i class="bx bx-upload"></i> Entregar Asignación</h3>
+            <span onclick="cerrarModalEntregarTarea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
+        </div>
+        <form id="formEntregarTareaAlumno" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8" style="padding: 20px;">
+            <?= csrf_field() ?>
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
+                <strong id="entregar_modal_titulo" style="display: block; color: #1e40af; font-size: 0.96rem;"></strong>
+                <span id="entregar_modal_materia" style="font-size: 0.8rem; color: #3b82f6;"></span>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="input_archivo_tarea"><i class="bx bx-file"></i> Archivo de la Tarea (PDF, Word, ZIP, JPG):</label>
+                <input type="file" name="archivo_tarea" id="input_archivo_tarea" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg" class="input-lay8" style="padding: 8px;">
+            </div>
+
+            <div class="campo-grupo">
+                <label for="comentario_tarea_alumno"><i class="bx bx-comment-detail"></i> Comentario / Observación para el Docente (Opcional):</label>
+                <textarea name="comentario" id="comentario_tarea_alumno" rows="3" placeholder="Profesor, adjunto la solución de los ejercicios solicitados..." class="input-lay8 textarea-lay8"></textarea>
+            </div>
+
+            <button type="submit" class="btn-cta-submit" id="btnSubmitEntrega">
+                <i class="bx bx-check-shield"></i> Confirmar y Enviar al Profesor
             </button>
         </form>
     </div>
@@ -857,6 +925,75 @@
             label.style.color = '#1e3a8a';
         }
     }
+
+    // Restaurar Horario Oficial
+    async function confirmarRestaurarHorario() {
+        if (!confirm('¿Deseas restaurar todos los bloques oficiales asignados por la universidad?')) return;
+        try {
+            const resp = await fetch(BASE_URL + 'aulas/restaurar-horario', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const res = await resp.json();
+            if (res.success) {
+                mostrarToastAulas(res.mensaje, 'exito');
+                setTimeout(() => { window.location.href = BASE_URL + 'aulas?tab=horario'; }, 800);
+            } else {
+                mostrarToastAulas(res.error || 'No se pudo restaurar.', 'error');
+            }
+        } catch(e) {
+            window.location.href = BASE_URL + 'aulas?tab=horario';
+        }
+    }
+
+    // Modal Entregar Tarea Alumno
+    let actividadEntregaSeleccionada = null;
+    function abrirModalEntregarTarea(actividadId, titulo, materia) {
+        actividadEntregaSeleccionada = actividadId;
+        document.getElementById('entregar_modal_titulo').textContent = titulo;
+        document.getElementById('entregar_modal_materia').textContent = materia;
+        const form = document.getElementById('formEntregarTareaAlumno');
+        form.action = BASE_URL + 'aulas/entregar-tarea/' + actividadId;
+        document.getElementById('modalEntregarTarea').style.display = 'flex';
+    }
+
+    function cerrarModalEntregarTarea() {
+        document.getElementById('modalEntregarTarea').style.display = 'none';
+    }
+
+    const formEntrega = document.getElementById('formEntregarTareaAlumno');
+    if (formEntrega) {
+        formEntrega.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitEntrega');
+            const origText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Subiendo entrega...';
+
+            try {
+                const formData = new FormData(this);
+                const resp = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    mostrarToastAulas(res.mensaje || '¡Tarea entregada con éxito!', 'exito');
+                    cerrarModalEntregarTarea();
+                    setTimeout(() => { window.location.reload(); }, 900);
+                } else {
+                    mostrarToastAulas(res.error || 'Error al subir la entrega.', 'error');
+                }
+            } catch(err) {
+                mostrarToastAulas('Error de conexión al enviar la tarea.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origText;
+            }
+        });
+    }
+
 </script>
 
 

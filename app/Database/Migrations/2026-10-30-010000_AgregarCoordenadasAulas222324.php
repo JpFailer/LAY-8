@@ -14,21 +14,21 @@ class AgregarCoordenadasAulas222324 extends Migration
                     'nombre_json' => 'Aula 22 (Planta Baja)',
                     'alias_pdf'   => 'Aula 22',
                     'coord_x'     => 33.39,
-                    'coord_y'     => 67.45,
+                    'coord_y'     => 66.10,
                     'estado'      => 'disponible'
                 ],
                 [
                     'nombre_json' => 'Aula 23 (Planta Baja)',
                     'alias_pdf'   => 'Aula 23',
                     'coord_x'     => 30.49,
-                    'coord_y'     => 67.45,
+                    'coord_y'     => 66.10,
                     'estado'      => 'disponible'
                 ],
                 [
                     'nombre_json' => 'Aula 24 (Planta Baja)',
                     'alias_pdf'   => 'Aula 24',
                     'coord_x'     => 27.49,
-                    'coord_y'     => 67.45,
+                    'coord_y'     => 66.10,
                     'estado'      => 'disponible'
                 ],
             ];

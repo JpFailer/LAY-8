@@ -319,7 +319,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
     </div>
   </div>
 
-  <!-- Modal de Términos y Condiciones dentro del Registro -->
+  <!-- Modal de Términos y Condiciones dentro del Registro (8 Artículos Oficiales UMC) -->
   <div id="modal-terminos-registro" class="modal-terminos-overlay" style="display: none;" onclick="if(event.target === this) cerrarModalTerminos()">
     <div class="modal-terminos-content">
       <div class="modal-terminos-header">
@@ -328,30 +328,57 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
       </div>
 
       <div class="modal-terminos-body">
-        <h4>1. Naturaleza y Propósito de la Plataforma</h4>
+        <h4>1. Naturaleza del Servicio y Aceptación Vinculante</h4>
         <p>
-          LAY-8 es una plataforma tecnológica desarrollada exclusivamente con fines de apoyo académico, formativo y de geolocalización dentro del campus de la <strong>Universidad Marítima del Caribe (UMC)</strong>.
+          El presente instrumento constituye un acuerdo legal vinculante entre el usuario y el ecosistema <strong>LAY-8</strong>. El registro de una cuenta, la carga de credenciales y el uso de los servicios implica la aceptación irrevocable y plena de la totalidad de las cláusulas aquí establecidas.
         </p>
 
-        <h4>2. Verificación Documental y Cero Tolerancia al Fraude</h4>
+        <h4>2. Deslinde de Responsabilidad Institucional (Disclaimer UMC)</h4>
         <p>
-          El registro como estudiante requiere la carga del Registro de Inscripción emitido por el sistema oficial <code>campus.umc.edu.ve</code>. La falsificación o alteración de datos documentales acarreará sanciones conforme al reglamento académico disciplinario de la UMC.
+          LAY-8 es una plataforma tecnológica colaborativa de orientación física, horarios y apoyo académico. No reemplaza bajo ninguna circunstancia a los sistemas administrativos oficiales de la UMC (<code>campus.umc.edu.ve</code>). Los semáforos de disponibilidad y horarios en vivo poseen carácter estrictamente referencial.
         </p>
 
-        <h4>3. Confidencialidad y Uso de Información</h4>
+        <h4>3. Autenticidad Documental y Cero Tolerancia al Fraude</h4>
         <p>
-          Toda información proporcionada (nombres, matrículas, horarios y calificaciones) se resguarda bajo estrictos principios de privacidad y es utilizada exclusivamente para sincronizar tu jornada académica y las aulas del campus.
+          El registro como estudiante requiere la carga de tu Registro de Inscripción emitido por el sistema oficial. La falsificación, alteración o forjamiento de documentos digitales acarreará el bloqueo permanente e inmediato de la cuenta y la notificación a las autoridades competentes.
         </p>
 
-        <h4>4. Convivencia y Recursos Colaborativos</h4>
+        <h4>4. Privacidad y Tratamiento Ético de Datos Personales</h4>
         <p>
-          Las publicaciones en el muro informativo y aportes compartidos en la biblioteca virtual deben regirse bajo principios de respeto mutuo, veracidad y rigor académico.
+          Toda información proporcionada (nombres, cédula, matrícula, carrera y horarios) se resguarda bajo estrictos principios de privacidad y jamás será comercializada ni cedida a terceros ajenos a la comunidad universitaria. Las contraseñas se almacenan mediante algoritmos criptográficos irreversibles.
+        </p>
+
+        <h4>5. Propiedad Intelectual y Uso de la Biblioteca Estudiantil</h4>
+        <p>
+          El material compartido en la biblioteca virtual debe circunscribirse a guías de estudio, ejercicios resueltos y resúmenes de clase propios. Queda terminantemente prohibida la distribución de material comercial protegido por copyright o la filtración de evaluaciones académicas vigentes.
+        </p>
+
+        <h4>6. Aulas Virtuales, Enlaces y Código de Conducta</h4>
+        <p>
+          Los enlaces a salas remotas deben destinarse exclusivamente a fines pedagógicos. Se prohíbe el uso de lenguaje soez, hostigamiento, discriminación, acoso o la difusión de enlaces maliciosos a través de tareas, avisos o publicaciones.
+        </p>
+
+        <h4>7. Régimen Sancionatorio, Auditoría y Baneo de Cuentas</h4>
+        <p>
+          La administración se reserva la facultad de suspender o inhabilitar permanentemente cuentas que incurran en desacato, suplantación de identidad o ataques informáticos. Un usuario sancionado no podrá volver a registrarse con su número de cédula.
+        </p>
+
+        <h4>8. Legislación Aplicable y Resolución de Controversias</h4>
+        <p>
+          Estos términos se rigen bajo el ordenamiento jurídico de la República Bolivariana de Venezuela, la Ley Orgánica de Educación y el Reglamento Disciplinario Estudiantil de la Universidad Marítima del Caribe.
         </p>
       </div>
 
       <div class="modal-terminos-footer">
-        <button type="button" onclick="cerrarModalTerminos()" style="background: none; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 8px; color: #475569; font-weight: 600; cursor: pointer;">Cerrar</button>
-        <button type="button" class="btn-aceptar-terminos" onclick="aceptarTerminosModal()"><i class="bx bx-check"></i> Aceptar y Continuar</button>
+        <a href="<?= base_url('terminos') ?>" target="_blank" class="link-terminos-completo">
+          <i class="bx bx-link-external"></i> Leer Documento Completo
+        </a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" class="btn-cerrar-modal-terminos" onclick="cerrarModalTerminos()">Cerrar</button>
+          <button type="button" class="btn-aceptar-terminos" onclick="aceptarTerminosModal()">
+            <i class="bx bx-check"></i> Aceptar y Continuar
+          </button>
+        </div>
       </div>
     </div>
   </div>

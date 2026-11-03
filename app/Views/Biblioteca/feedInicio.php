@@ -151,8 +151,8 @@
                     <div class="tarjeta-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                         <span class="peso-badge"><?= strtoupper($ext) ?> • <?= $pesoTexto ?></span>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <?php if ($ext === 'pdf'): ?>
-                                <button type="button" class="btn-leer-aporte" data-id="<?= $aporte['id'] ?>" data-titulo="<?= esc($aporte['titulo']) ?>" data-url="<?= base_url('biblioteca/ver/' . $aporte['id']) ?>" onclick="abrirLectorAporte(this.dataset.id, this.dataset.titulo, this.dataset.url)" style="background: #eff6ff; color: #1e40af; border: 1.5px solid #bfdbfe; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                            <?php if (in_array($ext, ['pdf', 'doc', 'docx', 'txt'])): ?>
+                                <button type="button" class="btn-leer-aporte" data-id="<?= $aporte['id'] ?>" data-titulo="<?= esc($aporte['titulo']) ?>" data-ext="<?= esc($ext) ?>" data-url="<?= base_url('biblioteca/ver/' . $aporte['id']) ?>" onclick="abrirLectorAporte(this.dataset.id, this.dataset.titulo, this.dataset.url, this.dataset.ext)">
                                     <i class="bx bx-book-open"></i> Leer
                                 </button>
                             <?php endif; ?>
@@ -177,6 +177,7 @@
 
 </div>
 
+<script src="<?= base_url('js/mammoth.browser.min.js') ?>"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const inputVivo = document.getElementById('buscador-vivo');
@@ -202,16 +203,66 @@
         actualizarBotonesDescargados();
     });
 
-    function abrirLectorAporte(id, titulo, url) {
+    function abrirLectorAporte(id, titulo, url, ext) {
         document.getElementById('titulo-lector-doc').textContent = titulo;
-        document.getElementById('iframe-visor-doc').src = url;
         document.getElementById('btn-descargar-desde-visor').href = '<?= rtrim(base_url('biblioteca/descargar'), '/') ?>/' + id;
+
+        const iframe = document.getElementById('iframe-visor-doc');
+        const docxContainer = document.getElementById('visor-doc-docx-container');
+
+        if (ext === 'docx') {
+            iframe.style.display = 'none';
+            docxContainer.style.display = 'block';
+            docxContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="bx bx-loader-alt bx-spin" style="font-size: 2.2rem; color: #2563eb;"></i><p style="margin-top: 10px; font-weight: 600;">Cargando documento Word (.docx)...</p></div>';
+
+            fetch(url)
+                .then(r => r.arrayBuffer())
+                .then(buffer => {
+                    if (window.mammoth) {
+                        return mammoth.convertToHtml({ arrayBuffer: buffer });
+                    } else {
+                        throw new Error('Lector Word no disponible');
+                    }
+                })
+                .then(result => {
+                    docxContainer.innerHTML = `
+                        <div class="docx-doc-content" style="max-width: 820px; margin: 0 auto;">
+                            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; color: #1e40af; margin-bottom: 22px; display: flex; align-items: center; gap: 6px;">
+                                <i class="bx bxs-file-doc" style="font-size: 1.2rem;"></i> Documento Word oficial (.docx) convertido para lectura en línea
+                            </div>
+                            ${result.value}
+                        </div>
+                    `;
+                })
+                .catch(err => {
+                    docxContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            <i class="bx bxs-file-doc" style="font-size: 3rem; color: #3b82f6;"></i>
+                            <h4 style="margin: 12px 0 6px 0; color: #0f172a;">Vista previa en línea</h4>
+                            <p style="margin: 0 0 16px 0; font-size: 0.88rem;">Puedes descargar el archivo original para abrirlo directamente en Microsoft Word.</p>
+                            <a href="${document.getElementById('btn-descargar-desde-visor').href}" class="btn-subir-cta" style="display: inline-flex;">
+                                <i class="bx bx-download"></i> Descargar Documento
+                            </a>
+                        </div>
+                    `;
+                });
+        } else {
+            if (docxContainer) docxContainer.style.display = 'none';
+            iframe.style.display = 'block';
+            iframe.src = url;
+        }
+
         document.getElementById('modal-lector-biblioteca').style.display = 'flex';
     }
 
     function cerrarLectorAporte() {
         document.getElementById('modal-lector-biblioteca').style.display = 'none';
         document.getElementById('iframe-visor-doc').src = '';
+        const docxContainer = document.getElementById('visor-doc-docx-container');
+        if (docxContainer) {
+            docxContainer.innerHTML = '';
+            docxContainer.style.display = 'none';
+        }
     }
 
     function marcarAporteDescargado(id) {
@@ -257,8 +308,9 @@
         <button type="button" class="btn-cerrar-carreras" onclick="cerrarLectorAporte()" style="color: white; font-size: 1.6rem; background: none; border: none; cursor: pointer;">&times;</button>
       </div>
     </div>
-    <div style="flex: 1; background: #1e293b; position: relative;">
+    <div style="flex: 1; background: #1e293b; position: relative; overflow: hidden; display: flex; flex-direction: column;">
       <iframe id="iframe-visor-doc" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+      <div id="visor-doc-docx-container" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: 35px 45px; background: #ffffff; color: #1e293b; box-sizing: border-box; line-height: 1.7; font-family: 'Hind', sans-serif;"></div>
     </div>
   </div>
 </div>

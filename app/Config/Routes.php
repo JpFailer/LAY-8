@@ -16,6 +16,8 @@ $routes->get('/login', 'Login::index');
 $routes->post('/login/autenticar', 'Login::autenticar');
 $routes->post('/login/verificar-recuperacion', 'Login::verificarRecuperacion');
 $routes->post('/login/restablecer-contrasena', 'Login::restablecerContrasena');
+$routes->get('/restablecer-contrasena', 'Login::vistaRestablecerConToken');
+$routes->post('/restablecer-contrasena', 'Login::procesarRestablecerConToken');
 $routes->get('/registro', 'Registro::index');
 $routes->post('/registro/procesar', 'Registro::procesar');
 $routes->get('/logout', 'Login::salir');
@@ -59,9 +61,12 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('/aulas/guardar-bloque-manual', 'AulasController::guardarBloqueManual');
     $routes->post('/aulas/eliminar-bloque/(:num)', 'AulasController::eliminarBloqueManual/$1');
     $routes->post('/aulas/limpiar-horario', 'AulasController::limpiarHorarioPersonal');
+    $routes->post('/aulas/restaurar-horario', 'AulasController::restaurarHorarioOficial');
     $routes->post('/aulas/crear-actividad', 'AulasController::crearActividad');
     $routes->post('/aulas/toggle-actividad/(:num)', 'AulasController::toggleActividad/$1');
     $routes->post('/aulas/eliminar-actividad/(:num)', 'AulasController::eliminarActividad/$1');
+    $routes->post('/aulas/entregar-tarea/(:num)', 'AulasController::entregarTarea/$1');
+    $routes->get('/aulas/descargar-mi-entrega/(:num)', 'AulasController::descargarMiEntrega/$1');
     
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');
@@ -74,6 +79,14 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/api/notificaciones/conteo', 'NotificacionController::conteoNoLeidas');
     $routes->post('/api/notificaciones/marcar-leida/(:num)', 'NotificacionController::marcarLeida/$1');
     
+    // Vista y Módulo de Profesor / Classroom
+    $routes->get('/docente', 'ProfesorController::index');
+    $routes->post('/docente/actualizar-estado', 'ProfesorController::actualizarEstadoClase');
+    $routes->post('/docente/crear-tarea', 'ProfesorController::crearTareaDocente');
+    $routes->get('/docente/entregas/(:num)', 'ProfesorController::obtenerEntregasAjax/$1');
+    $routes->post('/docente/calificar', 'ProfesorController::calificarEntrega');
+    $routes->get('/docente/descargar-entrega/(:num)', 'ProfesorController::descargarEntrega/$1');
+
     // Rutas exclusivas para Profesores Aprobados (Filtro Profesor)
     $routes->group('', ['filter' => 'profesor'], static function ($routes) {
         $routes->get('/crear-sala', 'Sala::crear');
