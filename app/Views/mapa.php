@@ -5,7 +5,6 @@
     <div class="mapa-header-box">
         <div>
             <h2><i class="bx bx-map-pin"></i> Mapa Interactivo del Campus UMC</h2>
-            <p>Monitoreo en tiempo real de ocupación académica, carreras asignadas y disponibilidad de aulas.</p>
         </div>
     </div>
 

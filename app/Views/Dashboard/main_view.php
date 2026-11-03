@@ -334,6 +334,16 @@
 
           <?php endif; ?>
 
+          <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+
+            <a href="<?= base_url('docente') ?>" class="dropdown-item" style="color: #059669; font-weight: 700;">
+
+              <i class="bx bx-chalkboard" style="margin-right: 6px;"></i> Panel Docente
+
+            </a>
+
+          <?php endif; ?>
+
           <a href="<?= base_url('perfil') ?>" class="dropdown-item" onclick="abrirModalPerfil(event)">
 
             <i class="bx bx-user" style="margin-right: 6px;"></i> Perfil
@@ -383,6 +393,16 @@
           <i class="bx bx-door-open" style="margin-right: 8px;"></i> Aulas
 
         </a>
+
+        <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+
+          <a href="<?= base_url('/docente'); ?>" class="<?= ($segmentoActual === 'docente') ? 'active' : '' ?>" style="color: #10b981; font-weight: 700;">
+
+            <i class="bx bx-chalkboard" style="margin-right: 8px;"></i> Panel Docente
+
+          </a>
+
+        <?php endif; ?>
 
         <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
 
@@ -702,9 +722,9 @@
               <p class="form-sublabel-editar">
                 Si cambias de carrera, adjunta tu <strong>Registro de Inscripción oficial (PDF)</strong> emitido por <code>campus.umc.edu.ve</code>:
               </p>
-              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable" style="margin-bottom: 12px;">
+              <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable input-file-certificacion" style="margin-bottom: 12px;">
               <label class="form-label-editar label-pass-seguridad"><i class="bx bx-lock-alt"></i> Contraseña actual (solo para confirmar cambios de carrera):</label>
-              <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global" placeholder="Tu contraseña actual">
+              <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global input-pass-perfil" placeholder="Tu contraseña actual">
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -1184,7 +1204,7 @@
 
         html += `
 
-          <div class="card-solicitud-docente-item" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+          <div class="card-solicitud-docente-item" style="border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
 
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
 
@@ -1502,7 +1522,7 @@
 
             'modulo'      => 'Inicio',
 
-            'titulo'      => 'Tablón Comunitario UMC',
+            'titulo'      => 'Dashboard Principal',
 
             'tag'         => 'Comunidad Universitaria',
 
@@ -1514,7 +1534,7 @@
 
             'tips'        => [
 
-                ['icono' => 'bx-edit', 'titulo' => 'Publicar en el muro', 'texto' => 'Comparte avisos, dudas académicas o novedades de tu escuela.'],
+                ['icono' => 'bx-edit', 'titulo' => 'Tablero de Noticias', 'texto' => 'Recibe avisos oficiales de los profesores y publicaciones de la comunidad universitaria.'],
 
                 ['icono' => 'bx-heart', 'titulo' => 'Reacciones y debate', 'texto' => 'Interactúa dando "Me gusta" y aportando en los comentarios de cada post.'],
 
@@ -1528,9 +1548,9 @@
 
             'modulo'      => 'Mapa UMC',
 
-            'titulo'      => 'Mapa Interactivo del Campus',
+            'titulo'      => 'Mapa UMC',
 
-            'tag'         => 'Monitoreo en Tiempo Real',
+            'tag'         => 'Mapa Interactivo',
 
             'icono'       => 'bx-map-pin',
 
@@ -1556,7 +1576,7 @@
 
             'modulo'      => 'Biblioteca',
 
-            'titulo'      => 'Biblioteca Académica Digital',
+            'titulo'      => 'Biblioteca',
 
             'tag'         => 'Recursos de Estudio',
 
@@ -1564,13 +1584,13 @@
 
             'color'       => '#7c3aed',
 
-            'descripcion' => 'Repositorio colaborativo de guías, exámenes pasados, libros y proyectos clasificados por carrera y semestre para apoyar tu preparación académica.',
+            'descripcion' => 'Repositorio colaborativo de guías, exámenes pasados, libros y recursos para apoyar tu preparación académica.',
 
             'tips'        => [
 
-                ['icono' => 'bx-search', 'titulo' => 'Filtros por carrera', 'texto' => 'Encuentra guías y libros por carrera, semestre, materia o profesor.'],
+                ['icono' => 'bx-search', 'titulo' => 'Filtros por carrera', 'texto' => 'Encuentra guías y libros por carrera, materia o autor.'],
 
-                ['icono' => 'bx-download', 'titulo' => 'Descarga inmediata', 'texto' => 'Descarga documentos en PDF para estudiar en cualquier momento.'],
+                ['icono' => 'bx-download', 'titulo' => 'Descarga inmediata', 'texto' => 'Descarga documentos en PDF para estudiar en cualquier momento, o leelos en línea.'],
 
                 ['icono' => 'bx-cloud-upload', 'titulo' => 'Compartir aportes', 'texto' => 'Sube tus propios resúmenes y material para ayudar a la comunidad.']
 
@@ -1582,9 +1602,9 @@
 
             'modulo'      => 'Aulas',
 
-            'titulo'      => 'Directorio y Programación de Aulas',
+            'titulo'      => 'Aulas Virtuales',
 
-            'tag'         => 'Gestión de Espacios',
+            'tag'         => 'Gestión de tu vida académica',
 
             'icono'       => 'bx-door-open',
 
@@ -1594,11 +1614,11 @@
 
             'tips'        => [
 
-                ['icono' => 'bx-calendar', 'titulo' => 'Horario semanal', 'texto' => 'Revisa qué asignaturas y secciones ocupan cada aula por bloque.'],
+                ['icono' => 'bx-calendar', 'titulo' => 'Horario semanal', 'texto' => 'Crea y consulta tu horario de clase, visualiza las aulas asignadas por cada bloque.'],
 
-                ['icono' => 'bx-group', 'titulo' => 'Aforo y condiciones', 'texto' => 'Verifica la capacidad máxima de estudiantes y el estado del aula.'],
+                ['icono' => 'bx-laptop-alt', 'titulo' => 'Espacios virtuales', 'texto' => 'Tus aulas virtuales asignadas, donde los profesores autorizados pueden agendar avisos o evaluaciones.'],
 
-                ['icono' => 'bx-user-voice', 'titulo' => 'Avisos docentes', 'texto' => 'Los profesores autorizados pueden agendar avisos o evaluaciones.']
+                ['icono' => 'bx-checklist', 'titulo' => 'Tareas', 'texto' => 'Lleva un control de tu cronograma académico con la creación de tareas.']
 
             ]
 
@@ -1629,54 +1649,6 @@
             ]
 
         ],
-
-        'perfil' => [
-
-            'modulo'      => 'Perfil',
-
-            'titulo'      => 'Perfil y Cuenta Universitaria',
-
-            'tag'         => 'Datos del Estudiante',
-
-            'icono'       => 'bx-user',
-
-            'color'       => '#2563eb',
-
-            'descripcion' => 'Información personal de tu cuenta, cédula de identidad, carrera inscrita, foto de avatar y conteo de aportes compartidos en la biblioteca.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-camera', 'titulo' => 'Foto de perfil', 'texto' => 'Actualiza tu foto institucional para mostrar en el tablón.'],
-
-                ['icono' => 'bx-id-card', 'titulo' => 'Verificación', 'texto' => 'Comprueba tu rol y estado de verificación en el campus.']
-
-            ]
-
-        ],
-
-        'ajustes' => [
-
-            'modulo'      => 'Ajustes',
-
-            'titulo'      => 'Configuración de la Plataforma',
-
-            'tag'         => 'Preferencias',
-
-            'icono'       => 'bx-cog',
-
-            'color'       => '#475569',
-
-            'descripcion' => 'Personaliza tu experiencia de navegación, tema visual oscuro o claro y opciones de seguridad de tu cuenta.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-moon', 'titulo' => 'Modo Oscuro', 'texto' => 'Cambia entre tema claro y tema oscuro cuando lo prefieras.'],
-
-                ['icono' => 'bx-lock-alt', 'titulo' => 'Contraseña', 'texto' => 'Actualiza tus credenciales de acceso de forma segura.']
-
-            ]
-
-        ]
 
     ];
 

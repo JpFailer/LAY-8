@@ -92,6 +92,10 @@ class Login extends BaseController
         }
     }
 
+    /**
+     * Paso 1: Verifica la existencia de la cuenta y genera token/correo seguro
+     * Simplificado y amigable: Sin necesidad de comprobantes PDF
+     */
     public function verificarRecuperacion()
     {
         $identificador = trim((string) $this->request->getPost('identificador'));
@@ -116,20 +120,6 @@ class Login extends BaseController
             ]);
         }
 
-        if ($usuario['rol'] === 'admin') {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => 'Por motivos estrictos de seguridad institucional, las cuentas de Administrador no pueden restablecer credenciales mediante este formulario. Debes acceder a la consola del servidor.'
-            ]);
-        }
-
-        if ($usuario['rol'] === 'profesor') {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => 'Las cuentas de personal docente no poseen Registro de Inscripción estudiantil. Para restablecer el acceso a tu cuenta docente, contacta a la Administración Universitaria de LAY-8 con tu carnet institucional.'
-            ]);
-        }
-
         if (($usuario['estado_cuenta'] ?? 'activo') === 'baneado') {
             return $this->response->setJSON([
                 'exito' => false,
@@ -137,25 +127,70 @@ class Login extends BaseController
             ]);
         }
 
+        // Generar token criptográfico único con vigencia de 2 horas
+        $token = bin2hex(random_bytes(32));
+        $expira = date('Y-m-d H:i:s', strtotime('+2 hours'));
+
+        $db->table('usuarios')
+           ->where('id', $usuario['id'])
+           ->update([
+               'token_recuperacion' => $token,
+               'token_expiracion'   => $expira
+           ]);
+
+        // Ofuscar correo para privacidad visual (ej: ab***@umc.edu.ve)
+        $correoReal = (string) $usuario['correo'];
+        $partesEmail = explode('@', $correoReal);
+        $userPart = $partesEmail[0];
+        $domainPart = $partesEmail[1] ?? 'umc.edu.ve';
+        $ofuscado = (strlen($userPart) > 2)
+            ? substr($userPart, 0, 2) . str_repeat('*', max(3, strlen($userPart) - 2)) . '@' . $domainPart
+            : $userPart . '***@' . $domainPart;
+
+        $linkRecuperacion = base_url('restablecer-contrasena?token=' . $token);
+
+        // Intento de despacho de correo electrónico
+        $correoEnviado = false;
+        try {
+            $emailService = \Config\Services::email();
+            $emailService->setTo($correoReal);
+            $emailService->setSubject('Recuperación de Contraseña - LAY-8 UMC');
+            $mensajeTexto = "Hola " . ($usuario['primer_nombre'] ?? $usuario['nombre_usuario']) . ",\n\n"
+                          . "Recibimos una solicitud para restablecer la contraseña de tu cuenta de LAY-8.\n\n"
+                          . "Para definir tu nueva clave ingresa en el siguiente enlace seguro (válido por 2 horas):\n"
+                          . $linkRecuperacion . "\n\n"
+                          . "Si no solicitaste este cambio, puedes ignorar este mensaje.\n\n"
+                          . "Equipo LAY-8 - Universidad Marítima del Caribe";
+            $emailService->setMessage($mensajeTexto);
+            $correoEnviado = @$emailService->send();
+        } catch (\Throwable $e) {
+            log_message('error', 'Error envío correo recuperación: ' . $e->getMessage());
+        }
+
         return $this->response->setJSON([
-            'exito' => true,
-            'usuario_id' => (int) $usuario['id'],
-            'nombre' => $usuario['primer_nombre'] . ' ' . $usuario['apellidos'],
-            'rol' => ucfirst($usuario['rol']),
-            'usuario' => $usuario['nombre_usuario'],
-            'carrera' => $usuario['carrera'] ?? 'UMC'
+            'exito'           => true,
+            'usuario_id'      => (int) $usuario['id'],
+            'token'           => $token,
+            'nombre'          => trim(($usuario['primer_nombre'] ?? '') . ' ' . ($usuario['apellidos'] ?? '')),
+            'rol'             => ucfirst($usuario['rol']),
+            'usuario'         => $usuario['nombre_usuario'],
+            'correo_ofuscado' => $ofuscado,
+            'correo_enviado'  => $correoEnviado,
+            'enlace_directo'  => $linkRecuperacion,
+            'mensaje'         => '¡Cuenta verificada! Hemos enviado un enlace de recuperación a tu correo ' . $ofuscado . '.'
         ]);
     }
 
+    /**
+     * Paso 2: Restablece la contraseña directamente mediante token o ID verificado
+     * Sin pedir comprobantes PDF
+     */
     public function restablecerContrasena()
     {
         $usuarioId = (int) $this->request->getPost('usuario_id');
+        $token     = trim((string) $this->request->getPost('token'));
         $nueva     = (string) $this->request->getPost('nueva_contrasena');
         $repetir   = (string) $this->request->getPost('repetir_contrasena');
-
-        if (!$usuarioId) {
-            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Identificador de usuario inválido.']);
-        }
 
         if (strlen($nueva) < 8) {
             return $this->response->setJSON(['exito' => false, 'mensaje' => 'La nueva contraseña debe contener al menos 8 caracteres.']);
@@ -166,95 +201,109 @@ class Login extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $usuario = $db->table('usuarios')->where('id', $usuarioId)->get()->getRowArray();
+        $builder = $db->table('usuarios');
+
+        if (!empty($token)) {
+            $builder->where('token_recuperacion', $token)
+                    ->where('token_expiracion >=', date('Y-m-d H:i:s'));
+        } elseif ($usuarioId > 0) {
+            $builder->where('id', $usuarioId);
+        } else {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Solicitud de recuperación inválida o expirada.']);
+        }
+
+        $usuario = $builder->get()->getRowArray();
         if (!$usuario) {
-            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Cuenta de usuario no encontrada en el sistema.']);
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'El enlace de recuperación es inválido o ha expirado.']);
         }
 
-        // ======================================================================
-        // COMPROBACIÓN OBLIGATORIA DE SEGURIDAD ANTI-SUPLANTACIÓN (UMC)
-        // ======================================================================
-        $archivo = $this->request->getFile('planilla_inscripcion');
-        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => 'Por motivos estrictos de seguridad institucional y prevención de suplantación de identidad, debes adjuntar obligatoriamente tu Registro de Inscripción UMC oficial en formato PDF.'
-            ]);
-        }
-
-        if ($archivo->getClientMimeType() !== 'application/pdf') {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => 'El comprobante debe ser exclusivamente un archivo digital PDF emitido por el sistema oficial campus.umc.edu.ve.'
-            ]);
-        }
-
-        $verificador = new VerificadorInscripcionService();
-        $carreraUsuario = $usuario['carrera'] ?? null;
-        $analisis = $verificador->verificar($archivo->getTempName(), $carreraUsuario);
-
-        if (!$analisis['es_valido']) {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => 'Seguridad UMC: ' . ($analisis['motivo_invalidez'] ?? 'El documento de inscripción no superó los filtros de autenticidad institucional.')
-            ]);
-        }
-
-        // Validar concordancia de titular para evitar que suban el documento de otro estudiante
-        $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
-        $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
-        if (!empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
-            return $this->response->setJSON([
-                'exito' => false,
-                'mensaje' => "Alerta de Seguridad: La cédula del comprobante ({$cedulaPdf}) no coincide con la cédula registrada en la cuenta solicitada ({$cedulaUsuario})."
-            ]);
-        }
-
-        if (!empty($analisis['estudiante'])) {
-            $norm = function(string $s): string {
-                $s = mb_strtolower(trim($s), 'UTF-8');
-                $r = ['á'=>'a', 'é'=>'e', 'í'=>'i', 'ó'=>'o', 'ú'=>'u', 'ñ'=>'n', 'ü'=>'u'];
-                return strtr($s, $r);
-            };
-
-            $nombreDoc     = $norm($analisis['estudiante']);
-            $primerNombre  = $norm($usuario['primer_nombre']);
-            $apellidos     = $norm($usuario['apellidos']);
-
-            $coincide = (strpos($nombreDoc, $primerNombre) !== false) || (strpos($nombreDoc, $apellidos) !== false);
-            if (!$coincide) {
-                $partes = explode(' ', $apellidos);
-                foreach ($partes as $p) {
-                    if (strlen($p) > 2 && strpos($nombreDoc, $p) !== false) {
-                        $coincide = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!$coincide) {
-                return $this->response->setJSON([
-                    'exito' => false,
-                    'mensaje' => 'Alerta de Seguridad: El comprobante de inscripción adjunto pertenece al titular "' . $analisis['estudiante'] . '", el cual no coincide con la cuenta solicitada. Solo el estudiante legítimo puede restablecer la clave.'
-                ]);
-            }
-        }
-
-        // Actualizar la contraseña
+        // Actualizar la contraseña y limpiar el token de recuperación
         $actualizado = $db->table('usuarios')
-                          ->where('id', $usuarioId)
+                          ->where('id', $usuario['id'])
                           ->update([
-                              'contrasena' => password_hash($nueva, PASSWORD_DEFAULT)
+                              'contrasena'         => password_hash($nueva, PASSWORD_DEFAULT),
+                              'token_recuperacion' => null,
+                              'token_expiracion'   => null
                           ]);
 
         if ($actualizado) {
             return $this->response->setJSON([
-                'exito' => true,
-                'mensaje' => '¡Identidad verificada exitosamente con tu Registro de Inscripción UMC! Tu nueva contraseña ha sido establecida con éxito.'
+                'exito'   => true,
+                'mensaje' => '¡Tu nueva contraseña ha sido establecida con éxito! Ya puedes iniciar sesión en LAY-8.'
             ]);
         }
 
         return $this->response->setJSON(['exito' => false, 'mensaje' => 'Ocurrió un error al actualizar la contraseña en el servidor.']);
+    }
+
+    /**
+     * Vista dedicada para restablecer con token desde el enlace recibido por correo
+     */
+    public function vistaRestablecerConToken()
+    {
+        $token = trim((string) $this->request->getGet('token'));
+        $db = \Config\Database::connect();
+
+        $usuario = null;
+        $tokenValido = false;
+
+        if (!empty($token)) {
+            $usuario = $db->table('usuarios')
+                          ->where('token_recuperacion', $token)
+                          ->where('token_expiracion >=', date('Y-m-d H:i:s'))
+                          ->get()
+                          ->getRowArray();
+            $tokenValido = ($usuario !== null);
+        }
+
+        return view('auth/restablecer_view', [
+            'token'       => $token,
+            'tokenValido' => $tokenValido,
+            'usuario'     => $usuario
+        ]);
+    }
+
+    /**
+     * Procesa el cambio desde la vista con token
+     */
+    public function procesarRestablecerConToken()
+    {
+        $token   = trim((string) $this->request->getPost('token'));
+        $nueva   = (string) $this->request->getPost('nueva_contrasena');
+        $repetir = (string) $this->request->getPost('repetir_contrasena');
+
+        if (empty($token)) {
+            return redirect()->back()->with('error', 'Token de recuperación ausente o inválido.');
+        }
+
+        if (strlen($nueva) < 8) {
+            return redirect()->back()->with('error', 'La nueva contraseña debe tener al menos 8 caracteres.');
+        }
+
+        if ($nueva !== $repetir) {
+            return redirect()->back()->with('error', 'Las contraseñas no coinciden.');
+        }
+
+        $db = \Config\Database::connect();
+        $usuario = $db->table('usuarios')
+                      ->where('token_recuperacion', $token)
+                      ->where('token_expiracion >=', date('Y-m-d H:i:s'))
+                      ->get()
+                      ->getRowArray();
+
+        if (!$usuario) {
+            return redirect()->to(base_url('login'))->with('error', 'El enlace de recuperación ha caducado o ya fue utilizado.');
+        }
+
+        $db->table('usuarios')
+           ->where('id', $usuario['id'])
+           ->update([
+               'contrasena'         => password_hash($nueva, PASSWORD_DEFAULT),
+               'token_recuperacion' => null,
+               'token_expiracion'   => null
+           ]);
+
+        return redirect()->to(base_url('login'))->with('mensaje', '¡Tu contraseña ha sido restablecida con éxito! Ingresa con tus nuevas credenciales.');
     }
 
     public function salir()

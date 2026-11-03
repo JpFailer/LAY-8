@@ -102,10 +102,18 @@ class AulasController extends BaseController
         }
         unset($sec);
 
-        // 3. Obtener el Horario Semanal Completo del Estudiante
+        // 3. Obtener el Horario Semanal Completo del Estudiante (Excluyendo bloques descartados)
         $horarioSemanal = [];
         if (!empty($seccionesIds)) {
-            $horarioSemanal = $claseModel
+            $db = \Config\Database::connect();
+            $bloquesExcluidos = $db->table('estudiante_bloques_excluidos')
+                ->select('clase_id')
+                ->where('estudiante_id', $usuarioId)
+                ->get()
+                ->getResultArray();
+            $idsExcluidos = !empty($bloquesExcluidos) ? array_column($bloquesExcluidos, 'clase_id') : [];
+
+            $builderClases = $claseModel
                 ->select('clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
                 ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
                 ->join('materias', 'materias.id = secciones.materia_id')
@@ -113,8 +121,13 @@ class AulasController extends BaseController
                 ->groupStart()
                     ->where('clases_programadas.estudiante_id', null)
                     ->orWhere('clases_programadas.estudiante_id', $usuarioId)
-                ->groupEnd()
-                ->findAll();
+                ->groupEnd();
+
+            if (!empty($idsExcluidos)) {
+                $builderClases->whereNotIn('clases_programadas.id', $idsExcluidos);
+            }
+
+            $horarioSemanal = $builderClases->findAll();
         }
 
         // 4. Mapear horarios en una matriz [Dia][Intervalo] para renderizar la grilla oficial
@@ -140,7 +153,7 @@ class AulasController extends BaseController
                     'hora_inicio' => $bloque['hora_inicio'],
                     'hora_fin'    => $bloque['hora_fin'],
                     'intervalo'   => $claveIntervalo,
-                    'es_personal' => (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId),
+                    'es_personal' => true, // Todos los bloques tienen botón de descarte personal
                 ];
             }
         }
@@ -422,31 +435,29 @@ class AulasController extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $puedeEliminar = false;
 
+        // Si es admin, profesor o es bloque personal propio, se elimina directamente de la tabla
         if ($rol === 'administrador' || $rol === 'profesor') {
-            $puedeEliminar = true;
+            $claseModel->delete($id);
         } elseif (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) {
-            $puedeEliminar = true;
+            $claseModel->delete($id);
+        } else {
+            // Es un bloque oficial de sección: se excluye del horario personal de este estudiante sin romper a los demás
+            $db->table('estudiante_bloques_excluidos')->ignore(true)->insert([
+                'estudiante_id' => $usuarioId,
+                'clase_id'      => $id,
+                'created_at'    => date('Y-m-d H:i:s')
+            ]);
         }
-
-        if (!$puedeEliminar) {
-            if ($esAjax) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para eliminar bloques oficiales de la universidad. Solo puedes eliminar los bloques que hayas creado manualmente.']);
-            }
-            return redirect()->to(base_url('aulas?tab=horario'))->with('error', 'No tienes permisos para eliminar bloques oficiales de la universidad. Solo puedes eliminar los bloques que hayas creado manualmente.');
-        }
-
-        $claseModel->delete($id);
 
         if ($esAjax) {
             return $this->response->setJSON([
                 'success' => true,
-                'mensaje' => 'Bloque de horario eliminado correctamente.'
+                'mensaje' => 'Bloque removido de tu horario correctamente.'
             ]);
         }
 
-        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', 'Bloque de horario eliminado.');
+        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', 'Bloque removido de tu horario.');
     }
 
     /**
@@ -466,10 +477,32 @@ class AulasController extends BaseController
 
         $db = \Config\Database::connect();
 
-        // Eliminar únicamente bloques personales creados por el estudiante (preservando los oficiales de la universidad)
+        // 1. Eliminar bloques creados manualmente por el estudiante
         $db->table('clases_programadas')
             ->where('estudiante_id', $usuarioId)
             ->delete();
+
+        // 2. Excluir todos los bloques oficiales de las secciones del estudiante para dejar la grilla totalmente vacía
+        $inscripcionModel = new \App\Models\InscripcionModel();
+        $seccionesInscritas = $inscripcionModel->obtenerSeccionesEstudiante($usuarioId);
+        $seccionesIds = !empty($seccionesInscritas) ? array_column($seccionesInscritas, 'id') : [];
+
+        if (!empty($seccionesIds)) {
+            $bloquesOficiales = $db->table('clases_programadas')
+                ->select('id')
+                ->whereIn('seccion_id', $seccionesIds)
+                ->where('estudiante_id', null)
+                ->get()
+                ->getResultArray();
+
+            foreach ($bloquesOficiales as $bo) {
+                $db->table('estudiante_bloques_excluidos')->ignore(true)->insert([
+                    'estudiante_id' => $usuarioId,
+                    'clase_id'      => (int)$bo['id'],
+                    'created_at'    => date('Y-m-d H:i:s'),
+                ]);
+            }
+        }
 
         if ($esAjax) {
             return $this->response->setJSON([
@@ -479,6 +512,148 @@ class AulasController extends BaseController
         }
 
         return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', '¡Tu horario semanal ha sido limpiado por completo! Ahora puedes armarlo desde cero con tus materias y horas reales.');
+    }
+
+    /**
+     * Restaura los bloques de horario oficiales asignados originalmente por la universidad
+     */
+    public function restaurarHorarioOficial()
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+
+        if (!$usuarioId) {
+            if ($esAjax) {
+                return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+            }
+            return redirect()->to('/login')->with('error', 'Sesión expirada.');
+        }
+
+        $db = \Config\Database::connect();
+        $db->table('estudiante_bloques_excluidos')
+            ->where('estudiante_id', $usuarioId)
+            ->delete();
+
+        if ($esAjax) {
+            return $this->response->setJSON([
+                'success' => true,
+                'mensaje' => '¡Horario oficial de la universidad restaurado correctamente!'
+            ]);
+        }
+
+        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', '¡Horario oficial restaurado con éxito!');
+    }
+
+    /**
+     * Permite al estudiante subir su entrega de tarea / actividad académica (PDF, Word, ZIP, JPG)
+     */
+    public function entregarTarea(int $actividadId)
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+
+        if (!$usuarioId) {
+            if ($esAjax) return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+            return redirect()->to('/login')->with('error', 'Sesión expirada.');
+        }
+
+        $actividadModel = new \App\Models\ActividadClaseModel();
+        $actividad = $actividadModel->find($actividadId);
+        if (!$actividad) {
+            if ($esAjax) return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
+            return redirect()->back()->with('error', 'Actividad no encontrada.');
+        }
+
+        $archivo = $this->request->getFile('archivo_tarea');
+        $comentario = strip_tags(trim((string)$this->request->getPost('comentario')));
+        $rutaDestino = null;
+        $nombreOriginal = null;
+
+        if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
+            $nombreOriginal = $archivo->getClientName();
+            $nuevoNombre = 'entrega_' . $actividadId . '_' . $usuarioId . '_' . time() . '.' . $archivo->getClientExtension();
+            $uploadDir = WRITEPATH . 'uploads/entregas';
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
+            $archivo->move($uploadDir, $nuevoNombre);
+            $rutaDestino = 'uploads/entregas/' . $nuevoNombre;
+        }
+
+        $entregaModel = new \App\Models\EntregaActividadModel();
+        $existente = $entregaModel->obtenerEntregaEstudiante($actividadId, $usuarioId);
+
+        $datosEntrega = [
+            'actividad_id'      => $actividadId,
+            'estudiante_id'     => $usuarioId,
+            'comentario_alumno' => $comentario,
+            'updated_at'        => date('Y-m-d H:i:s'),
+        ];
+        if ($rutaDestino) {
+            $datosEntrega['archivo_ruta']   = $rutaDestino;
+            $datosEntrega['archivo_nombre'] = $nombreOriginal;
+        }
+
+        if ($existente) {
+            $entregaModel->update($existente['id'], $datosEntrega);
+        } else {
+            $datosEntrega['created_at'] = date('Y-m-d H:i:s');
+            $entregaModel->insert($datosEntrega);
+        }
+
+        // Marcar la actividad como completada para el estudiante
+        $db = \Config\Database::connect();
+        $regEstado = $db->table('actividades_estudiante_estado')
+            ->where('actividad_id', $actividadId)
+            ->where('estudiante_id', $usuarioId)
+            ->get()
+            ->getRowArray();
+
+        if ($regEstado) {
+            $db->table('actividades_estudiante_estado')
+                ->where('id', $regEstado['id'])
+                ->update(['completada' => 1, 'fecha_completada' => date('Y-m-d H:i:s')]);
+        } else {
+            $db->table('actividades_estudiante_estado')->insert([
+                'actividad_id'     => $actividadId,
+                'estudiante_id'    => $usuarioId,
+                'completada'       => 1,
+                'fecha_completada' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        $msg = '¡Entrega guardada exitosamente en el cronograma!';
+        if ($esAjax) {
+            return $this->response->setJSON([
+                'success' => true,
+                'mensaje' => $msg,
+                'archivo' => $nombreOriginal ?: ($existente['archivo_nombre'] ?? null)
+            ]);
+        }
+
+        return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', $msg);
+    }
+
+    /**
+     * Permite descargar la entrega de tarea subida por el estudiante
+     */
+    public function descargarMiEntrega(int $actividadId)
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        if (!$usuarioId) return redirect()->to('/login');
+
+        $entregaModel = new \App\Models\EntregaActividadModel();
+        $entrega = $entregaModel->obtenerEntregaEstudiante($actividadId, $usuarioId);
+        if (!$entrega || empty($entrega['archivo_ruta'])) {
+            return redirect()->back()->with('error', 'No hay archivo adjunto para esta entrega.');
+        }
+
+        $rutaAbs = WRITEPATH . $entrega['archivo_ruta'];
+        if (!file_exists($rutaAbs)) {
+            return redirect()->back()->with('error', 'El archivo no se encuentra físicamente en el servidor.');
+        }
+
+        return $this->response->download($rutaAbs, null)->setFileName($entrega['archivo_nombre'] ?: 'entrega.pdf');
     }
 
     /**

@@ -24,7 +24,6 @@
         <?php endif; ?>
         <span style="font-size: 1.5rem;"></span>
       </h2>
-      <p>Bienvenido al centro de operaciones de tu vida académica en la Universidad Marítima del Caribe.</p>
       
       <div class="welcome-meta-chips">
         <span class="welcome-chip">
@@ -38,7 +37,7 @@
     </div>
 
     <div class="welcome-badge-icon">
-      <i class="bx bxs-ship"></i>
+      <i class="bx bx-anchor"></i>
     </div>
   </div>
 
@@ -131,11 +130,11 @@
             <div class="composer-bottom-controls">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <select name="categoria" id="composer-categoria" class="composer-select-categoria">
-                  <option value="Institucional">📌 Institucional</option>
-                  <option value="Académico">📚 Académico</option>
-                  <option value="Urgente">🚨 Urgente / Importante</option>
-                  <option value="Evento">⚓ Evento Náutico / Cultural</option>
-                  <option value="Comunidad">👥 Comunidad Estudiantil</option>
+                  <option value="Institucional">Institucional</option>
+                  <option value="Académico">Académico</option>
+                  <option value="Urgente">Urgente / Importante</option>
+                  <option value="Evento">Evento Náutico / Cultural</option>
+                  <option value="Comunidad">Comunidad Estudiantil</option>
                 </select>
 
                 <?php if (in_array($userRol, ['admin', 'administrador'], true)): ?>

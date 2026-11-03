@@ -129,7 +129,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .avatar-trigger:hover {
     transform: scale(1.06);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
 .avatar-trigger img {
@@ -242,7 +241,6 @@ h1, h2, h3, h4, h5, h6 {
     border-color: #fca5a5;
     color: #dc2626;
     transform: translateX(4px);
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.16);
 }
 
 .logout-btn:hover i {
@@ -690,7 +688,6 @@ body.dark-mode .sidebar-footer .logout-btn:hover {
     background: rgba(239, 68, 68, 0.2) !important;
     border-color: #ef4444 !important;
     color: #fca5a5 !important;
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25) !important;
 }
 
 body.dark-mode .sidebar-footer .logout-btn:hover i,
@@ -737,13 +734,12 @@ body.dark-mode .content-box p {
 }
 
 body.dark-mode .btn-expandir-layout {
-    background-color: #334155 !important;
+    background-color: #1e293b !important;
     color: #f8fafc !important;
-    border: 1px solid #475569 !important;
 }
 
-body.dark-mode .btn-expandir-layout:hover {
-    background-color: #475569 !important;
+body.dark-mode .focus-icon {
+    color: #f8fafc !important;
 }
 
 body.dark-mode .dropdown-menu {
@@ -1229,15 +1225,21 @@ body.dark-mode .tarjeta-meta {
     color: #94a3b8 !important;
 }
 
-body.dark-mode .btn-filtro {
-    background: #1e293b !important;
+body.dark-mode .btn-filtro-carrera {
+    background: #0f172a !important;
     border-color: #334155 !important;
     color: #94a3b8 !important;
 }
 
-body.dark-mode .btn-filtro.activo {
-    background: #1e3a8a !important;
+body.dark-mode .btn-filtro-carrera:hover {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+    border-color: #60a5fa !important;
+}
+body.dark-mode .btn-filtro-carrera.activo {
+    background: #2563eb !important;
     color: white !important;
+    border-color: #2563eb !important; 
 }
 
 body.dark-mode .estado-vacio {
@@ -1290,6 +1292,7 @@ body.dark-mode .estado-vacio h3 {
 .btn-subir-cta {
     background-color: #10b981;
     color: white;
+    border: none;
     text-decoration: none;
     font-size: 0.92rem;
     font-weight: 700;
@@ -1298,14 +1301,12 @@ body.dark-mode .estado-vacio h3 {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
     transition: all 0.2s ease;
 }
 
 .btn-subir-cta:hover {
     background-color: #059669;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
 .btn-volver-dashboard-link {
@@ -1956,6 +1957,7 @@ body.dark-mode .peso-badge {
 
 body.dark-mode .btn-descargar {
     background-color: #2563eb !important;
+    color: #fff
 }
 
 body.dark-mode .btn-descargar:hover {
@@ -1976,12 +1978,19 @@ body.dark-mode .estado-vacio p {
 }
 
 /* Modo oscuro Mapa */
-body.dark-mode .leyenda-mapa {
+body.dark-mode .leyenda-mapa-moderna {
     background: #0f172a !important;
     border-color: #334155 !important;
-    color: #cbd5e1 !important;
+    color: #94a3b8 !important;
 }
 
+body.dark-mode .leyenda-titulo-seccion {
+    color: #3b82f6;
+}
+
+body.dark-mode .item-leyenda-badge {
+    color: #94a3b8;
+}
 body.dark-mode .contenedor-mapa {
     background: #0b1329 !important;
     border-color: #334155 !important;
@@ -3701,11 +3710,11 @@ body.dark-mode .admin-empty-state p {
 }
 
 .btn-secundario-aulas {
-    background: #0284c7 !important;
+    background: #1C53B0 !important;
 }
 
 .btn-secundario-aulas:hover {
-    background: #0369a1 !important;
+    background: #1e40af !important;
 }
 
 /* Grid de Materias / Aulas Virtuales */
@@ -4509,7 +4518,18 @@ body.dark-mode .admin-empty-state p {
 }
 
 .modal-actividad-ancho {
-    max-width: 500px !important;
+    max-width: 520px !important;
+    max-height: 88vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.modal-actividad-ancho .formulario-estilo-lay8 {
+    overflow-y: auto !important;
+    max-height: calc(88vh - 65px) !important;
+    padding: 22px 24px !important;
+    box-sizing: border-box !important;
 }
 
 /* ==========================================================================
@@ -4800,7 +4820,7 @@ body.dark-mode .contenedor-tabla-horario {
 }
 
 body.dark-mode .tabla-horario-umc th {
-    background: #1e293b !important;
+    background: #1e3a8a !important;
     border-color: #334155 !important;
 }
 
@@ -4815,7 +4835,7 @@ body.dark-mode .fila-separador-turno td {
 }
 
 body.dark-mode .celda-hora-bloque {
-    background: #0f172a !important;
+    background: #1e293b !important;
     color: #94a3b8 !important;
 }
 
@@ -5767,4 +5787,139 @@ body.dark-mode .guia-card-footer {
     background: #0f172a;
     border-top-color: #334155;
     color: #94a3b8;
+}
+
+/* ==========================================================================
+   ESTILOS DE MODO OSCURO PARA CAJAS DE AJUSTES, BOTÓN LEER Y VISOR WORD (REVISIÓN HARYERIT)
+   ========================================================================== */
+
+/* Botón Leer Aporte en Biblioteca */
+.btn-leer-aporte {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1.5px solid #bfdbfe;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.btn-leer-aporte:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+body.dark-mode .btn-leer-aporte,
+html.dark-mode .btn-leer-aporte {
+    background: #1e293b !important;
+    color: #93c5fd !important;
+    border-color: #3b82f6 !important;
+}
+
+body.dark-mode .btn-leer-aporte:hover,
+html.dark-mode .btn-leer-aporte:hover {
+    background: #273549 !important;
+    color: #bfdbfe !important;
+}
+
+/* Cajas de inputs en Ajustes de Cuenta y Perfil (Cajitas blancas reportadas por Haryerit) */
+body.dark-mode .editar-seguridad-box,
+html.dark-mode .editar-seguridad-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .editar-seguridad-box input,
+body.dark-mode .editar-seguridad-box input[type="file"],
+body.dark-mode .editar-seguridad-box input[type="password"],
+body.dark-mode .input-file-adaptable,
+body.dark-mode .input-file-certificacion,
+body.dark-mode #input-pass-perfil,
+body.dark-mode .input-pass-perfil,
+html.dark-mode .editar-seguridad-box input,
+html.dark-mode .input-file-adaptable,
+html.dark-mode #input-pass-perfil {
+    background: #1e293b !important;
+    border: 1.5px solid #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .editar-seguridad-box input::file-selector-button,
+body.dark-mode .input-file-adaptable::file-selector-button,
+body.dark-mode .input-file-certificacion::file-selector-button,
+html.dark-mode input[type="file"]::file-selector-button {
+    background: #0f172a !important;
+    color: #93c5fd !important;
+    border: 1px solid #334155 !important;
+}
+
+/* Tarjetas de Solicitudes y Entregas Docentes en Modo Oscuro */
+body.dark-mode .card-solicitud-docente-item,
+html.dark-mode .card-solicitud-docente-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .card-solicitud-docente-item strong,
+body.dark-mode .card-solicitud-docente-item div,
+html.dark-mode .card-solicitud-docente-item strong {
+    color: #f8fafc !important;
+}
+
+body.dark-mode .card-solicitud-docente-item span,
+html.dark-mode .card-solicitud-docente-item span {
+    color: #94a3b8 !important;
+}
+
+/* Visor de Word (.docx) en Modo Oscuro */
+body.dark-mode #visor-doc-docx-container,
+html.dark-mode #visor-doc-docx-container {
+    background: #0f172a !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #visor-doc-docx-container h1,
+body.dark-mode #visor-doc-docx-container h2,
+body.dark-mode #visor-doc-docx-container h3,
+body.dark-mode #visor-doc-docx-container h4 {
+    color: #93c5fd !important;
+}
+
+body.dark-mode #visor-doc-docx-container p,
+body.dark-mode #visor-doc-docx-container li,
+body.dark-mode #visor-doc-docx-container span {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #visor-doc-docx-container table,
+body.dark-mode #visor-doc-docx-container td,
+body.dark-mode #visor-doc-docx-container th {
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Overrides para el Panel Admin en Modo Oscuro */
+body.dark-mode .carreras-horarios-summary-box,
+body.dark-mode .carreras-horarios-summary-box > div > div,
+body.dark-mode .carrera-horario-card {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+body.dark-mode .btn-seleccionar-pdf {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode code {
+    background: rgba(30, 58, 138, 0.4) !important;
+    color: #93c5fd !important;
 }
