@@ -707,6 +707,10 @@ class VerificadorInscripcionService
             $db->table('clases_programadas')
                ->where('estudiante_id', $usuarioId)
                ->delete();
+
+            $db->table('estudiante_bloques_excluidos')
+               ->where('estudiante_id', $usuarioId)
+               ->delete();
         }
 
 

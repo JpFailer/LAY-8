@@ -72,14 +72,18 @@ class ProfesorController extends BaseController
         $estadoRapido     = strip_tags(trim((string) $this->request->getPost('estado_rapido')));
         $mensajeAdicional = strip_tags(trim((string) $this->request->getPost('mensaje_adicional'))) ?: null;
 
-        // 2. Row-Level Security / Ownership: Comprobar que esta sección le pertenezca a ESTE profesor
+        // 2. Row-Level Security / Ownership: Comprobar que esta sección le pertenezca a ESTE profesor (o admin)
         $seccionModel = new SeccionModel();
-        $seccion = $seccionModel
+        $builderSec = $seccionModel
             ->select('secciones.*, materias.nombre as materia')
             ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('secciones.id', $seccionId)
-            ->where('secciones.profesor_id', $profesorId)
-            ->first();
+            ->where('secciones.id', $seccionId);
+
+        if (session('rol') !== 'administrador') {
+            $builderSec->where('secciones.profesor_id', $profesorId);
+        }
+
+        $seccion = $builderSec->first();
 
         if (!$seccion) {
             return $this->response->setStatusCode(403)->setJSON([
@@ -406,6 +410,25 @@ class ProfesorController extends BaseController
         $ponderacion = $this->request->getPost('ponderacion') ? (float)$this->request->getPost('ponderacion') : 0;
         $descripcion = strip_tags(trim((string)$this->request->getPost('descripcion')));
 
+        // Validación de pertenencia de sección
+        $seccionModel = new SeccionModel();
+        $builderSec = $seccionModel
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId);
+
+        if ($rol !== 'administrador') {
+            $builderSec->where('secciones.profesor_id', $profesorId);
+        }
+
+        $seccionInfo = $builderSec->first();
+        if (!$seccionInfo) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'error'   => 'Acceso denegado: No tienes permisos para crear evaluaciones en esta sección.'
+            ]);
+        }
+
         $actividadModel = new \App\Models\ActividadClaseModel();
         $actividadId = $actividadModel->insert([
             'seccion_id'    => $seccionId,
@@ -423,11 +446,6 @@ class ProfesorController extends BaseController
         $inscripcionModel = new InscripcionModel();
         $alumnos = $inscripcionModel->obtenerEstudiantesDeSeccion($seccionId);
         $notifModel = new NotificacionModel();
-
-        $seccionInfo = (new SeccionModel())
-            ->select('secciones.*, materias.nombre as materia')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->find($seccionId);
 
         $materiaNombre = $seccionInfo['materia'] ?? 'tu asignatura';
 
@@ -464,10 +482,23 @@ class ProfesorController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado.']);
         }
 
+        $actividad = (new \App\Models\ActividadClaseModel())->find($actividadId);
+        if (!$actividad) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
+        }
+
+        if ($rol !== 'administrador') {
+            $seccion = (new SeccionModel())
+                ->where('id', $actividad['seccion_id'])
+                ->where('profesor_id', $profesorId)
+                ->first();
+            if (!$seccion) {
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para visualizar entregas de esta actividad.']);
+            }
+        }
+
         $entregaModel = new \App\Models\EntregaActividadModel();
         $entregas = $entregaModel->obtenerEntregasDeActividad($actividadId);
-
-        $actividad = (new \App\Models\ActividadClaseModel())->find($actividadId);
 
         return $this->response->setJSON([
             'success'   => true,
@@ -504,6 +535,21 @@ class ProfesorController extends BaseController
         $entrega = $entregaModel->find($entregaId);
         if (!$entrega) {
             return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Entrega no encontrada.']);
+        }
+
+        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
+        if (!$actividad) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad asociada no encontrada.']);
+        }
+
+        if ($rol !== 'administrador') {
+            $seccion = (new SeccionModel())
+                ->where('id', $actividad['seccion_id'])
+                ->where('profesor_id', $profesorId)
+                ->first();
+            if (!$seccion) {
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para calificar entregas de esta sección.']);
+            }
         }
 
         $entregaModel->update($entregaId, [
@@ -555,7 +601,23 @@ class ProfesorController extends BaseController
             return redirect()->back()->with('error', 'No hay archivo adjunto en esta entrega.');
         }
 
-        $rutaAbs = WRITEPATH . $entrega['archivo_ruta'];
+        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
+        if (!$actividad) {
+            return redirect()->back()->with('error', 'Actividad no encontrada.');
+        }
+
+        if ($rol !== 'administrador') {
+            $seccion = (new SeccionModel())
+                ->where('id', $actividad['seccion_id'])
+                ->where('profesor_id', $profesorId)
+                ->first();
+            if (!$seccion) {
+                return redirect()->back()->with('error', 'No tienes permisos para descargar entregas de esta sección.');
+            }
+        }
+
+        $nombreLimpio = basename($entrega['archivo_ruta']);
+        $rutaAbs = WRITEPATH . 'uploads/entregas/' . $nombreLimpio;
         if (!file_exists($rutaAbs)) {
             return redirect()->back()->with('error', 'El archivo no se encuentra físicamente en el servidor.');
         }

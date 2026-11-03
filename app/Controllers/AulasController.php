@@ -564,14 +564,43 @@ class AulasController extends BaseController
             return redirect()->back()->with('error', 'Actividad no encontrada.');
         }
 
+        // Verificación de pertenencia a la materia / sección
+        $db = \Config\Database::connect();
+        if ((int)$actividad['es_personal'] === 1) {
+            if ((int)$actividad['creado_por'] !== $usuarioId) {
+                if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No autorizado.']);
+                return redirect()->back()->with('error', 'No autorizado.');
+            }
+        } else {
+            $estaInscrito = ($db->table('inscripciones')
+                ->where('estudiante_id', $usuarioId)
+                ->where('seccion_id', $actividad['seccion_id'])
+                ->countAllResults() > 0);
+            if (!$estaInscrito && session('rol') !== 'administrador') {
+                if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.']);
+                return redirect()->back()->with('error', 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.');
+            }
+        }
+
         $archivo = $this->request->getFile('archivo_tarea');
         $comentario = strip_tags(trim((string)$this->request->getPost('comentario')));
         $rutaDestino = null;
         $nombreOriginal = null;
 
         if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
+            $extPermitidas = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg'];
+            $ext = strtolower($archivo->getClientExtension());
+            if (!in_array($ext, $extPermitidas, true)) {
+                if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Tipo de archivo no permitido. Solo se aceptan documentos PDF, Office, imágenes o archivos comprimidos.']);
+                return redirect()->back()->with('error', 'Tipo de archivo no permitido. Solo se aceptan documentos PDF, Office, imágenes o archivos comprimidos.');
+            }
+            if ($archivo->getSize() > 20 * 1024 * 1024) {
+                if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'El archivo supera el tamaño máximo permitido de 20 MB.']);
+                return redirect()->back()->with('error', 'El archivo supera el tamaño máximo permitido de 20 MB.');
+            }
+
             $nombreOriginal = $archivo->getClientName();
-            $nuevoNombre = 'entrega_' . $actividadId . '_' . $usuarioId . '_' . time() . '.' . $archivo->getClientExtension();
+            $nuevoNombre = 'entrega_' . $actividadId . '_' . $usuarioId . '_' . time() . '.' . $ext;
             $uploadDir = WRITEPATH . 'uploads/entregas';
             if (!is_dir($uploadDir)) {
                 @mkdir($uploadDir, 0777, true);
@@ -648,7 +677,8 @@ class AulasController extends BaseController
             return redirect()->back()->with('error', 'No hay archivo adjunto para esta entrega.');
         }
 
-        $rutaAbs = WRITEPATH . $entrega['archivo_ruta'];
+        $nombreLimpio = basename($entrega['archivo_ruta']);
+        $rutaAbs = WRITEPATH . 'uploads/entregas/' . $nombreLimpio;
         if (!file_exists($rutaAbs)) {
             return redirect()->back()->with('error', 'El archivo no se encuentra físicamente en el servidor.');
         }

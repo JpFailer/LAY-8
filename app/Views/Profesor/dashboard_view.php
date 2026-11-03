@@ -574,11 +574,18 @@
         formData.append('calificacion', notaInput.value);
         formData.append('feedback', fbInput ? fbInput.value : '');
 
+        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
+        if (csrfInput) {
+            formData.append('<?= csrf_token() ?>', csrfInput.value);
+            headers['<?= csrf_header() ?>'] = csrfInput.value;
+        }
+
         try {
             const resp = await fetch(BASE_URL + 'docente/calificar', {
                 method: 'POST',
                 body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: headers
             });
             const res = await resp.json();
             if (res.success) {

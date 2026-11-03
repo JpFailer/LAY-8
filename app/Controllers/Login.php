@@ -167,18 +167,24 @@ class Login extends BaseController
             log_message('error', 'Error envío correo recuperación: ' . $e->getMessage());
         }
 
-        return $this->response->setJSON([
+        $responsePayload = [
             'exito'           => true,
             'usuario_id'      => (int) $usuario['id'],
-            'token'           => $token,
             'nombre'          => trim(($usuario['primer_nombre'] ?? '') . ' ' . ($usuario['apellidos'] ?? '')),
             'rol'             => ucfirst($usuario['rol']),
             'usuario'         => $usuario['nombre_usuario'],
             'correo_ofuscado' => $ofuscado,
             'correo_enviado'  => $correoEnviado,
-            'enlace_directo'  => $linkRecuperacion,
-            'mensaje'         => '¡Cuenta verificada! Hemos enviado un enlace de recuperación a tu correo ' . $ofuscado . '.'
-        ]);
+            'mensaje'         => '¡Cuenta verificada! Hemos enviado un enlace de recuperación seguro a tu correo ' . $ofuscado . '.'
+        ];
+
+        // En entorno de desarrollo (localhost), permitir inspeccionar el enlace generado para pruebas locales
+        if (ENVIRONMENT === 'development') {
+            $responsePayload['enlace_directo'] = $linkRecuperacion;
+            $responsePayload['token'] = $token;
+        }
+
+        return $this->response->setJSON($responsePayload);
     }
 
     /**
@@ -203,14 +209,12 @@ class Login extends BaseController
         $db = \Config\Database::connect();
         $builder = $db->table('usuarios');
 
-        if (!empty($token)) {
-            $builder->where('token_recuperacion', $token)
-                    ->where('token_expiracion >=', date('Y-m-d H:i:s'));
-        } elseif ($usuarioId > 0) {
-            $builder->where('id', $usuarioId);
-        } else {
-            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Solicitud de recuperación inválida o expirada.']);
+        if (empty($token)) {
+            return $this->response->setJSON(['exito' => false, 'mensaje' => 'Token de recuperación ausente o inválido. Debes utilizar el enlace enviado a tu correo institucional.']);
         }
+
+        $builder->where('token_recuperacion', $token)
+                ->where('token_expiracion >=', date('Y-m-d H:i:s'));
 
         $usuario = $builder->get()->getRowArray();
         if (!$usuario) {

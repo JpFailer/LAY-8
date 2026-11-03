@@ -361,7 +361,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="acciones-columna">
-                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || session('rol') === 'profesor' || session('rol') === 'admin'): ?>
+                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array(session('rol'), ['admin', 'administrador', 'profesor'], true)): ?>
                                 <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return confirm('¿Deseas eliminar esta actividad del cronograma?')">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
@@ -930,9 +930,13 @@
     async function confirmarRestaurarHorario() {
         if (!confirm('¿Deseas restaurar todos los bloques oficiales asignados por la universidad?')) return;
         try {
+            const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+            const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
+            if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
+
             const resp = await fetch(BASE_URL + 'aulas/restaurar-horario', {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: headers
             });
             const res = await resp.json();
             if (res.success) {
