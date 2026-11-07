@@ -694,14 +694,10 @@ body {
   transition: transform 0.3s ease;
 }
 
-.insignia-pill-rumbo:hover {
-  transform: scale(1.03);
-}
 
 .insignia-pill-rumbo i {
   font-size: 1.15rem;
   color: #2563eb;
-  animation: pulseCompass 2.5s infinite ease-in-out;
 }
 
 @keyframes pulseCompass {

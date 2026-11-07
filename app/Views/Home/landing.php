@@ -503,7 +503,7 @@
             <span class="punto-linea"></span>
           </div>
           <p class="rumbo-subtitulo">
-            Tecnología desarrollada por estudiantes de la <b>Universidad Marítima del Caribe (UMC)</b> para modernizar la orientación en el campus, la gestión de horarios y el aprendizaje colaborativo.
+            Tecnología desarrollada por estudiantes de la <b>Universidad Marítima del Caribe</b> para modernizar la orientación en el campus, la gestión de horarios y el aprendizaje colaborativo.
           </p>
         </div>
 
@@ -749,7 +749,7 @@
           </div>
 
           <div style="text-align: center; margin-top: 16px; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px;">
-            ¿Problemas con tu cuenta? Escribe a <a href="mailto:info@lay8.com" style="color: #2563eb; text-decoration: underline;">info@lay8.com</a>
+            ¿Problemas con tu cuenta? Escribe a <a href="mailto:lay8contacto@gmail.com" style="color: #2563eb; text-decoration: underline;">lay8contacto@gmail.com</a>
           </div>
 
         </div>
@@ -784,7 +784,7 @@
 
       <div class="footer-columna">
         <h4>CONTACTO</h4>
-        <p style="margin-bottom: 8px;"><i class="bx bx-envelope" style="vertical-align: middle;"></i> info@lay8.com</p>
+        <p style="margin-bottom: 8px;"><i class="bx bx-envelope" style="vertical-align: middle;"></i> lay8contacto@gmail.com</p>
         <p style="margin-top: 6px;">
           <a href="<?= base_url('terminos') ?>" style="color: #60a5fa; text-decoration: none; font-size: 0.88rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: color 0.2s;">
             <i class="bx bx-shield-quarter"></i> Términos y Condiciones
