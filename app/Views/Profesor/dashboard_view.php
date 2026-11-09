@@ -7,7 +7,23 @@
 <?= $this->section('content') ?>
 <div class="biblioteca-dashboard-contenedor docente-dashboard-contenedor">
 
-    <!-- header docente -->
+        <!-- Encabezado del Módulo Docente -->
+    <?php if (in_array(session()->get('rol'), ['administrador', 'admin'], true)): ?>
+        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 10px; background: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                    <i class="bx bx-shield-quarter"></i>
+                </div>
+                <div>
+                    <strong style="color: #1e3a8a; font-size: 0.95rem; display: block;">Modo Supervisión de Administrador</strong>
+                    <span style="font-size: 0.84rem; color: #475569;">Como administrador visualizas todas las secciones del campus. Los profesores solo ven las asignaturas que tú les asignes.</span>
+                </div>
+            </div>
+            <a href="<?= base_url('admin?tab=docentes') ?>" class="btn-subir-cta" style="padding: 8px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                <i class="bx bx-slider-alt"></i> Asignar Secciones a Profesores
+            </a>
+        </div>
+    <?php endif; ?>
     <div class="biblio-header-flex">
         <div>
             <h2 style="display: flex; align-items: center; gap: 8px; margin: 0;">

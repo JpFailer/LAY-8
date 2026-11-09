@@ -459,3 +459,13 @@ async function desasignarSeccion(seccionId) {
         alert('Error al procesar la desasignación.');
     }
 }
+
+
+// Inicializar pestaña activa desde el parámetro URL ?tab=...
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+        mostrarTabAdmin(tabParam);
+    }
+});

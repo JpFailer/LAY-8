@@ -73,9 +73,15 @@
   <!-- Barra de Pestañas de Navegación del Panel -->
   <div class="admin-tabs-bar">
     <button type="button" class="tab-btn-admin activa" id="tabbtn-profesores" onclick="mostrarTabAdmin('profesores')">
-      <i class="bx bx-user-voice"></i> Profesores Pendientes 
+      <i class="bx bx-user-check"></i> Solicitudes Docentes 
       <?php if ($metricas['solicitudes_pendientes'] > 0): ?>
         <span class="tab-badge-contador"><?= $metricas['solicitudes_pendientes'] ?></span>
+      <?php endif; ?>
+    </button>
+    <button type="button" class="tab-btn-admin" id="tabbtn-docentes" onclick="mostrarTabAdmin('docentes')">
+      <i class="bx bx-chalkboard"></i> Asignar Secciones (Aulas)
+      <?php if (!empty($profesoresActivos)): ?>
+        <span class="tab-badge-contador" style="background: #2563eb;"><?= count($profesoresActivos) ?></span>
       <?php endif; ?>
     </button>
     <button type="button" class="tab-btn-admin" id="tabbtn-usuarios" onclick="mostrarTabAdmin('usuarios')">
@@ -162,8 +168,11 @@
       <?php endif; ?>
     </div>
 
-    <!-- SECCIÓN: DOCENTES ACTIVOS Y ASIGNACIÓN DE SECCIONES -->
-    <div class="admin-section-box" style="margin-top: 30px;">
+      </div>
+
+  <!-- tab: asignacion de materias a profesores -->
+  <div id="tab-docentes" class="admin-tab-pane">
+    <div class="admin-section-box">
       <div class="section-box-header">
         <div>
           <h3><i class="bx bx-chalkboard"></i> Docentes Activos y Asignación de Secciones (Aulas)</h3>
