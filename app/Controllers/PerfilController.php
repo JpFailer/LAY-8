@@ -112,13 +112,13 @@ class PerfilController extends BaseController
 
         // Si el usuario está cambiando a una carrera distinta a la que tenía
         if (in_array($carreraSolicitada, $carrerasValidas, true) && $carreraSolicitada !== $carreraPrevia) {
-            // 🛡️ Filtro de Seguridad 1: Confirmación con Contraseña
+            // sistema de confirmacion de clave antidayanas (requiere credencial antes de solicitar rol docente)
             $passwordConfirm = (string) $this->request->getPost('confirmar_contrasena');
             if (empty($passwordConfirm) || !password_verify($passwordConfirm, $usuarioActual['contrasena'])) {
                 return redirect()->back()->with('error', 'Seguridad: Para cambiar tu carrera debes ingresar tu contraseña actual correctamente.');
             }
 
-            // 🛡️ Filtro de Seguridad 2: Comprobante Oficial UMC (PDF)
+            // sistema de comprobacion documental antidayanas (solo pdf oficial de constancia docente)
             $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
             if (!$archivoInscripcion || !$archivoInscripcion->isValid() || $archivoInscripcion->hasMoved()) {
                 return redirect()->back()->with('error', 'Seguridad: Para certificar un cambio de carrera es obligatorio adjuntar tu Registro de Inscripción emitido por campus.umc.edu.ve en PDF.');
@@ -128,7 +128,7 @@ class PerfilController extends BaseController
                 return redirect()->back()->with('error', 'El comprobante debe ser un archivo PDF oficial de la UMC.');
             }
 
-            // 🛡️ Filtro de Seguridad 3: Análisis Anti-Fraude y Detección de Materias
+            // sistema de analisis anti-fraude antidayanas
             $verificador = new VerificadorInscripcionService();
             $analisis = $verificador->verificar($archivoInscripcion->getTempName(), $carreraSolicitada);
 

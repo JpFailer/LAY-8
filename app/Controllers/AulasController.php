@@ -60,13 +60,20 @@ class AulasController extends BaseController
         $actividadModel   = new ActividadClaseModel();
         $aulasModel       = new AulasModel();
 
-        // 1. Obtener secciones del usuario (estudiante o profesor)
+        // sacar secciones segun el rol del usuario
         $secciones = [];
         if ($rol === 'profesor') {
             $secciones = (new SeccionModel())
                 ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto')
                 ->join('materias', 'materias.id = secciones.materia_id')
                 ->where('secciones.profesor_id', $usuarioId)
+                ->findAll();
+        } elseif (in_array($rol, ['administrador', 'admin'], true)) {
+            // si es admin ve todo el campus sin estar inscrito
+            $secciones = (new SeccionModel())
+                ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+                ->join('materias', 'materias.id = secciones.materia_id')
+                ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
                 ->findAll();
         } else {
             $secciones = $inscripcionModel
@@ -308,7 +315,7 @@ class AulasController extends BaseController
             return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
         }
 
-        // 1. Validar que la sección le pertenezca a las materias inscritas del alumno (o sea profesor/admin)
+        // sistema de proteccion contra idor antidayanas (un estudiante no puede alterar materias ajenas) (o sea profesor/admin)
         $db = \Config\Database::connect();
         $estaInscrito = $db->table('inscripciones')
             ->where('estudiante_id', $usuarioId)
@@ -787,6 +794,7 @@ class AulasController extends BaseController
             return redirect()->back()->with('error', 'Actividad no encontrada.');
         }
 
+        // sistema de autorizacion estricta antidayanas (solo el creador o un admin puede eliminar la actividad)
         if ((int)$actividad['creado_por'] !== $usuarioId && session()->get('rol') !== 'administrador') {
             return redirect()->back()->with('error', 'Solo quien creó esta actividad puede eliminarla.');
         }

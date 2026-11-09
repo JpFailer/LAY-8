@@ -37,6 +37,15 @@ class AdminController extends BaseController
             ->orderBy('id', 'ASC')
             ->findAll();
 
+        // lista de profes pa asignarles aulas
+        $profesoresActivos = $this->usuarioModel
+            ->select('usuarios.id, usuarios.cedula, usuarios.primer_nombre, usuarios.apellidos, usuarios.nombre_usuario, usuarios.correo, COUNT(secciones.id) as total_secciones_asignadas')
+            ->join('secciones', 'secciones.profesor_id = usuarios.id', 'left')
+            ->where('usuarios.rol', 'profesor')
+            ->groupBy('usuarios.id')
+            ->orderBy('usuarios.primer_nombre', 'ASC')
+            ->findAll();
+
         // 3. Usuarios registrados (últimos 100)
         $usuarios = $this->usuarioModel
             ->select('id, cedula, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
@@ -105,8 +114,9 @@ class AdminController extends BaseController
                 'solicitudes_pendientes' => count($solicitudes),
                 'total_aportes'          => count($aportes),
             ],
-            'solicitudes'      => $solicitudes,
-            'usuarios'         => $usuarios,
+            'solicitudes'       => $solicitudes,
+            'profesoresActivos' => $profesoresActivos,
+            'usuarios'          => $usuarios,
             'aportes'          => $aportes,
             'auditoria'        => $auditoriaLogs,
             'horarioInfo'      => $horarioInfo,
@@ -459,7 +469,7 @@ class AdminController extends BaseController
      */
     public function banearUsuario(int $id)
     {
-        // 🛡️ Regla de seguridad: Un administrador no puede auto-banearse
+        // sistema de prevencion de auto-baneo antidayanas (un admin no puede sabotearse a si mismo)
         if ($id === $this->adminId) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
@@ -550,7 +560,7 @@ class AdminController extends BaseController
      */
     public function eliminarUsuario(int $id)
     {
-        // 🛡️ Regla de seguridad: El administrador no puede auto-eliminarse
+        // sistema de prevencion de auto-eliminacion antidayanas (evita dejar el sistema sin administradores)
         if ($id === $this->adminId) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
@@ -893,7 +903,7 @@ class AdminController extends BaseController
     // =========================================================================
 
     /**
-     * Historial inmutable de auditoría para trazabilidad de seguridad
+     // sistema de auditoria inmutable antidayanas para trazabilidad de eventos
      */
     public function historialAuditoria()
     {
@@ -1127,4 +1137,143 @@ class AdminController extends BaseController
 
         return redirect()->to(base_url('admin'))->with('mensaje', $mensaje);
     }
+
+    /**
+     // traerse las secciones que tiene el profe
+     */
+    public function obtenerSeccionesDocente(int $profesorId)
+    {
+        $db = \Config\Database::connect();
+        $profesor = $this->usuarioModel->find($profesorId);
+        if (!$profesor) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
+        }
+
+        $secciones = $db->table('secciones')
+            ->select('secciones.id, secciones.codigo_seccion, materias.nombre as materia, materias.codigo_materia, materias.carrera')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.profesor_id', $profesorId)
+            ->orderBy('materias.nombre', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'profesor'  => $profesor,
+            'secciones' => $secciones
+        ]);
+    }
+
+    /**
+     // buscar materias pa asignarselas
+     */
+    public function buscarSeccionesParaAsignar()
+    {
+        $q = trim((string)$this->request->getGet('q'));
+        $db = \Config\Database::connect();
+
+        $builder = $db->table('secciones')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.profesor_id, materias.nombre as materia, materias.codigo_materia, materias.carrera, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
+
+        if (!empty($q)) {
+            $builder->groupStart()
+                ->like('materias.nombre', $q)
+                ->orLike('materias.codigo_materia', $q)
+                ->orLike('secciones.codigo_seccion', $q)
+                ->orLike('materias.carrera', $q)
+                ->groupEnd();
+        }
+
+        $secciones = $builder->orderBy('materias.nombre', 'ASC')->limit(20)->get()->getResultArray();
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'secciones' => $secciones
+        ]);
+    }
+
+    /**
+     // amarrar seccion a un profe
+     */
+    public function asignarSeccionDocente()
+    {
+        $profesorId = (int) $this->request->getPost('profesor_id');
+        $seccionId  = (int) $this->request->getPost('seccion_id');
+
+        if ($profesorId <= 0 || $seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificadores inválidos.']);
+        }
+
+        $profesor = $this->usuarioModel->find($profesorId);
+        if (!$profesor) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
+        }
+
+        $db = \Config\Database::connect();
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
+        }
+
+        $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => $profesorId]);
+
+        $this->registrarAuditoria(
+            'asignar_seccion_docente',
+            'secciones',
+            $seccionId,
+            json_encode(['profesor_id' => $profesorId, 'profesor' => $profesor['nombre_usuario'], 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']])
+        );
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Sección {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}) asignada exitosamente a {$profesor['primer_nombre']} {$profesor['apellidos']}."
+        ]);
+    }
+
+    /**
+     // desvincular seccion del profe
+     */
+    public function desasignarSeccionDocente()
+    {
+        $seccionId = (int) $this->request->getPost('seccion_id');
+        if ($seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificador de sección inválido.']);
+        }
+
+        $db = \Config\Database::connect();
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
+        }
+
+        $profAnterior = $seccion['profesor_id'];
+        $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => null]);
+
+        $this->registrarAuditoria(
+            'desasignar_seccion_docente',
+            'secciones',
+            $seccionId,
+            json_encode(['profesor_anterior' => $profAnterior, 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']])
+        );
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Sección {$seccion['materia']} desvinculada del docente."
+        ]);
+    }
+
 }

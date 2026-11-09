@@ -1,0 +1,92 @@
+/* estilos de aulas y horario */
+
+.aulas-contenedor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+/* botoncitos de turnos mañana tarde noche */
+.turnos-filtro-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-filtro-turno {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-filtro-turno.activo,
+.btn-filtro-turno:hover {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #ffffff;
+}
+
+body.dark-mode .btn-filtro-turno {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.dark-mode .btn-filtro-turno.activo,
+body.dark-mode .btn-filtro-turno:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+/* scroll pa que no tape el boton de guardar */
+.modal-aulas-scroll {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 60px) !important;
+}
+
+/* aviso toast */
+#toast-aulas {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 100000;
+    min-width: 280px;
+    max-width: 400px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    animation: slideUpToast 0.3s ease;
+}
+
+@keyframes slideUpToast {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#toast-aulas.toast-exito {
+    background: #059669;
+    color: #ffffff;
+}
+
+#toast-aulas.toast-error {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+#toast-aulas.toast-info {
+    background: #2563eb;
+    color: #ffffff;
+}

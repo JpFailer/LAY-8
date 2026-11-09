@@ -1,0 +1,211 @@
+/* css del dashboard de administracion */
+
+.admin-dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.admin-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.badge-admin-pill {
+    background: #e0e7ff;
+    color: #1e3a8a;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.dark-mode .badge-admin-pill {
+    background: #1e293b;
+    color: #93c5fd;
+    border: 1px solid #334155;
+}
+
+/* cajitas de resumen arriba */
+.kpi-grid-admin {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+body.dark-mode .kpi-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-green { background: #ecfdf5; color: #059669; }
+.icon-amber { background: #fffbeb; color: #d97706; }
+.icon-purple { background: #f5f3ff; color: #7c3aed; }
+
+body.dark-mode .icon-blue { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
+body.dark-mode .icon-green { background: rgba(5, 150, 105, 0.2); color: #34d399; }
+body.dark-mode .icon-amber { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+body.dark-mode .icon-purple { background: rgba(124, 58, 237, 0.2); color: #a78bfa; }
+
+.kpi-valor {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: block;
+    line-height: 1.1;
+}
+
+body.dark-mode .kpi-valor {
+    color: #f8fafc;
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+body.dark-mode .kpi-label {
+    color: #94a3b8;
+}
+
+/* chips de las carreras */
+.carreras-horarios-summary-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+body.dark-mode .carreras-horarios-summary-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+.carreras-horarios-chip {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+body.dark-mode .carreras-horarios-chip {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+.carreras-chip-code {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+body.dark-mode .carreras-chip-code {
+    color: #f1f5f9 !important;
+}
+
+.carreras-chip-count {
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+body.dark-mode .carreras-chip-count {
+    color: #94a3b8 !important;
+}
+
+/* cards de subida de pdf */
+.carrera-horario-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+    background: #ffffff;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .carrera-horario-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* ventanas modales de ban y horarios */
+.modal-carreras-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+
+body.dark-mode .modal-carreras-overlay .modal-editar-perfil-content {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+body.dark-mode .modal-carreras-overlay .modal-editar-footer {
+    background: #0f172a !important;
+    border-top-color: #334155 !important;
+}
+
+.item-seccion-asignada {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+body.dark-mode .item-seccion-asignada {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}

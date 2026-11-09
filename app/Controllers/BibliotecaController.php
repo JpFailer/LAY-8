@@ -60,7 +60,8 @@ class BibliotecaController extends BaseController
         $reglas = [
             'aporte' => [
                 'label' => 'Archivo de Aporte',
-                'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt,pptx]',
+                // si el estudiante intenta hacer trampa subiendo un ejecutable .exe o .bat se friega
+            'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt,pptx]',
                 'errors' => [
                     'uploaded' => 'Debes seleccionar una guía, resumen o ejercicio para subir.',
                     'max_size' => 'El archivo supera el límite permitido de 5MB.',
@@ -86,9 +87,10 @@ class BibliotecaController extends BaseController
             $nombreOriginal = $archivo->getClientName();
             $extension      = $archivo->getClientExtension();
             $tamanoBytes    = $archivo->getSize();
+            // sistema de renombrado aleatorio antidayanas (evita sobreescritura y ejecucion de scripts php)
             $nuevoNombre    = $archivo->getRandomName();
 
-            // 1. Capturamos y sanitizamos la categoría del formulario
+            // sistema de lista blanca de categorias antidayanas (evita path traversal o inyeccion de rutas)
             $categoria = (string) $this->request->getPost('categoria');
             $carpetasPermitidas = ['guias', 'ejercicios', 'resumenes'];
             if (!in_array($categoria, $carpetasPermitidas, true)) {
@@ -152,6 +154,7 @@ class BibliotecaController extends BaseController
     /**
      * Descarga segura de archivos desde el almacenamiento protegido WRITEPATH
      */
+    // sistema de descarga segura fuera de la raiz web antidayanas (almacenamiento en WRITEPATH protegido)
     public function descargar(int $id)
     {
         $aporteModel = new AporteBibliotecaModel();
@@ -167,9 +170,10 @@ class BibliotecaController extends BaseController
             return redirect()->to(base_url('biblioteca'))->with('error', 'El archivo físico no se encuentra disponible en el servidor.');
         }
 
-        // Descarga segura de CodeIgniter 4 manteniendo el nombre original del archivo
+        // por si algun estudiante comico inventa meter comillas o saltos de linea en el archivo
+        $nombreLimpio = preg_replace('/[\r\n\t"]+/', '_', basename($aporte['nombre_original'] ?? 'documento.pdf'));
         return $this->response->download($rutaAbsoluta, null)
-                              ->setFileName($aporte['nombre_original']);
+                              ->setFileName($nombreLimpio);
     }
 
     /**
@@ -190,7 +194,7 @@ class BibliotecaController extends BaseController
             return $this->response->setStatusCode(404)->setBody('El archivo físico no se encuentra en el servidor');
         }
 
-        // Detección de tipo MIME segura y compatible con XAMPP (sin depender de fileinfo)
+        // sistema de deteccion real de mime antidayanas (no se fia del content-type del cliente)
         $mime = null;
         if (function_exists('mime_content_type')) {
             $mime = @mime_content_type($rutaAbsoluta);
@@ -200,9 +204,11 @@ class BibliotecaController extends BaseController
             $mime = \Config\Mimes::guessTypeFromExtension($ext) ?: 'application/pdf';
         }
 
+        // sanitizacion contra header injection por si el nombre del archivo trae cosas raras
+        $nombreLimpio = preg_replace('/[\r\n\t"]+/', '_', basename($aporte['nombre_original'] ?? 'documento.pdf'));
         return $this->response
             ->setHeader('Content-Type', $mime)
-            ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($aporte['nombre_original']) . '"')
+            ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($nombreLimpio) . '"')
             ->setBody(file_get_contents($rutaAbsoluta));
     }
 }

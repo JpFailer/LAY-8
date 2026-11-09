@@ -109,12 +109,16 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('/api/admin/horario/actualizar-carrera', 'AdminController::actualizarHorarioPdf');
         $routes->get('/api/admin/metricas', 'AdminController::metricas');
 
-        // Gestión de Profesores (Aprobación, Denegación y Revocación)
+        // Gestión de Profesores (Aprobación, Denegación, Revocación y Asignación de Secciones)
         $routes->get('/api/admin/solicitudes-profesores', 'AdminController::solicitudesProfesores');
         $routes->post('/api/admin/aprobar-profesor/(:num)', 'AdminController::aprobarProfesor/$1');
         $routes->post('/api/admin/denegar-profesor/(:num)', 'AdminController::denegarProfesor/$1');
         $routes->post('/api/admin/rechazar-profesor/(:num)', 'AdminController::denegarProfesor/$1'); // compatibilidad
         $routes->post('/api/admin/revocar-profesor/(:num)', 'AdminController::revocarProfesor/$1');
+        $routes->get('/api/admin/profesor-secciones/(:num)', 'AdminController::obtenerSeccionesDocente/$1');
+        $routes->get('/api/admin/buscar-secciones', 'AdminController::buscarSeccionesParaAsignar');
+        $routes->post('/api/admin/asignar-seccion', 'AdminController::asignarSeccionDocente');
+        $routes->post('/api/admin/desasignar-seccion', 'AdminController::desasignarSeccionDocente');
 
         // Gestión de Usuarios (Listar, Detalle, Banear, Desbanear, Eliminar y Roles)
         $routes->get('/api/admin/usuarios', 'AdminController::listarUsuarios');

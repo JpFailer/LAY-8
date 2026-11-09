@@ -13,392 +13,7 @@
     <link rel="stylesheet" href="<?= base_url('css/global.css') . '?v=' . time() ?>">
     <link rel="stylesheet" href="<?= base_url('css/landing.css') . '?v=' . time() ?>">
   
-    <style id="estilos-rumbo-lay8">
-/* ==========================================================================
-   SECCIÓN DE MISIÓN, VISIÓN Y VALORES (LAY-8) - ESTILOS Y ANIMACIONES
-   ========================================================================== */
-
-.seccion-rumbo-lay8 {
-  width: 100%;
-  padding: 90px 6% 110px;
-  background: linear-gradient(180deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%);
-  position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-/* Fondo con efecto sutil de resplandor */
-.seccion-rumbo-lay8::before {
-  content: '';
-  position: absolute;
-  top: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0) 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.rumbo-header {
-  text-align: center;
-  max-width: 840px;
-  margin: 0 auto 55px;
-  position: relative;
-  z-index: 1;
-}
-
-.insignia-pill-rumbo {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #ffffff;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
-  padding: 8px 20px;
-  border-radius: 9999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08);
-  margin-bottom: 18px;
-  cursor: default;
-  user-select: none;
-}
-
-.insignia-pill-rumbo i {
-  font-size: 1.15rem;
-  color: #2563eb;
-}
-
-.rumbo-titulo {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 2.6rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.25;
-  margin: 0 0 16px 0;
-}
-
-.rumbo-gradient-text {
-  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0284c7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  display: inline-block;
-}
-
-.divisor-decorativo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto 20px;
-  width: 90px;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, #2563eb, transparent);
-  border-radius: 4px;
-  position: relative;
-}
-
-.divisor-decorativo .punto-linea {
-  width: 10px;
-  height: 10px;
-  background: #1e3a8a;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
-}
-
-.rumbo-subtitulo {
-  font-family: 'Hind', sans-serif;
-  font-size: 1.05rem;
-  color: #475569;
-  line-height: 1.7;
-  margin: 0 auto;
-}
-
-/* Grilla de Tarjetas */
-.rumbo-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
-  gap: 32px;
-  max-width: 1280px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-
-/* Estilo Base de las Tarjetas */
-.card-filosofia {
-  background: #ffffff;
-  border-radius: 22px;
-  padding: 38px 32px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
-  border: 1px solid #e2e8f0;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-.card-filosofia:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 24px 38px -12px rgba(15, 23, 42, 0.12), 0 12px 16px -8px rgba(15, 23, 42, 0.06);
-}
-
-/* Barra superior de acento con gradiente */
-.card-glow-accent {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 5px;
-}
-
-.glow-blue {
-  background: linear-gradient(90deg, #1d4ed8, #60a5fa);
-}
-
-.glow-purple {
-  background: linear-gradient(90deg, #7c3aed, #c084fc);
-}
-
-.glow-green {
-  background: linear-gradient(90deg, #059669, #34d399);
-}
-
-.card-mision-animada:hover {
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-.card-vision-animada:hover {
-  border-color: rgba(124, 58, 237, 0.35);
-}
-
-.card-valores-animada:hover {
-  border-color: rgba(5, 150, 105, 0.35);
-}
-
-/* Cabecera interna de cada tarjeta */
-.card-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-/* Íconos Flotantes */
-.icono-flotante {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.95rem;
-  transition: transform 0.3s ease;
-}
-
-.icono-box-mision {
-  background: #eff6ff;
-  color: #2563eb;
-  box-shadow: 0 8px 18px -4px rgba(37, 99, 235, 0.25);
-}
-
-.icono-box-vision {
-  background: #faf5ff;
-  color: #7c3aed;
-  box-shadow: 0 8px 18px -4px rgba(124, 58, 237, 0.25);
-}
-
-.icono-box-valores {
-  background: #ecfdf5;
-  color: #059669;
-  box-shadow: 0 8px 18px -4px rgba(5, 150, 105, 0.25);
-}
-
-.card-filosofia:hover .icono-flotante {
-  transform: scale(1.08) rotate(3deg);
-}
-
-/* Tags/Badges */
-.badge-card-tipo {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.73rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  cursor: default;
-  user-select: none;
-}
-
-.tag-blue {
-  background: #e0e7ff;
-  color: #3730a3;
-  border: 1px solid #c7d2fe;
-}
-
-.tag-purple {
-  background: #f3e8ff;
-  color: #6b21a8;
-  border: 1px solid #e9d5ff;
-}
-
-.tag-green {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-}
-
-/* Títulos y textos */
-.card-filosofia-titulo {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1.55rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 14px 0;
-}
-
-.card-filosofia-desc {
-  font-family: 'Hind', sans-serif;
-  font-size: 0.98rem;
-  color: #475569;
-  line-height: 1.72;
-  margin: 0 0 26px 0;
-  flex-grow: 1;
-}
-
-/* Chips de aspectos destacados */
-.card-highlights {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 15px;
-  border-top: 1px dashed #e2e8f0;
-}
-
-.highlight-chip {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 6px 13px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #334155;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.25s ease;
-}
-
-.highlight-chip i {
-  font-size: 1rem;
-  color: #1e40af;
-}
-
-.highlight-chip:hover {
-  background: #ffffff;
-  border-color: #94a3b8;
-  color: #0f172a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-}
-
-/* Lista interactiva de Valores */
-.lista-valores-moderna {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex-grow: 1;
-}
-
-.lista-valores-moderna li {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  background: #f8fafc;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 1px solid #f1f5f9;
-  transition: all 0.25s ease;
-}
-
-.lista-valores-moderna li:hover {
-  background: #ffffff;
-  border-color: #a7f3d0;
-  transform: translateX(5px);
-  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.08);
-}
-
-.valor-icon-wrapper {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #ecfdf5;
-  color: #059669;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.18rem;
-  flex-shrink: 0;
-  margin-top: 2px;
-  transition: transform 0.25s ease;
-}
-
-.lista-valores-moderna li:hover .valor-icon-wrapper {
-  transform: scale(1.12);
-  background: #059669;
-  color: #ffffff;
-}
-
-.valor-text-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.valor-text-wrapper strong {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.valor-text-wrapper span {
-  font-family: 'Hind', sans-serif;
-  font-size: 0.82rem;
-  color: #64748b;
-  line-height: 1.45;
-}
-
-/* Responsive */
-@media (max-width: 992px) {
-  .rumbo-cards-grid {
-    grid-template-columns: 1fr;
-    max-width: 600px;
-  }
-}
-
-@media (max-width: 768px) {
-  .seccion-rumbo-lay8 {
-    padding: 60px 5% 80px;
-  }
-  .rumbo-titulo {
-    font-size: 2rem;
-  }
-  .card-filosofia {
-    padding: 30px 22px;
-  }
-}
-</style>
+    
   </head>
 
   <body>
@@ -670,7 +285,7 @@
     <!-- Modal Recuperación de Contraseña Interactivo (Con Scroll Adaptativo y Diseño Compacto) -->
     <div id="modal-recuperacion-pass" class="modal-overlay oculto" onclick="if(event.target === this) cerrarModalRecuperacion()" style="padding: 15px; box-sizing: border-box;">
       <div class="card-recuperar-adaptativa" style="background: #ffffff; width: 100%; max-width: 530px; max-height: calc(100vh - 30px); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); position: relative; display: flex; flex-direction: column; overflow: hidden; animation: modalScaleUp 0.25s ease-out;">
-        <button type="button" class="btn-close" onclick="cerrarModalRecuperacion()" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.8rem; cursor: pointer; color: #64748b; z-index: 10;">&times;</button>
+        <button type="button" class="btn-close btn-cerrar-recup" onclick="cerrarModalRecuperacion()" title="Cerrar ventana" aria-label="Cerrar">&times;</button>
         
         <div style="padding: 24px 28px; overflow-y: auto; max-height: calc(100vh - 30px); box-sizing: border-box;">
           
@@ -696,44 +311,50 @@
             <button type="button" id="btn-verificar-recup" onclick="ejecutarVerificarCuenta()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600;">Verificar Cuenta</button>
           </div>
 
-          <!-- PASO 2: Verificación de Cuenta y Restablecimiento Directo -->
-          <div id="recup-paso-2" style="display: none;">
-            <div style="text-align: center; margin-bottom: 16px;">
-              <div style="width: 48px; height: 48px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 8px auto;">
-                <i class="bx bx-envelope"></i>
+          <!-- PASO 2: Confirmación de Envío de Enlace Seguro -->
+          <div id="recup-paso-2" style="display: none; text-align: center;">
+            <div style="width: 56px; height: 56px; background: #ecfdf5; color: #059669; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.9rem; margin: 0 auto 10px auto;">
+              <i class="bx bx-mail-send"></i>
+            </div>
+            <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.3rem; color: #0f172a; margin: 0 0 6px 0; font-weight: 700;">¡Enlace de Recuperación Enviado!</h3>
+            <p style="font-size: 0.88rem; color: #64748b; margin: 0 0 16px 0; line-height: 1.5;">
+              Hemos enviado un enlace seguro al correo registrado de la cuenta <strong id="recup-usuario-nombre" style="color: #0f172a;"></strong>:
+            </p>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; text-align: left;">
+              <div style="display: flex; align-items: center; gap: 10px; color: #0f172a; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px;">
+                <i class="bx bx-envelope" style="color: #2563eb; font-size: 1.3rem;"></i>
+                <span id="recup-correo-destino"></span>
               </div>
-              <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.25rem; color: #0f172a; margin: 0 0 4px 0; font-weight: 700;" id="recup-usuario-info">Cuenta Verificada</h3>
-              <p style="font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.4;" id="recup-msg-envio">
-                Hemos enviado un enlace de recuperación a tu correo electrónico registrado.
+              <p style="font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.4; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+                <i class="bx bx-shield-quarter" style="color: #059669;"></i> Por seguridad, solo quien tenga acceso a este correo puede cambiar la clave. El enlace caduca en <strong>2 horas</strong>.
               </p>
             </div>
 
-            <div id="recup-alerta-error-2" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px;"></div>
-
-            <input type="hidden" id="recup_usuario_id">
-            <input type="hidden" id="recup_token">
-
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px;">
-              <span style="display: block; font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 10px;">
-                <i class="bx bx-lock-open-alt"></i> O define tu nueva contraseña aquí directamente:
-              </span>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <!-- Botón de testing sólo si estamos en localhost/desarrollo -->
+            <div id="recup-dev-card" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 12px; margin-bottom: 16px; text-align: left; font-size: 0.82rem; color: #92400e;">
+              <div style="display: flex; align-items: flex-start; gap: 8px;">
+                <i class="bx bx-info-circle" style="font-size: 1.2rem; color: #d97706; flex-shrink: 0; margin-top: 1px;"></i>
                 <div>
-                  <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Nueva Contraseña *</label>
-                  <input type="password" id="recup_nueva_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Mín. 8 caracteres">
-                </div>
-
-                <div>
-                  <label style="font-size: 0.83rem; font-weight: 600; color: #334155; display: block; margin-bottom: 4px;">Confirmar Contraseña *</label>
-                  <input type="password" id="recup_repetir_clave" class="input-login" style="width: 100%; box-sizing: border-box; padding: 10px 12px;" placeholder="Repite la contraseña">
+                  <strong>Modo de pruebas local:</strong> Como tu servidor local no cuenta con servidor SMTP de correo configurado, puedes acceder a la página de restablecimiento directamente desde aquí:
+                  <div style="margin-top: 8px;">
+                    <a id="recup-dev-link" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; background: #2563eb; color: #ffffff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.8rem;">
+                      <i class="bx bx-link-external"></i> Abrir Enlace de Recuperación
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <button type="button" id="btn-guardar-clave" onclick="ejecutarGuardarClave()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-              <i class="bx bx-save"></i> Guardar Nueva Contraseña
+            <button type="button" onclick="cerrarModalRecuperacion()" class="btn-ingresar" style="width: 100%; margin-top: 0; padding: 12px; border-radius: 10px; font-weight: 600;">
+              Entendido
             </button>
+
+            <div style="margin-top: 14px;">
+              <a href="javascript:void(0)" onclick="volverAPaso1Recup()" style="font-size: 0.83rem; color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                <i class="bx bx-arrow-back"></i> Verificar otra cuenta
+              </a>
+            </div>
           </div>
 
           <!-- PASO 3: Éxito -->
@@ -796,162 +417,10 @@
       <img src="<?= base_url('img/lay8_logo.png') ?>" alt="LAY-8 Marca de Agua" class="decoracion-logo">
     </footer>
 
+    <script>window.BASE_URL = '<?= base_url() ?>';</script>
     <script src="<?= base_url('js/landing.js?v=' . time()) ?>"></script>
 
-    <!-- Script de Recuperación de Contraseña Garantizado -->
-    <script>
-      function abrirModalRecuperacion() {
-        const modalLogin = document.getElementById('modal-login-overlay');
-        const modalRecup = document.getElementById('modal-recuperacion-pass');
-        if (modalLogin) modalLogin.classList.add('oculto');
-        if (modalRecup) {
-          modalRecup.classList.remove('oculto');
-          document.body.style.overflow = 'hidden';
-          // Resetear al paso 1
-          document.getElementById('recup-paso-1').style.display = 'block';
-          document.getElementById('recup-paso-2').style.display = 'none';
-          document.getElementById('recup-paso-3').style.display = 'none';
-          const errBox = document.getElementById('recup-alerta-error');
-          if (errBox) errBox.style.display = 'none';
-        }
-      }
-
-      function cerrarModalRecuperacion() {
-        const modalRecup = document.getElementById('modal-recuperacion-pass');
-        if (modalRecup) {
-          modalRecup.classList.add('oculto');
-          document.body.style.overflow = '';
-        }
-      }
-
-      function ejecutarVerificarCuenta() {
-        const iden = document.getElementById('recup_identificador').value.trim();
-        const errBox = document.getElementById('recup-alerta-error');
-        const btn = document.getElementById('btn-verificar-recup');
-
-        if (!iden) {
-          errBox.textContent = 'Por favor ingresa tu usuario o correo.';
-          errBox.style.display = 'block';
-          return;
-        }
-
-        errBox.style.display = 'none';
-        btn.textContent = 'Verificando...';
-        btn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('identificador', iden);
-
-        fetch('<?= base_url('login/verificar-recuperacion') ?>', {
-          method: 'POST',
-          body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-          btn.textContent = 'Verificar Cuenta';
-          btn.disabled = false;
-          if (data.exito) {
-            document.getElementById('recup_usuario_id').value = data.usuario_id;
-            if (data.token) document.getElementById('recup_token').value = data.token;
-            document.getElementById('recup-usuario-info').innerHTML = '<i class="bx bxs-user-check"></i> ' + data.nombre;
-            if (document.getElementById('recup-msg-envio')) {
-              document.getElementById('recup-msg-envio').innerHTML = 'Enviamos un enlace seguro a <strong>' + data.correo_ofuscado + '</strong> para restablecer tu acceso.';
-            }
-            document.getElementById('recup-paso-1').style.display = 'none';
-            document.getElementById('recup-paso-2').style.display = 'block';
-          } else {
-            errBox.textContent = data.mensaje || 'Cuenta no encontrada.';
-            errBox.style.display = 'block';
-          }
-        })
-        .catch(err => {
-          btn.textContent = 'Verificar Cuenta';
-          btn.disabled = false;
-          errBox.textContent = 'Error al verificar la cuenta. Intenta de nuevo.';
-          errBox.style.display = 'block';
-        });
-      }
-
-      function actualizarFeedbackPdfRecup(input) {
-        const feedback = document.getElementById('recup-pdf-feedback');
-        const nombreSpan = document.getElementById('recup-pdf-nombre');
-        const tamanoSpan = document.getElementById('recup-pdf-tamano');
-        if (input.files && input.files[0]) {
-          const file = input.files[0];
-          if (nombreSpan) nombreSpan.textContent = file.name;
-          if (tamanoSpan) {
-            const kb = (file.size / 1024).toFixed(1);
-            tamanoSpan.textContent = (kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB');
-          }
-          if (feedback) feedback.style.display = 'flex';
-        }
-      }
-
-      function ejecutarGuardarClave() {
-        const uid = document.getElementById('recup_usuario_id').value;
-        const token = document.getElementById('recup_token') ? document.getElementById('recup_token').value : '';
-        const clave = document.getElementById('recup_nueva_clave').value;
-        const rep = document.getElementById('recup_repetir_clave').value;
-        const errBox = document.getElementById('recup-alerta-error-2');
-        const btn = document.getElementById('btn-guardar-clave');
-
-        if (!clave || clave.length < 8) {
-          errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
-          errBox.style.display = 'block';
-          return;
-        }
-
-        if (clave !== rep) {
-          errBox.textContent = 'Las contraseñas no coinciden.';
-          errBox.style.display = 'block';
-          return;
-        }
-
-        errBox.style.display = 'none';
-        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
-        btn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('usuario_id', uid);
-        if (token) formData.append('token', token);
-        formData.append('nueva_contrasena', clave);
-        formData.append('repetir_contrasena', rep);
-
-        fetch('<?= base_url('login/restablecer-contrasena') ?>', {
-          method: 'POST',
-          body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-          btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-          btn.disabled = false;
-          if (data.exito) {
-            const exitoMsg = document.getElementById('recup-mensaje-exito');
-            if (exitoMsg) exitoMsg.textContent = data.mensaje;
-            document.getElementById('recup-paso-2').style.display = 'none';
-            document.getElementById('recup-paso-3').style.display = 'block';
-          } else {
-            errBox.textContent = data.mensaje || 'Error al actualizar contraseña.';
-            errBox.style.display = 'block';
-          }
-        })
-        .catch(err => {
-          btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-          btn.disabled = false;
-          errBox.textContent = 'Ocurrió un error en el servidor al actualizar la contraseña.';
-          errBox.style.display = 'block';
-        });
-      }
-
-      function volverALoginDesdeRecuperacion() {
-        cerrarModalRecuperacion();
-        const modalLogin = document.getElementById('modal-login-overlay');
-        if (modalLogin) {
-          modalLogin.classList.remove('oculto');
-          document.body.style.overflow = 'hidden';
-        }
-      }
-    </script>
+    
 
   </body>
 </html>

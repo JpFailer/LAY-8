@@ -36,6 +36,26 @@ class ActividadClaseModel extends Model
     public function obtenerParaEstudiante(int $estudianteId): array
     {
         $db = \Config\Database::connect();
+        $rol = session('rol') ?? 'estudiante';
+
+        // los admins ven todas las tareas pa supervisar
+        if (in_array($rol, ['administrador', 'admin'], true)) {
+            return $this->select('actividades_clase.*, materias.nombre as materia_nombre, materias.codigo_materia, secciones.codigo_seccion, 0 as completada, NULL as fecha_completada, NULL as entrega_id, NULL as entrega_archivo, NULL as calificacion, NULL as feedback_profesor, NULL as fecha_entrega_alumno')
+                ->join('secciones', 'secciones.id = actividades_clase.seccion_id')
+                ->join('materias', 'materias.id = secciones.materia_id')
+                ->orderBy('actividades_clase.fecha_entrega', 'ASC')
+                ->findAll();
+        }
+
+        // el profe ve las tareas de sus secciones
+        if ($rol === 'profesor') {
+            return $this->select('actividades_clase.*, materias.nombre as materia_nombre, materias.codigo_materia, secciones.codigo_seccion, 0 as completada, NULL as fecha_completada, NULL as entrega_id, NULL as entrega_archivo, NULL as calificacion, NULL as feedback_profesor, NULL as fecha_entrega_alumno')
+                ->join('secciones', 'secciones.id = actividades_clase.seccion_id')
+                ->join('materias', 'materias.id = secciones.materia_id')
+                ->where('secciones.profesor_id', $estudianteId)
+                ->orderBy('actividades_clase.fecha_entrega', 'ASC')
+                ->findAll();
+        }
 
         // 1. Obtener los IDs de las secciones donde está inscrito el alumno
         $seccionesInscritas = $db->table('inscripciones')

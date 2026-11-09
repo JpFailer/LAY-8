@@ -11,7 +11,7 @@ class AuthFilter implements FilterInterface
     {
         $session = session();
 
-        // 1. Verificación estricta de sesión en el servidor
+        // sistema de guardia de sesion antidayanas (expulsa peticiones no autenticadas)
         if (!$session->get('isLoggedIn') || !$session->get('usuario_id')) {
             // Si es una petición API/Fetch, retornamos JSON 401 en vez de redirigir
             if ($request->isAJAX() || str_starts_with($request->getUri()->getPath(), 'api/')) {

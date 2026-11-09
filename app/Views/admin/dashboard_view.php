@@ -1,5 +1,9 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= base_url('css/admin.css?v=' . time()) ?>">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="admin-dashboard-container">
 
@@ -88,9 +92,7 @@
     </button>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- TAB 1: PROFESORES PENDIENTES DE VALIDACIÓN -->
-  <!-- ========================================================================= -->
+  <!-- tab 1: profes por aprobar -->
   <div id="tab-profesores" class="admin-tab-pane activa">
     <div class="admin-section-box">
       <div class="section-box-header">
@@ -159,11 +161,67 @@
         </div>
       <?php endif; ?>
     </div>
+
+    <!-- SECCIÓN: DOCENTES ACTIVOS Y ASIGNACIÓN DE SECCIONES -->
+    <div class="admin-section-box" style="margin-top: 30px;">
+      <div class="section-box-header">
+        <div>
+          <h3><i class="bx bx-chalkboard"></i> Docentes Activos y Asignación de Secciones (Aulas)</h3>
+          <p>Asigna las materias y secciones oficiales a cada profesor para que puedan gestionar sus aulas, estados y tareas.</p>
+        </div>
+      </div>
+
+      <?php if (empty($profesoresActivos)): ?>
+        <div class="admin-empty-state">
+          <i class="bx bx-user-x" style="font-size: 2.8rem; color: #94a3b8;"></i>
+          <h4>No hay profesores aprobados aún</h4>
+          <p>Aprueba las solicitudes docentes pendientes arriba para habilitar su asignación de materias.</p>
+        </div>
+      <?php else: ?>
+        <div class="tabla-responsive-container">
+          <table class="tabla-admin">
+            <thead>
+              <tr>
+                <th>Docente</th>
+                <th>Cédula</th>
+                <th>Usuario / Correo</th>
+                <th>Secciones Asignadas</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($profesoresActivos as $prof): ?>
+                <tr>
+                  <td>
+                    <strong><?= esc($prof['primer_nombre'] . ' ' . $prof['apellidos']) ?></strong>
+                  </td>
+                  <td>
+                    <code style="background: #eff6ff; color: #1e40af; padding: 3px 7px; border-radius: 5px; font-weight: 600; font-size: 0.85rem;"><?= esc($prof['cedula'] ?? 'N/D') ?></code>
+                  </td>
+                  <td>
+                    <div style="font-weight: 600;">@<?= esc($prof['nombre_usuario']) ?></div>
+                    <div style="font-size: 0.82rem; color: #64748b;"><?= esc($prof['correo']) ?></div>
+                  </td>
+                  <td>
+                    <span class="badge-accion-tag" style="background: #eff6ff; color: #2563eb; font-weight: 700;">
+                      <i class="bx bx-door-open"></i> <?= (int)$prof['total_secciones_asignadas'] ?> secciones
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <button type="button" class="btn-accion-admin btn-aprobar" onclick="abrirModalAsignarSecciones(<?= (int)$prof['id'] ?>, '<?= esc($prof['primer_nombre'] . ' ' . $prof['apellidos'], 'js') ?>')">
+                      <i class="bx bx-link-alt"></i> Asignar Secciones
+                    </button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+    </div>
   </div>
 
-  <!-- ========================================================================= -->
   <!-- TAB 2: GESTIÓN DE USUARIOS Y BANEO -->
-  <!-- ========================================================================= -->
   <div id="tab-usuarios" class="admin-tab-pane">
     <div class="admin-section-box">
       <div class="section-box-header">
@@ -247,9 +305,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
   <!-- TAB 3: BIBLIOTECA Y PUBLICACIONES -->
-  <!-- ========================================================================= -->
   <div id="tab-biblioteca" class="admin-tab-pane">
     <div class="admin-section-box">
       <div class="section-box-header">
@@ -315,9 +371,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
   <!-- TAB 4: HORARIO OFICIAL Y MAPA -->
-  <!-- ========================================================================= -->
   <div id="tab-horario" class="admin-tab-pane">
     <div class="admin-section-box">
       <div class="section-box-header">
@@ -346,19 +400,19 @@
             Sincroniza y procesa los documentos PDF oficiales (Formulario CGD-001) para cada carrera de la UMC. Cada carrera cuenta con su programación académica del 1er al último semestre.
           </p>
 
-          <div class="carreras-horarios-summary-box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
-            <div style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <div class="carreras-horarios-summary-box">
+            <div class="carreras-horarios-header">
               <span>Programación en el Mapa</span>
               <span class="badge-counter-active"><?= esc($horarioInfo['total_clases']) ?> clases activas</span>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+            <div class="carreras-horarios-grid">
               <?php if (!empty($carrerasHorarios)): ?>
                 <?php foreach ($carrerasHorarios as $cCode => $cInfo): ?>
-                  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; display: flex; align-items: center; gap: 8px;">
+                  <div class="carreras-horarios-chip">
                     <i class="bx <?= esc($cInfo['icono']) ?>" style="color: <?= $cInfo['color'] ?>; font-size: 1.3rem;"></i>
                     <div>
-                      <div style="font-size: 0.76rem; font-weight: 700; color: #1e293b;"><?= esc($cCode) ?></div>
-                      <div style="font-size: 0.72rem; color: #64748b;"><?= $cInfo['total_clases'] ?> clases</div>
+                      <div class="carreras-chip-code"><?= esc($cCode) ?></div>
+                      <div class="carreras-chip-count"><?= $cInfo['total_clases'] ?> clases</div>
                     </div>
                   </div>
                 <?php endforeach; ?>
@@ -374,9 +428,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
   <!-- TAB 5: AUDITORÍA DE SEGURIDAD -->
-  <!-- ========================================================================= -->
   <div id="tab-auditoria" class="admin-tab-pane">
     <div class="admin-section-box">
       <div class="section-box-header">
@@ -419,10 +471,7 @@
 
 </div>
 
-<!-- ========================================================================= -->
 <!-- MODALES INTERACTIVOS PARA ACCIONES ADMINISTRATIVAS -->
-<!-- ========================================================================= -->
-
 <!-- Modal: Denegar Profesor con Motivo -->
 <div id="modal-denegar-profesor" class="modal-carreras-overlay" style="display: none;">
   <div class="modal-editar-perfil-content" style="max-width: 480px;">
@@ -480,343 +529,46 @@
   </div>
 </div>
 
-<script>
-// =========================================================================
-// INTERACTIVIDAD DEL PANEL DE ADMINISTRACIÓN
-// =========================================================================
 
-function mostrarTabAdmin(tabId) {
-    document.querySelectorAll('.admin-tab-pane').forEach(pane => pane.classList.remove('activa'));
-    document.querySelectorAll('.tab-btn-admin').forEach(btn => btn.classList.remove('activa'));
 
-    const paneActiva = document.getElementById('tab-' + tabId);
-    const btnActivo  = document.getElementById('tabbtn-' + tabId);
+<!-- modal asignar materias a profe -->
+<div id="modal-asignar-secciones-docente" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 100000;" onclick="if(event.target === this) cerrarModalAsignarSecciones()">
+  <div class="modal-editar-perfil-content" style="max-width: 650px; width: 100%; border-radius: 18px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);">
+    <div class="modal-editar-header" style="padding: 16px 20px; background: #1e3a8a; color: white; display: flex; align-items: center; justify-content: space-between;">
+      <h3 style="margin: 0; font-size: 1.15rem; color: white; display: flex; align-items: center; gap: 8px;">
+        <i class="bx bx-chalkboard"></i> Asignación de Secciones (Aulas)
+      </h3>
+      <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalAsignarSecciones()" style="color: white; font-size: 1.5rem; background: none; border: none; cursor: pointer;">&times;</button>
+    </div>
 
-    if (paneActiva) paneActiva.classList.add('activa');
-    if (btnActivo) btnActivo.classList.add('activa');
-}
+    <div style="padding: 14px 20px; font-size: 0.9rem;" class="modal-docentes-info-banner">
+      Docente Seleccionado: <strong id="docente-asignar-nombre" style="color: #0f172a;"></strong>
+    </div>
 
-function filtrarTablaUsuarios() {
-    const busqueda = document.getElementById('filtro-usuarios-input').value.toLowerCase().trim();
-    const filas = document.querySelectorAll('#tabla-usuarios-admin .fila-usuario-item');
-    filas.forEach(fila => {
-        const texto = fila.getAttribute('data-texto') || '';
-        fila.style.display = (texto.indexOf(busqueda) !== -1) ? '' : 'none';
-    });
-}
+    <div style="padding: 18px 20px; overflow-y: auto; max-height: 55vh; box-sizing: border-box;">
+      <h4 style="margin: 0 0 10px 0; font-size: 0.92rem;">Secciones actualmente asignadas a este docente:</h4>
+      <div id="lista-secciones-asignadas" style="margin-bottom: 20px;">
+        <div style="text-align: center; padding: 15px; color: #64748b;"><i class="bx bx-loader-alt bx-spin"></i> Cargando...</div>
+      </div>
 
-function actualizarNombreHorario(input) {
-    const contenedor = document.getElementById('nombre-archivo-horario');
-    if (input.files && input.files[0]) {
-        contenedor.innerHTML = '<i class="bx bxs-file-pdf" style="color:#ef4444;"></i> ' + input.files[0].name;
-    } else {
-        contenedor.innerHTML = '';
-    }
-}
+      <h4 style="margin: 0 0 8px 0; font-size: 0.92rem;">Buscar y Vincular Nueva Sección / Asignatura:</h4>
+      <div style="position: relative; margin-bottom: 12px;">
+        <i class="bx bx-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.15rem;"></i>
+        <input type="text" id="input-buscar-seccion" class="input-global" placeholder="Escribe el nombre de la materia o código (ej: Lógica, Cálculo, LOG-101)..." oninput="buscarSeccionesDisponibles(this.value)" style="padding-left: 36px; width: 100%; box-sizing: border-box;">
+      </div>
 
-// -------------------------------------------------------------------------
-// Acciones con Fetch API: Aprobar / Denegar Profesor
-// -------------------------------------------------------------------------
-let docenteSeleccionadoId = null;
+      <div id="lista-secciones-busqueda" style="max-height: 200px; overflow-y: auto;">
+        <p style="font-size: 0.82rem; color: #94a3b8; margin: 0;">Escribe arriba para buscar entre las secciones oficiales del campus.</p>
+      </div>
+    </div>
 
-function aprobarProfesor(id, username) {
-    if (!confirm('¿Confirmas aprobar al usuario @' + username + ' como Profesor oficial de la UMC?')) return;
+    <div class="modal-editar-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn-cancelar-modal" onclick="cerrarModalAsignarSecciones()">Cerrar</button>
+    </div>
+  </div>
+</div>
 
-    fetch('<?= base_url('api/admin/aprobar-profesor') ?>/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo aprobar.'));
-        }
-    })
-    .catch(() => alert('Error al procesar la solicitud.'));
-}
-
-function abrirModalDenegarProfesor(id, username) {
-    docenteSeleccionadoId = id;
-    document.getElementById('denegar-docente-nombre').innerText = 'Docente: @' + username;
-    document.getElementById('motivo-denegar-input').value = '';
-    document.getElementById('modal-denegar-profesor').style.display = 'flex';
-}
-
-function cerrarModalDenegar() {
-    document.getElementById('modal-denegar-profesor').style.display = 'none';
-}
-
-function confirmarDenegarProfesor() {
-    const motivo = document.getElementById('motivo-denegar-input').value.trim();
-    if (!motivo) {
-        alert('Por favor ingresa un motivo para el rechazo.');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('motivo', motivo);
-
-    fetch('<?= base_url('api/admin/denegar-profesor') ?>/' + docenteSeleccionadoId, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo rechazar.'));
-        }
-    })
-    .catch(() => alert('Error de conexión.'));
-}
-
-// -------------------------------------------------------------------------
-// Acciones: Banear / Desbanear / Eliminar Usuario
-// -------------------------------------------------------------------------
-let usuarioSeleccionadoId = null;
-
-function abrirModalBanear(id, username) {
-    usuarioSeleccionadoId = id;
-    document.getElementById('banear-usuario-nombre').innerText = 'Suspender cuenta de: @' + username;
-    document.getElementById('motivo-banear-input').value = '';
-    document.getElementById('modal-banear-usuario').style.display = 'flex';
-}
-
-function cerrarModalBanear() {
-    document.getElementById('modal-banear-usuario').style.display = 'none';
-}
-
-function confirmarBanearUsuario() {
-    const motivo = document.getElementById('motivo-banear-input').value.trim();
-    if (!motivo) {
-        alert('Por favor ingresa un motivo para el baneo.');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('motivo', motivo);
-
-    fetch('<?= base_url('api/admin/usuarios/banear') ?>/' + usuarioSeleccionadoId, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo banear.'));
-        }
-    })
-    .catch(() => alert('Error de red.'));
-}
-
-function desbanearUsuario(id, username) {
-    if (!confirm('¿Reactivar la cuenta de @' + username + '?')) return;
-
-    fetch('<?= base_url('api/admin/usuarios/desbanear') ?>/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo desbanear.'));
-        }
-    })
-    .catch(() => alert('Error al procesar la solicitud.'));
-}
-
-function eliminarUsuario(id, username) {
-    if (!confirm('⚠️ ¿Estás seguro de eliminar PERMANENTEMENTE a @' + username + '? Esta acción no se puede deshacer.')) return;
-
-    fetch('<?= base_url('api/admin/usuarios/eliminar') ?>/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo eliminar el usuario.'));
-        }
-    })
-    .catch(() => alert('Error de conexión.'));
-}
-
-// -------------------------------------------------------------------------
-// Acciones: Eliminar Aporte de Biblioteca
-// -------------------------------------------------------------------------
-let aporteSeleccionadoId = null;
-
-function abrirModalEliminarAporte(id, titulo) {
-    aporteSeleccionadoId = id;
-    document.getElementById('eliminar-aporte-titulo').innerText = 'Aporte: ' + titulo;
-    document.getElementById('motivo-eliminar-aporte-input').value = '';
-    document.getElementById('modal-eliminar-aporte').style.display = 'flex';
-}
-
-function cerrarModalEliminarAporte() {
-    document.getElementById('modal-eliminar-aporte').style.display = 'none';
-}
-
-function confirmarEliminarAporte() {
-    const motivo = document.getElementById('motivo-eliminar-aporte-input').value.trim();
-    const formData = new FormData();
-    if (motivo) formData.append('motivo', motivo);
-
-    fetch('<?= base_url('api/admin/biblioteca/eliminar') ?>/' + aporteSeleccionadoId, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo eliminar el recurso.'));
-        }
-    })
-    .catch(() => alert('Error de red.'));
-}
-
-// -------------------------------------------------------------------------
-// Acciones: Modal de Actualización de Horarios de Carreras
-// -------------------------------------------------------------------------
-function abrirModalHorariosCarreras() {
-    const modal = document.getElementById('modal-actualizar-horarios-carreras');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-}
-
-function cerrarModalHorariosCarreras() {
-    const modal = document.getElementById('modal-actualizar-horarios-carreras');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-function onArchivoCarreraSeleccionado(codCarrera, input) {
-    const file = input.files && input.files[0];
-    const btnSubir = document.getElementById('btn-subir-' + codCarrera);
-    const labelFile = document.getElementById('label-file-' + codCarrera);
-    if (file) {
-        labelFile.innerText = file.name.length > 20 ? (file.name.substring(0, 18) + '...') : file.name;
-        if (btnSubir) {
-            btnSubir.disabled = false;
-            btnSubir.style.opacity = '1';
-        }
-    } else {
-        labelFile.innerText = 'Seleccionar PDF';
-        if (btnSubir) {
-            btnSubir.disabled = true;
-            btnSubir.style.opacity = '0.6';
-        }
-    }
-}
-
-async function subirHorarioCarrera(codCarrera) {
-    const input = document.getElementById('file-horario-' + codCarrera);
-    const btnSubir = document.getElementById('btn-subir-' + codCarrera);
-    const banner = document.getElementById('banner-feedback-horarios');
-
-    if (!input || !input.files || !input.files[0]) {
-        alert('Por favor selecciona un archivo PDF de horario primero.');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('horario_pdf', input.files[0]);
-    formData.append('carrera', codCarrera);
-
-    const csrfInput = document.querySelector('input[name="csrf_token_name"]') || document.querySelector('input[name="<?= csrf_token() ?>"]');
-    if (csrfInput) {
-        formData.append(csrfInput.name, csrfInput.value);
-    }
-
-    btnSubir.disabled = true;
-    btnSubir.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Procesando...';
-
-    if (banner) {
-        banner.style.display = 'block';
-        banner.style.background = '#eff6ff';
-        banner.style.color = '#1e40af';
-        banner.style.border = '1px solid #bfdbfe';
-        banner.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Leyendo semestres, horas exactas de inicio/fin, secciones y aulas de <strong>' + codCarrera + '</strong>... Esto puede tomar entre 15 y 45 segundos según la cantidad de páginas del PDF.';
-    }
-
-    try {
-        const res = await fetch('<?= base_url('api/admin/horario/actualizar') ?>', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        });
-
-        const data = await res.json();
-        if (data.success) {
-            if (banner) {
-                banner.style.background = '#ecfdf5';
-                banner.style.color = '#065f46';
-                banner.style.border = '1px solid #a7f3d0';
-                banner.innerHTML = '<i class="bx bx-check-circle"></i> ¡Éxito! Se sincronizaron <strong>' + data.clases_cargadas + '</strong> bloques de clases para <strong>' + codCarrera + '</strong> con horas exactas en el mapa.';
-            }
-
-            const card = document.getElementById('card-horario-' + codCarrera);
-            if (card) {
-                const metaStatus = card.querySelector('.carrera-meta-status');
-                if (metaStatus) {
-                    metaStatus.innerHTML = '<span class="badge-status-ok" style="color: #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="bx bxs-check-circle"></i> <span id="conteo-clases-' + codCarrera + '">' + data.clases_cargadas + '</span> bloques sincronizados</span><span style="color: #94a3b8; margin: 0 4px;">•</span><span style="color: #64748b;" id="fecha-sync-' + codCarrera + '">' + data.fecha + '</span>';
-                }
-            }
-
-            btnSubir.innerHTML = '<i class="bx bx-check"></i> Sincronizado';
-            setTimeout(() => {
-                btnSubir.innerHTML = '<i class="bx bx-sync"></i> Procesar';
-                btnSubir.disabled = true;
-                btnSubir.style.opacity = '0.6';
-                const labelFile = document.getElementById('label-file-' + codCarrera);
-                if (labelFile) labelFile.innerText = 'Seleccionar PDF';
-                input.value = '';
-            }, 3000);
-        } else {
-            throw new Error(data.error || 'Error al procesar el horario');
-        }
-    } catch (err) {
-        if (banner) {
-            banner.style.background = '#fef2f2';
-            banner.style.color = '#991b1b';
-            banner.style.border = '1px solid #fecaca';
-            banner.innerHTML = '<i class="bx bx-error-circle"></i> Error al sincronizar: ' + err.message;
-        }
-        btnSubir.disabled = false;
-        btnSubir.innerHTML = '<i class="bx bx-sync"></i> Reintentar';
-    }
-}
-
-</script>
-
-<!-- ========================================================================= -->
-<!-- MODAL: ACTUALIZAR HORARIOS DE TODAS LAS CARRERAS -->
-<!-- ========================================================================= -->
+<!-- modal subir pdfs carreras -->
 <div id="modal-actualizar-horarios-carreras" class="modal-carreras-overlay" style="display: none; padding: 20px; box-sizing: border-box; z-index: 100000; align-items: center; justify-content: center;">
   <div class="modal-editar-perfil-content" style="max-width: 860px; width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);">
     <div class="modal-editar-header" style="padding: 18px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
@@ -890,4 +642,8 @@ async function subirHorarioCarrera(codCarrera) {
   </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="<?= base_url('js/admin.js?v=' . time()) ?>"></script>
 <?= $this->endSection() ?>

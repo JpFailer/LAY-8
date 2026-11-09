@@ -1,0 +1,105 @@
+/* cositas visuales del panel docente */
+
+.docente-dashboard-contenedor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.docente-search-container {
+    position: relative;
+    min-width: 260px;
+    flex: 1;
+    max-width: 360px;
+}
+
+.docente-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1.15rem;
+    pointer-events: none;
+}
+
+.docente-search-input {
+    padding-left: 38px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+    border-radius: 20px !important;
+    font-size: 0.86rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.badge-conteo-docente {
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+body.dark-mode .badge-conteo-docente {
+    background: #1e293b;
+    color: #60a5fa;
+}
+
+.tarjeta-entrega-alumno {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .tarjeta-entrega-alumno {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.calificacion-box-inline {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+body.dark-mode .calificacion-box-inline {
+    border-top-color: #334155;
+}
+
+.chip-estado-sugerido {
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.chip-estado-sugerido:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+body.dark-mode .chip-estado-sugerido {
+    background: #1e293b;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+body.dark-mode .chip-estado-sugerido:hover {
+    background: #3b82f6;
+    color: #ffffff;
+}

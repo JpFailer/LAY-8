@@ -354,7 +354,33 @@ body {
     color: #0f172a;
     cursor: pointer;
     z-index: 10;
+}
 
+.card-recuperar-adaptativa .btn-close,
+.btn-cerrar-recup {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    left: auto;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 10;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.card-recuperar-adaptativa .btn-close:hover,
+.btn-cerrar-recup:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
 }
 
 

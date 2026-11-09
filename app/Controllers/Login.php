@@ -25,7 +25,8 @@ class Login extends BaseController
         $throttleKey = 'login_attempt_' . md5($ip);
 
         if ($throttler->check($throttleKey, 5, 60) === false) {
-            $espera = $throttler->getTokenTime();
+            // si el estudiante le da 20 veces por desesperado o un bot intenta fuerza bruta, que espere (throttler)
+        $espera = $throttler->getTokenTime();
             return redirect()->back()->with('error', "Demasiados intentos fallidos. Por seguridad espera {$espera} segundos.");
         }
 
@@ -43,14 +44,14 @@ class Login extends BaseController
         $nombre_usuario = trim((string) $this->request->getPost('nombre_usuario'));
         $contrasena     = (string) $this->request->getPost('contrasena');
 
-        // 3. Conexión parametrizada (Query Builder previene inyección SQL)
+        // sistema de consultas preparadas antidayanas (cero inyeccion sql por aqui)
         $db = \Config\Database::connect();
         $usuario = $db->table('usuarios')
                       ->where('nombre_usuario', $nombre_usuario)
                       ->get()
                       ->getRowArray();
 
-        // 4. Verificación criptográfica segura con password_verify
+        // sistema de verificacion criptografica antidayanas (password_verify con hash bcrypt)
         if ($usuario && password_verify($contrasena, $usuario['contrasena'])) {
             
             // Verificación de estado de cuenta (Baneo/Suspensión)
@@ -69,6 +70,7 @@ class Login extends BaseController
             }
 
             // Protección contra fijación de sesión (Session Fixation): regeneramos el ID de sesión
+            // reseteo de sesion pa que no le dejen la cuenta abierta en el laboratorio de la umc
             $session->regenerate(true);
 
             $session->set([
@@ -127,7 +129,7 @@ class Login extends BaseController
             ]);
         }
 
-        // Generar token criptográfico único con vigencia de 2 horas
+        // sistema de generacion de tokens criptograficos antidayanas (random_bytes 256 bits, vigencia estricta 2h)
         $token = bin2hex(random_bytes(32));
         $expira = date('Y-m-d H:i:s', strtotime('+2 hours'));
 
@@ -221,7 +223,7 @@ class Login extends BaseController
             return $this->response->setJSON(['exito' => false, 'mensaje' => 'El enlace de recuperación es inválido o ha expirado.']);
         }
 
-        // Actualizar la contraseña y limpiar el token de recuperación
+        // sistema de invalidacion inmediata de token antidayanas (token de un solo uso, se destruye al guardar)
         $actualizado = $db->table('usuarios')
                           ->where('id', $usuario['id'])
                           ->update([

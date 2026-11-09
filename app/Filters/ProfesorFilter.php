@@ -14,7 +14,11 @@ class ProfesorFilter implements FilterInterface
         $estado = $session->get('estado_verificacion');
         $isApi = ($request->isAJAX() || str_starts_with($request->getUri()->getPath(), 'api/'));
 
-        if ($rol !== 'profesor' || $estado !== 'aprobado') {
+        // sistema de control de acceso por roles (RBAC) antidayanas (permite profes verificados y admins)
+        $esAdmin = in_array($rol, ['administrador', 'admin'], true);
+        $esProfesorAprobado = ($rol === 'profesor' && $estado === 'aprobado');
+
+        if (!$esAdmin && !$esProfesorAprobado) {
             if ($isApi) {
                 return response()->setStatusCode(403)->setJSON([
                     'success' => false,

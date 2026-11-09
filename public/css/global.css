@@ -5923,3 +5923,116 @@ body.dark-mode code {
     background: rgba(30, 58, 138, 0.4) !important;
     color: #93c5fd !important;
 }
+
+/* ==========================================================================
+   AJUSTES DE CONTRASTE Y MODO OSCURO (REVISIÓN 071126)
+   ========================================================================== */
+
+/* 1. Modal Logout */
+.modal-logout-titulo {
+    color: #0f172a;
+}
+.modal-logout-desc {
+    color: #64748b;
+}
+body.dark-mode .modal-logout-titulo {
+    color: #f8fafc !important;
+}
+body.dark-mode .modal-logout-desc {
+    color: #94a3b8 !important;
+}
+
+/* 2. Modal Solicitudes de Registro Docente */
+.modal-docentes-info-banner {
+    padding: 14px 22px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+    color: #475569;
+}
+body.dark-mode .modal-docentes-info-banner {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+body.dark-mode .modal-editar-footer {
+    background: #0f172a !important;
+    border-top-color: #334155 !important;
+}
+
+/* 3. Programación en el Mapa (Panel Admin) */
+.carreras-horarios-summary-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+.carreras-horarios-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.carreras-horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+}
+.carreras-horarios-chip {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.carreras-chip-code {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.carreras-chip-count {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+body.dark-mode .carreras-horarios-summary-box {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .carreras-horarios-header span:first-child {
+    color: #94a3b8 !important;
+}
+body.dark-mode .carreras-horarios-chip {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .carreras-chip-code {
+    color: #f8fafc !important;
+}
+body.dark-mode .carreras-chip-count {
+    color: #94a3b8 !important;
+}
+
+/* 4. Bloque de Validación en Aulas (Materias pendientes de validación) */
+body.dark-mode .alerta-registro-requerido {
+    background: #1e293b !important;
+    border-color: #b45309 !important;
+}
+body.dark-mode .alerta-registro-requerido i {
+    color: #fbbf24 !important;
+}
+body.dark-mode .alerta-registro-requerido h4 {
+    color: #fde68a !important;
+}
+body.dark-mode .alerta-registro-requerido p {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .alerta-registro-requerido p b {
+    color: #f8fafc !important;
+}
