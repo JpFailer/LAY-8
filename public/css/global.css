@@ -5942,7 +5942,7 @@ body.dark-mode .modal-logout-desc {
     color: #94a3b8 !important;
 }
 
-/* 2. Modal Solicitudes de Registro Docente */
+/* 2. Modal Solicitudes de Registro Docente & Validaciones */
 .modal-docentes-info-banner {
     padding: 14px 22px;
     background: #f8fafc;
@@ -5950,12 +5950,199 @@ body.dark-mode .modal-logout-desc {
     font-size: 0.85rem;
     color: #475569;
 }
-body.dark-mode .modal-docentes-info-banner {
+.empty-solicitudes-container {
+    text-align: center;
+    padding: 35px 20px;
+}
+.empty-solicitudes-titulo {
+    margin: 0 0 6px 0;
+    color: #0f172a;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+.empty-solicitudes-desc {
+    margin: 0;
+    font-size: 0.88rem;
+    color: #64748b;
+}
+.loading-solicitudes-container {
+    text-align: center;
+    padding: 30px;
+    color: #64748b;
+}
+.loading-solicitudes-desc {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* Solicitudes de Profesores (Tarjetas y Elementos) */
+.card-solicitud-docente-item {
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+.docente-item-nombre {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.98rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.docente-item-user {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: normal;
+}
+.docente-item-meta {
+    font-size: 0.84rem;
+    color: #334155;
+    margin-top: 4px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.docente-item-cedula {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.btn-ver-comprobante-docente {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.btn-ver-comprobante-docente:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.sin-comprobante-badge {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+.docente-item-acciones {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.btn-docente-accion {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: filter 0.15s ease;
+}
+.btn-docente-accion:hover {
+    filter: brightness(0.92);
+}
+.btn-aprobar-docente-modal {
+    background: #10b981;
+    color: #ffffff;
+}
+.btn-rechazar-docente-modal {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+/* Modal Rechazo Docente */
+.docente-a-rechazar-txt {
+    font-size: 0.88rem;
+    color: #334155;
+    margin-top: 0;
+    font-weight: 600;
+}
+
+/* MODO OSCURO: Modal Solicitudes Docentes y Validaciones (Alta Legibilidad) */
+body.dark-mode .modal-docentes-info-banner,
+html.dark-mode .modal-docentes-info-banner {
     background: #0f172a !important;
     border-bottom-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .empty-solicitudes-titulo,
+html.dark-mode .empty-solicitudes-titulo {
+    color: #f8fafc !important;
+}
+body.dark-mode .empty-solicitudes-desc,
+html.dark-mode .empty-solicitudes-desc,
+body.dark-mode .loading-solicitudes-desc,
+html.dark-mode .loading-solicitudes-desc {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .card-solicitud-docente-item,
+html.dark-mode .card-solicitud-docente-item {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25) !important;
+}
+body.dark-mode .docente-item-nombre,
+html.dark-mode .docente-item-nombre {
+    color: #f8fafc !important;
+}
+body.dark-mode .docente-item-user,
+html.dark-mode .docente-item-user {
     color: #94a3b8 !important;
 }
-body.dark-mode .modal-editar-footer {
+body.dark-mode .docente-item-meta,
+html.dark-mode .docente-item-meta,
+body.dark-mode .docente-item-meta span,
+html.dark-mode .docente-item-meta span {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .docente-item-cedula,
+html.dark-mode .docente-item-cedula {
+    background: #1e293b !important;
+    color: #93c5fd !important;
+    border: 1px solid #334155 !important;
+}
+body.dark-mode .btn-ver-comprobante-docente,
+html.dark-mode .btn-ver-comprobante-docente {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+body.dark-mode .btn-ver-comprobante-docente:hover,
+html.dark-mode .btn-ver-comprobante-docente:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .docente-item-acciones,
+html.dark-mode .docente-item-acciones {
+    border-top-color: #334155 !important;
+}
+body.dark-mode .docente-a-rechazar-txt,
+html.dark-mode .docente-a-rechazar-txt {
+    color: #f8fafc !important;
+}
+body.dark-mode #modal-motivo-rechazo-docente .form-label,
+html.dark-mode #modal-motivo-rechazo-docente .form-label {
+    color: #cbd5e1 !important;
+}
+body.dark-mode .modal-editar-footer,
+html.dark-mode .modal-editar-footer {
     background: #0f172a !important;
     border-top-color: #334155 !important;
 }

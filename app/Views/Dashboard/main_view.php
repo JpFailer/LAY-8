@@ -881,53 +881,33 @@
       </div>
 
       <div id="contenedor-lista-solicitudes-top" style="padding: 18px 22px; overflow-y: auto; max-height: 55vh; box-sizing: border-box;">
-
-        <div style="text-align: center; padding: 30px; color: #64748b;">
-
+        <div class="loading-solicitudes-container">
           <i class="bx bx-loader-alt bx-spin" style="font-size: 2rem; color: #2563eb;"></i>
-
-          <p style="margin-top: 8px;">Cargando solicitudes...</p>
-
+          <p class="loading-solicitudes-desc">Cargando solicitudes...</p>
         </div>
-
       </div>
-
-      <div class="modal-editar-footer" style="padding: 12px 22px; display: flex; justify-content: flex-end;">
-
+      <div class="modal-editar-footer" style="padding: 12px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <a href="<?= base_url('admin?tab=docentes') ?>" style="display: inline-flex; align-items: center; gap: 6px; color: #2563eb; font-weight: 600; font-size: 0.88rem; text-decoration: none;">
+          <i class="bx bx-chalkboard"></i> Asignar Secciones a Docentes
+        </a>
         <button type="button" class="btn-cancelar-modal" onclick="cerrarModalSolicitudesDocentesTop()">Cerrar</button>
-
       </div>
-
     </div>
-
   </div>
 
   <!-- Modal para Motivo de Rechazo Docente -->
-
   <div id="modal-motivo-rechazo-docente" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 100000;">
-
     <div class="modal-editar-perfil-content" style="max-width: 460px; width: 100%; border-radius: 16px;">
-
       <div class="modal-editar-header" style="padding: 14px 20px;">
-
         <h3 style="color: #dc2626; font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 6px;">
-
           <i class="bx bx-user-x"></i> Denegar Solicitud Docente
-
         </h3>
-
         <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalRechazoDocente()">&times;</button>
-
       </div>
-
       <div class="modal-editar-body" style="padding: 16px 20px;">
-
-        <p id="texto-docente-a-rechazar" style="font-size: 0.88rem; color: #334155; margin-top: 0; font-weight: 600;"></p>
-
+        <p id="texto-docente-a-rechazar" class="docente-a-rechazar-txt"></p>
         <label class="form-label" style="font-size: 0.83rem;">Motivo del rechazo (se enviará por notificación al usuario):</label>
-
         <textarea id="input-motivo-rechazo" class="input-global" rows="3" placeholder="Ej: El comprobante presentado no es legible o no corresponde al carnet oficial de la UMC."></textarea>
-
       </div>
 
       <div class="modal-editar-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">

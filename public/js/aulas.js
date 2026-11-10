@@ -28,8 +28,11 @@ const BASE_URL = window.BASE_URL || '/';
         } catch (e) {}
     }
 
-    // abrir la pestaña que venia en el link
+    // abrir la pestaña que venia en el link e inicializar buscadores antidayanas
     document.addEventListener('DOMContentLoaded', () => {
+        inicializarBuscadorMaterias();
+        inicializarComboboxMaterias();
+
         const urlParams = new URLSearchParams(window.location.search);
         const tabSolicitada = urlParams.get('tab');
         if (tabSolicitada && document.getElementById('tab-seccion-' + tabSolicitada)) {
@@ -105,6 +108,20 @@ const BASE_URL = window.BASE_URL || '/';
     if (formArmar) {
         formArmar.addEventListener('submit', async function(e) {
             e.preventDefault();
+
+            // validacion antidayanas de materia seleccionada
+            const secId = document.getElementById('seccion_id')?.value;
+            if (!secId) {
+                mostrarToastAulas('Por favor busca y selecciona una materia inscrita.', 'error');
+                const trigger = document.getElementById('comboMateriaTrigger');
+                if (trigger) {
+                    trigger.classList.add('combobox-error-glow');
+                    setTimeout(() => trigger.classList.remove('combobox-error-glow'), 1800);
+                }
+                toggleComboMateria(true);
+                return;
+            }
+
             const checked = this.querySelectorAll('.chk-bloque-hora:checked');
             if (checked.length === 0) {
                 mostrarToastAulas('Por favor selecciona al menos un bloque de hora oficial.', 'error');
@@ -388,4 +405,254 @@ const BASE_URL = window.BASE_URL || '/';
                 btn.innerHTML = origText;
             }
         });
+    }
+
+    // =========================================================================
+    // SISTEMA DE BÚSQUEDA Y FILTRADO DE MATERIAS (ANTIDAYANAS - CASE & ACCENT INSENSITIVE)
+    // =========================================================================
+
+    // normalizador antidayanas: porque ningun estudiante ni profesor estresado en semana de parciales va a poner acentos
+    function normalizarTextoAulas(txt) {
+        return (txt || '')
+            .toString()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
+    let tarjetasMateriasCache = [];
+    let totalMateriasOriginal = 0;
+
+    function inicializarBuscadorMaterias() {
+        const cards = document.querySelectorAll('.tarjeta-aula-classroom');
+        totalMateriasOriginal = cards.length;
+        tarjetasMateriasCache = Array.from(cards).map(card => {
+            const titulo = card.querySelector('.titulo-materia-aula')?.textContent || '';
+            const codigo = card.querySelector('.badge-codigo-materia')?.textContent || '';
+            const seccion = card.querySelector('.badge-seccion-materia')?.textContent || '';
+            const semestre = card.querySelector('.badge-semestre')?.textContent || '';
+            const profesor = card.querySelector('.profesor-materia')?.textContent || '';
+            const aulas = Array.from(card.querySelectorAll('.btn-tag-mapa')).map(a => a.textContent).join(' ');
+            
+            // corpus indexado para busqueda relampago a 60fps
+            const searchCorpus = normalizarTextoAulas(`${titulo} ${codigo} ${seccion} secc ${semestre} ${profesor} ${aulas}`);
+            return {
+                element: card,
+                searchCorpus: searchCorpus
+            };
+        });
+    }
+
+    function filtrarGridMaterias(query) {
+        const btnClear = document.getElementById('btn-limpiar-search-materias');
+        const badgeNum = document.getElementById('conteo-materias-num');
+        const sinResultados = document.getElementById('sin-resultados-busqueda-materias');
+        const grid = document.getElementById('grid-materias-aulas');
+        const txtTermino = document.getElementById('texto-sin-resultados');
+
+        const rawQuery = (query || '').trim();
+        if (btnClear) btnClear.style.display = rawQuery.length > 0 ? 'inline-flex' : 'none';
+
+        const normQuery = normalizarTextoAulas(rawQuery);
+
+        if (!normQuery) {
+            tarjetasMateriasCache.forEach(item => item.element.style.display = '');
+            if (badgeNum) badgeNum.textContent = totalMateriasOriginal;
+            if (sinResultados) sinResultados.style.display = 'none';
+            if (grid) grid.style.display = 'grid';
+            return;
+        }
+
+        const tokens = normQuery.split(/\s+/).filter(Boolean);
+        let visibleCount = 0;
+
+        tarjetasMateriasCache.forEach(item => {
+            // debe coincidir con todas las palabras (ej: "calculo sec a")
+            const matchesAll = tokens.every(token => item.searchCorpus.includes(token));
+            if (matchesAll) {
+                item.element.style.display = '';
+                visibleCount++;
+            } else {
+                item.element.style.display = 'none';
+            }
+        });
+
+        if (badgeNum) badgeNum.textContent = visibleCount;
+
+        if (visibleCount === 0) {
+            if (grid) grid.style.display = 'none';
+            if (sinResultados) {
+                sinResultados.style.display = 'block';
+                if (txtTermino) {
+                    txtTermino.innerHTML = `No hay materias que coincidan con "<b>${rawQuery.replace(/</g, '&lt;')}</b>". Prueba buscando sin código o con otra palabra clave.`;
+                }
+            }
+        } else {
+            if (grid) grid.style.display = 'grid';
+            if (sinResultados) sinResultados.style.display = 'none';
+        }
+    }
+
+    function limpiarBuscadorMaterias() {
+        const input = document.getElementById('buscador-materias-aulas');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        filtrarGridMaterias('');
+    }
+
+    // =========================================================================
+    // COMBOBOX BUSCABLE PARA "MATERIA INSCRITA" (ANTIDAYANAS & ZERO-STRESS)
+    // =========================================================================
+
+    let comboOpcionesCache = [];
+
+    function inicializarComboboxMaterias() {
+        const items = document.querySelectorAll('.combo-option-item');
+        comboOpcionesCache = Array.from(items).map(item => {
+            const code = item.getAttribute('data-code') || '';
+            const nombre = item.getAttribute('data-nombre') || '';
+            const seccion = item.getAttribute('data-seccion') || '';
+            const corpus = normalizarTextoAulas(`${code} ${nombre} ${seccion} secc`);
+            return {
+                element: item,
+                corpus: corpus
+            };
+        });
+
+        // cerrar al hacer clic fuera del combobox
+        document.addEventListener('click', (e) => {
+            const combo = document.getElementById('comboMateriaInscrita');
+            if (combo && !combo.contains(e.target)) {
+                cerrarComboMateria();
+            }
+        });
+
+        // cerrar con escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cerrarComboMateria();
+            }
+        });
+    }
+
+    function toggleComboMateria(forzarAbrir = false) {
+        const dropdown = document.getElementById('comboMateriaDropdown');
+        const trigger = document.getElementById('comboMateriaTrigger');
+        const inputSearch = document.getElementById('inputBuscarMateriaInscrita');
+        if (!dropdown || !trigger) return;
+
+        const estaAbierto = dropdown.style.display === 'block';
+        if (estaAbierto && !forzarAbrir) {
+            cerrarComboMateria();
+        } else {
+            dropdown.style.display = 'block';
+            trigger.classList.add('activo');
+            if (inputSearch) {
+                inputSearch.value = '';
+                filtrarComboMaterias('');
+                setTimeout(() => inputSearch.focus(), 60);
+            }
+        }
+    }
+
+    function cerrarComboMateria() {
+        const dropdown = document.getElementById('comboMateriaDropdown');
+        const trigger = document.getElementById('comboMateriaTrigger');
+        if (dropdown) dropdown.style.display = 'none';
+        if (trigger) trigger.classList.remove('activo');
+    }
+
+    function filtrarComboMaterias(query) {
+        const norm = normalizarTextoAulas(query);
+        const vacio = document.getElementById('comboMateriaVacio');
+        const tokens = norm.split(/\s+/).filter(Boolean);
+        let visibles = 0;
+
+        comboOpcionesCache.forEach(opt => {
+            const matches = tokens.length === 0 || tokens.every(t => opt.corpus.includes(t));
+            if (matches) {
+                opt.element.style.display = 'flex';
+                visibles++;
+            } else {
+                opt.element.style.display = 'none';
+            }
+        });
+
+        if (vacio) vacio.style.display = visibles === 0 ? 'block' : 'none';
+    }
+
+    function seleccionarComboMateria(id, label, code, nombre, secc) {
+        const hiddenInput = document.getElementById('seccion_id');
+        const selectedContent = document.getElementById('comboMateriaSelected');
+        const btnClear = document.getElementById('btnClearComboMateria');
+        const trigger = document.getElementById('comboMateriaTrigger');
+
+        if (hiddenInput) hiddenInput.value = id;
+
+        if (selectedContent) {
+            selectedContent.innerHTML = `
+                <span class="combo-selected-pill">
+                    <i class="bx bx-check-circle pill-check"></i>
+                    <b class="pill-code">[${code}]</b>
+                    <span class="pill-name">${nombre}</span>
+                    <span class="pill-sec">Secc. ${secc}</span>
+                </span>
+            `;
+        }
+
+        if (btnClear) btnClear.style.display = 'inline-flex';
+        if (trigger) trigger.classList.remove('combobox-error-glow');
+
+        cerrarComboMateria();
+    }
+
+    function limpiarSeleccionComboMateria(event) {
+        if (event) event.stopPropagation();
+        const hiddenInput = document.getElementById('seccion_id');
+        const selectedContent = document.getElementById('comboMateriaSelected');
+        const btnClear = document.getElementById('btnClearComboMateria');
+
+        if (hiddenInput) hiddenInput.value = '';
+        if (selectedContent) {
+            selectedContent.innerHTML = `
+                <i class="bx bx-search combo-icon-search"></i>
+                <span class="combobox-placeholder">Selecciona o busca tu materia (ej: Cálculo, LOG-103)...</span>
+            `;
+        }
+        if (btnClear) btnClear.style.display = 'none';
+    }
+
+    // =========================================================================
+    // SUB-NAVEGACIÓN DE PESTAÑA CARGAR/ARMAR HORARIO (VISTA LIMPIA Y SIMPLIFICADA)
+    // =========================================================================
+
+    function cambiarVistaCarga(modo) {
+        const btnAmbos = document.getElementById('subnav-btn-ambos');
+        const btnManual = document.getElementById('subnav-btn-manual');
+        const btnPdf = document.getElementById('subnav-btn-pdf');
+        const cardPdf = document.getElementById('card-carga-pdf');
+        const cardManual = document.getElementById('card-carga-manual');
+        const grid = document.getElementById('contenedor-grid-cargar');
+
+        [btnAmbos, btnManual, btnPdf].forEach(b => b && b.classList.remove('activo'));
+
+        if (modo === 'manual') {
+            if (btnManual) btnManual.classList.add('activo');
+            if (cardPdf) cardPdf.style.display = 'none';
+            if (cardManual) cardManual.style.display = 'block';
+            if (grid) grid.style.gridTemplateColumns = '1fr';
+        } else if (modo === 'pdf') {
+            if (btnPdf) btnPdf.classList.add('activo');
+            if (cardManual) cardManual.style.display = 'none';
+            if (cardPdf) cardPdf.style.display = 'block';
+            if (grid) grid.style.gridTemplateColumns = '1fr';
+        } else {
+            if (btnAmbos) btnAmbos.classList.add('activo');
+            if (cardPdf) cardPdf.style.display = 'block';
+            if (cardManual) cardManual.style.display = 'block';
+            if (grid) grid.style.gridTemplateColumns = '';
+        }
     }

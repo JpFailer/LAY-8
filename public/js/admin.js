@@ -348,7 +348,7 @@ async function cargarSeccionesDocente(profId) {
         const data = await resp.json();
         if (data.success && data.secciones && data.secciones.length > 0) {
             cont.innerHTML = data.secciones.map(s => `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                <div class="item-seccion-asignada" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
                     <div>
                         <strong>${s.materia}</strong> <span style="font-size: 0.82rem; color: #2563eb; font-weight: 600;">[${s.codigo_materia} - Secc. ${s.codigo_seccion}]</span>
                         <div style="font-size: 0.78rem; color: #64748b;">Carrera: ${s.carrera || 'UMC'}</div>
@@ -385,7 +385,7 @@ function buscarSeccionesDisponibles(q) {
                 resCont.innerHTML = data.secciones.map(s => {
                     const docenteActual = s.prof_nombre ? `${s.prof_nombre} ${s.prof_apellido}` : '<span style="color:#059669; font-weight:600;">Disponible (Sin docente)</span>';
                     return `
-                        <div style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; background: #ffffff;">
+                        <div class="item-seccion-busqueda" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; font-size: 0.85rem; background: #ffffff;">
                             <div>
                                 <strong>${s.materia}</strong> (${s.codigo_materia} - Secc. ${s.codigo_seccion})
                                 <div style="font-size: 0.76rem; color: #64748b;">Docente actual: <em>${docenteActual}</em></div>

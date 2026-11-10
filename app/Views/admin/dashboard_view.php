@@ -551,7 +551,7 @@
     </div>
 
     <div style="padding: 14px 20px; font-size: 0.9rem;" class="modal-docentes-info-banner">
-      Docente Seleccionado: <strong id="docente-asignar-nombre" style="color: #0f172a;"></strong>
+      Docente Seleccionado: <strong id="docente-asignar-nombre" class="docente-asignar-nombre-val"></strong>
     </div>
 
     <div style="padding: 18px 20px; overflow-y: auto; max-height: 55vh; box-sizing: border-box;">
@@ -608,7 +608,7 @@
                 </div>
                 <div>
                   <div style="display: flex; align-items: center; gap: 8px;">
-                    <h4 style="margin: 0; font-size: 1rem; color: #0f172a; font-weight: 700;"><?= esc($cData['nombre']) ?></h4>
+                    <h4 class="carrera-horario-titulo" style="margin: 0; font-size: 1rem; font-weight: 700;"><?= esc($cData['nombre']) ?></h4>
                     <span style="font-size: 0.72rem; font-weight: 700; background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 6px;"><?= esc($codCarrera) ?></span>
                   </div>
                   <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;"><?= esc($cData['escuela']) ?></div>
@@ -631,7 +631,7 @@
               <!-- Formulario de subida individual -->
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <input type="file" id="file-horario-<?= $codCarrera ?>" accept=".pdf" style="display: none;" onchange="onArchivoCarreraSeleccionado('<?= $codCarrera ?>', this)">
-                <button type="button" class="btn-seleccionar-pdf" onclick="document.getElementById('file-horario-<?= $codCarrera ?>').click()" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: #334155; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                <button type="button" class="btn-seleccionar-pdf" onclick="document.getElementById('file-horario-<?= $codCarrera ?>').click()" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                   <i class="bx bx-upload"></i> <span id="label-file-<?= $codCarrera ?>">Seleccionar PDF</span>
                 </button>
                 <button type="button" class="btn-subir-carrera-accion" id="btn-subir-<?= $codCarrera ?>" onclick="subirHorarioCarrera('<?= $codCarrera ?>')" style="background: <?= $cData['color'] ?>; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; opacity: 0.6;" disabled>

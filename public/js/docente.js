@@ -226,19 +226,99 @@ const BASE_URL = window.BASE_URL || '/';
         }
     }
 
-    function filtrarSeccionesDocente(termino) {
-        termino = (termino || '').toLowerCase().trim();
+    // =========================================================================
+    // FILTRO DE SECCIONES (ANTIDAYANAS - CASE & ACCENT INSENSITIVE)
+    // =========================================================================
+
+    // normalizador antidayanas: descomposición canónica NFD + regex de marcas diacríticas
+    function normalizarTextoDocente(txt) {
+        return (txt || '')
+            .toString()
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
+    let tarjetasDocenteCache = [];
+    let totalDocenteOriginal = 0;
+
+    function inicializarBuscadorDocente() {
         const tarjetas = document.querySelectorAll('#tab-doc-secciones .tarjeta-aula-classroom');
+        totalDocenteOriginal = tarjetas.length;
+        tarjetasDocenteCache = Array.from(tarjetas).map(t => {
+            const texto = t.textContent || '';
+            return {
+                element: t,
+                searchCorpus: normalizarTextoDocente(texto)
+            };
+        });
+    }
+
+    function filtrarSeccionesDocente(termino) {
+        if (tarjetasDocenteCache.length === 0) {
+            inicializarBuscadorDocente();
+        }
+
+        const rawTermino = (termino || '').trim();
+        const normTermino = normalizarTextoDocente(rawTermino);
+        const badge = document.getElementById('badge-conteo-secciones');
+        const btnClear = document.getElementById('btn-limpiar-busqueda-docente');
+        const sinResultados = document.getElementById('sin-resultados-docente');
+        const grid = document.querySelector('#tab-doc-secciones .grid-aulas-classroom');
+        const txtTermino = document.getElementById('texto-sin-resultados-docente');
+
+        if (btnClear) {
+            btnClear.style.display = rawTermino.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        if (!normTermino) {
+            tarjetasDocenteCache.forEach(item => item.element.style.display = 'flex');
+            if (badge) badge.textContent = totalDocenteOriginal;
+            if (sinResultados) sinResultados.style.display = 'none';
+            if (grid) grid.style.display = 'grid';
+            return;
+        }
+
+        // separacion por tokens para busqueda de multiples palabras (ej: 'calculo a')
+        const tokens = normTermino.split(/\s+/).filter(Boolean);
         let visibles = 0;
-        tarjetas.forEach(t => {
-            const texto = t.textContent.toLowerCase();
-            if (!termino || texto.includes(termino)) {
-                t.style.display = 'flex';
+
+        tarjetasDocenteCache.forEach(item => {
+            const matchesAll = tokens.every(token => item.searchCorpus.includes(token));
+            if (matchesAll) {
+                item.element.style.display = 'flex';
                 visibles++;
             } else {
-                t.style.display = 'none';
+                item.element.style.display = 'none';
             }
         });
-        const badge = document.getElementById('badge-conteo-secciones');
+
         if (badge) badge.textContent = visibles;
+
+        if (visibles === 0) {
+            if (grid) grid.style.display = 'none';
+            if (sinResultados) {
+                sinResultados.style.display = 'block';
+                if (txtTermino) {
+                    txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${rawTermino.replace(/</g, '&lt;')}</b>".`;
+                }
+            }
+        } else {
+            if (grid) grid.style.display = 'grid';
+            if (sinResultados) sinResultados.style.display = 'none';
+        }
     }
+
+    function limpiarBuscadorDocente() {
+        const input = document.getElementById('filtro-secciones-docente');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        filtrarSeccionesDocente('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarBuscadorDocente();
+    });

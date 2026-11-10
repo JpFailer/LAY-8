@@ -209,3 +209,41 @@ body.dark-mode .item-seccion-asignada {
     border-color: #334155;
     color: #f1f5f9;
 }
+
+.docente-asignar-nombre-val {
+    color: #0f172a;
+}
+body.dark-mode .docente-asignar-nombre-val {
+    color: #f8fafc !important;
+}
+
+.carrera-horario-titulo {
+    color: #0f172a;
+}
+body.dark-mode .carrera-horario-titulo {
+    color: #f8fafc !important;
+}
+
+.btn-seleccionar-pdf {
+    color: #334155;
+}
+body.dark-mode .btn-seleccionar-pdf {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+body.dark-mode .btn-seleccionar-pdf:hover {
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.item-seccion-asignada {
+    background: #f8fafc;
+}
+
+body.dark-mode .item-seccion-asignada,
+body.dark-mode .item-seccion-busqueda {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}

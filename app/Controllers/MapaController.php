@@ -419,7 +419,7 @@ class MapaController extends BaseController {
     }
 
     // Helper: Calcula el estado dinámico del aula (ocupada con logo de carrera en rojo, libre en verde, etc.)
-    public static function calcularEstadoAula(array $aula, $clasesModel, string $dia_actual, string $hora_actual, string $hora_mas_15_min): array {
+    public static function calcularEstadoAula(array $aula, $clasesModel, string $dia_actual, string $hora_actual, string $hora_mas_15_min, ?array $clasesDelAula = null): array {
         $alias = $aula['alias_pdf'];
 
         // 1. Fuera de servicio o mantenimiento
@@ -440,7 +440,75 @@ class MapaController extends BaseController {
             ];
         }
 
-        // 2. Clase activa en este momento
+        // =========================================================================
+        // RESOLUCIÓN EN RAM ANTIDAYANAS (SI SE PASA EL ARRAY BATCH PRE-CARGADO)
+        // Cero queries individuales por cada aula: 60 FPS y cero colapso de MariaDB
+        // =========================================================================
+        if ($clasesDelAula !== null) {
+            $clase_activa = null;
+            $clase_proxima = null;
+
+            foreach ($clasesDelAula as $c) {
+                if ($c['hora_inicio'] <= $hora_actual && $c['hora_fin'] >= $hora_actual) {
+                    $clase_activa = $c;
+                    break;
+                }
+                if ($c['hora_inicio'] > $hora_actual && $c['hora_inicio'] <= $hora_mas_15_min) {
+                    if ($clase_proxima === null) {
+                        $clase_proxima = $c;
+                    }
+                }
+            }
+
+            if ($clase_activa) {
+                $codCarrera = $clase_activa['carrera'] ?: 'ING-INF';
+                $info = self::obtenerInfoCarrera($codCarrera);
+                return [
+                    'estado'         => 'ocupada',
+                    'color'          => 'roja',
+                    'carrera'        => $codCarrera,
+                    'carrera_nombre' => $info['nombre'],
+                    'icono'          => $info['icono'],
+                    'texto_estado'   => 'En clase (' . $info['nombre'] . ')',
+                    'materia'        => $clase_activa['materia'],
+                    'seccion'        => $clase_activa['codigo_seccion'],
+                    'intervalo'      => substr($clase_activa['hora_inicio'], 0, 5) . ' - ' . substr($clase_activa['hora_fin'], 0, 5),
+                    'esta_ocupado'   => true,
+                ];
+            }
+
+            if ($clase_proxima) {
+                $codCarrera = $clase_proxima['carrera'] ?: 'ING-INF';
+                $info = self::obtenerInfoCarrera($codCarrera);
+                return [
+                    'estado'         => 'proxima',
+                    'color'          => 'amarilla',
+                    'carrera'        => $codCarrera,
+                    'carrera_nombre' => $info['nombre'],
+                    'icono'          => $info['icono'],
+                    'texto_estado'   => 'Próxima clase (' . $info['nombre'] . ')',
+                    'materia'        => $clase_proxima['materia'],
+                    'seccion'        => $clase_proxima['codigo_seccion'],
+                    'intervalo'      => substr($clase_proxima['hora_inicio'], 0, 5) . ' - ' . substr($clase_proxima['hora_fin'], 0, 5),
+                    'esta_ocupado'   => false,
+                ];
+            }
+
+            return [
+                'estado'         => 'libre',
+                'color'          => 'verde',
+                'carrera'        => null,
+                'carrera_nombre' => null,
+                'icono'          => 'bx-check',
+                'texto_estado'   => 'Disponible',
+                'materia'        => null,
+                'seccion'        => null,
+                'intervalo'      => null,
+                'esta_ocupado'   => false,
+            ];
+        }
+
+        // 2. Clase activa en este momento (Fallback para llamadas aisladas)
         $clase_activa = $clasesModel
             ->select('clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
             ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
@@ -546,11 +614,27 @@ class MapaController extends BaseController {
         ];
         $dia_actual = $dias_ingles_a_espanol[date('l')];
 
-        // Calculamos el estado actual y logo de carrera de cada aula
+        // Batch antidayanas: Traemos todas las clases del día en 1 sola consulta SQL agrupada
+        $clasesDelDia = $clasesModel
+            ->select('clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
+            ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('clases_programadas.dia_semana', $dia_actual)
+            ->orderBy('clases_programadas.hora_inicio', 'ASC')
+            ->findAll();
+
+        $clasesPorAula = [];
+        foreach ($clasesDelDia as $c) {
+            $clasesPorAula[$c['aula']][] = $c;
+        }
+
+        // Calculamos el estado actual y logo de carrera de cada aula en memoria RAM
         foreach ($lista_aulas as &$aula) {
-            $detalles = self::calcularEstadoAula($aula, $clasesModel, $dia_actual, $hora_actual, $hora_mas_15_min);
+            $alias = $aula['alias_pdf'];
+            $detalles = self::calcularEstadoAula($aula, $clasesModel, $dia_actual, $hora_actual, $hora_mas_15_min, $clasesPorAula[$alias] ?? []);
             $aula = array_merge($aula, $detalles);
         }
+        unset($aula);
 
         return view('mapa', ['aulas' => $lista_aulas]);
     }
@@ -737,10 +821,24 @@ class MapaController extends BaseController {
             $this->importar_horarios_automaticamente();
         }
 
+        // Batch antidayanas para API en vivo: 1 sola consulta SQL para todo el campus
+        $clasesDelDia = $clasesModel
+            ->select('clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
+            ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('clases_programadas.dia_semana', $dia_actual)
+            ->orderBy('clases_programadas.hora_inicio', 'ASC')
+            ->findAll();
+
+        $clasesPorAula = [];
+        foreach ($clasesDelDia as $c) {
+            $clasesPorAula[$c['aula']][] = $c;
+        }
+
         $estadoMapa = [];
         foreach ($lista_aulas as $aula) {
             $alias = $aula['alias_pdf'];
-            $estadoMapa[$alias] = self::calcularEstadoAula($aula, $clasesModel, $dia_actual, $hora_actual, $hora_mas_15_min);
+            $estadoMapa[$alias] = self::calcularEstadoAula($aula, $clasesModel, $dia_actual, $hora_actual, $hora_mas_15_min, $clasesPorAula[$alias] ?? []);
         }
 
         return $this->response->setJSON($estadoMapa);

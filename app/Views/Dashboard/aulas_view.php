@@ -70,7 +70,38 @@
     <!-- PESTAÑA 1: MIS MATERIAS / AULAS VIRTUALES (Grid tipo Classroom)           -->
     <div id="tab-seccion-materias" class="tab-contenido-aulas">
         <?php if (!empty($secciones) && count($secciones) > 0): ?>
-            <div class="grid-aportes grid-aulas-classroom">
+            <!-- Barra de Búsqueda y Filtros de Materias (Antidayanas & Case/Accent-Insensitive) -->
+            <div class="aulas-search-toolbar">
+                <div class="aulas-search-input-wrapper">
+                    <i class="bx bx-search icono-search-aulas"></i>
+                    <input type="text" 
+                           id="buscador-materias-aulas" 
+                           class="input-search-aulas" 
+                           placeholder="Buscar materia por nombre (ej: Cálculo, Física), código (LOG-103), sección, aula o profesor..." 
+                           autocomplete="off"
+                           oninput="filtrarGridMaterias(this.value)">
+                    <button type="button" id="btn-limpiar-search-materias" class="btn-clear-search-aulas" style="display: none;" onclick="limpiarBuscadorMaterias()" title="Limpiar búsqueda">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="aulas-search-meta">
+                    <span id="conteo-materias-badge" class="badge-aulas-conteo">
+                        <i class="bx bx-book-open"></i> Mostrando <b id="conteo-materias-num"><?= count($secciones) ?></b> de <?= count($secciones) ?> materias
+                    </span>
+                </div>
+            </div>
+
+            <!-- Estado vacío cuando la búsqueda no arroja resultados -->
+            <div id="sin-resultados-busqueda-materias" class="panel-vacio-aulas panel-vacio-busqueda" style="display: none;">
+                <div class="icono-vacio"><i class="bx bx-search-alt"></i></div>
+                <h3>No se encontraron materias</h3>
+                <p id="texto-sin-resultados">No hay materias que coincidan con la búsqueda. Puedes probar buscando sin acentos o por el código oficial.</p>
+                <button type="button" class="btn-subir-cta" onclick="limpiarBuscadorMaterias()">
+                    <i class="bx bx-refresh"></i> Ver todas las materias
+                </button>
+            </div>
+
+            <div class="grid-aportes grid-aulas-classroom" id="grid-materias-aulas">
                 <?php foreach ($secciones as $sec): ?>
                     <?php
                         $estadoHoy = $sec['estado_hoy'];
@@ -391,9 +422,23 @@
 
     <!-- PESTAÑA 4: CARGAR / ARMAR HORARIO                                         -->
     <div id="tab-seccion-cargar" class="tab-contenido-aulas" style="display: none;">
-        <div class="grid-cargar-horario">
+        
+        <!-- Sub-navegación para alternar vista y simplificar la pestaña (Pestaña limpia y organizada) -->
+        <div class="cargar-horario-subnav">
+            <button type="button" class="btn-subnav-cargar activo" id="subnav-btn-ambos" onclick="cambiarVistaCarga('ambos')">
+                <i class="bx bx-columns"></i> Ver Ambas Opciones
+            </button>
+            <button type="button" class="btn-subnav-cargar" id="subnav-btn-manual" onclick="cambiarVistaCarga('manual')">
+                <i class="bx bx-calendar-edit"></i> Armar Manualmente
+            </button>
+            <button type="button" class="btn-subnav-cargar" id="subnav-btn-pdf" onclick="cambiarVistaCarga('pdf')">
+                <i class="bx bxs-file-pdf"></i> Carga Inteligente (PDF)
+            </button>
+        </div>
+
+        <div class="grid-cargar-horario" id="contenedor-grid-cargar">
             <!-- Opción A: Escaneo de Comprobante Oficial UMC (PDF) -->
-            <div class="card-formulario-aulas">
+            <div class="card-formulario-aulas" id="card-carga-pdf">
                 <div class="card-form-header">
                     <div class="icono-header-card"><i class="bx bxs-file-pdf"></i></div>
                     <div>
@@ -420,7 +465,7 @@
             </div>
 
             <!-- Opción B: Armar Horario Manual Asistido por Plantilla -->
-            <div class="card-formulario-aulas">
+            <div class="card-formulario-aulas" id="card-carga-manual">
                 <div class="card-form-header">
                     <div class="icono-header-card"><i class="bx bx-calendar-edit"></i></div>
                     <div>
@@ -433,28 +478,89 @@
                     <form action="<?= base_url('aulas/guardar-bloque-manual') ?>" method="post" id="formArmarHorarioManual" class="formulario-estilo-lay8">
                         <?= csrf_field() ?>
 
-                        <!-- Materia (Filtrada a las inscritas por el estudiante) -->
-                        <div class="campo-grupo">
+                        <!-- Materia (Buscable y con soporte anti-acentos / anti-mayúsculas) -->
+                        <div class="campo-grupo campo-materia-searchable">
                             <label for="seccion_id"><i class="bx bx-book-open"></i> Materia Inscrita:</label>
-                            <select name="seccion_id" id="seccion_id" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona una de tus materias --</option>
-                                <?php foreach ($secciones as $sec): ?>
-                                    <option value="<?= (int)$sec['id'] ?>">
-                                        [<?= esc($sec['codigo_materia']) ?>] <?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            
+                            <!-- Input oculto para preservar compatibilidad con AulasController::guardarBloqueManual -->
+                            <input type="hidden" name="seccion_id" id="seccion_id" required value="">
+
+                            <!-- Componente Combobox Buscable Antidayanas -->
+                            <div class="searchable-combobox" id="comboMateriaInscrita">
+                                <div class="combobox-trigger" id="comboMateriaTrigger" onclick="toggleComboMateria()">
+                                    <div class="combobox-selected-content" id="comboMateriaSelected">
+                                        <i class="bx bx-search combo-icon-search"></i>
+                                        <span class="combobox-placeholder">Selecciona o busca tu materia (ej: Cálculo, LOG-103)...</span>
+                                    </div>
+                                    <div class="combobox-actions">
+                                        <button type="button" class="btn-clear-combo" id="btnClearComboMateria" style="display: none;" onclick="limpiarSeleccionComboMateria(event)" title="Quitar selección">
+                                            <i class="bx bx-x"></i>
+                                        </button>
+                                        <i class="bx bx-chevron-down combo-arrow"></i>
+                                    </div>
+                                </div>
+
+                                <div class="combobox-dropdown" id="comboMateriaDropdown" style="display: none;">
+                                    <div class="combobox-search-box">
+                                        <i class="bx bx-search"></i>
+                                        <input type="text" 
+                                               id="inputBuscarMateriaInscrita" 
+                                               class="input-combo-search" 
+                                               placeholder="Escribe para filtrar (ej: calculo, quimica, log-103)..." 
+                                               autocomplete="off" 
+                                               oninput="filtrarComboMaterias(this.value)">
+                                    </div>
+                                    <div class="combobox-options-list" id="listaOpcionesComboMateria">
+                                        <?php foreach ($secciones as $sec): ?>
+                                            <?php 
+                                                $dispCode = esc($sec['codigo_materia']);
+                                                $dispNombre = esc($sec['materia']);
+                                                $dispSecc = esc($sec['codigo_seccion']);
+                                                $fullLabel = "[$dispCode] $dispNombre (Secc. $dispSecc)";
+                                            ?>
+                                            <div class="combo-option-item" 
+                                                 data-id="<?= (int)$sec['id'] ?>" 
+                                                 data-code="<?= $dispCode ?>" 
+                                                 data-nombre="<?= $dispNombre ?>" 
+                                                 data-seccion="<?= $dispSecc ?>" 
+                                                 data-label="<?= esc($fullLabel) ?>"
+                                                 onclick="seleccionarComboMateria(<?= (int)$sec['id'] ?>, '<?= esc($fullLabel, 'js') ?>', '<?= $dispCode ?>', '<?= $dispNombre ?>', '<?= $dispSecc ?>')">
+                                                <span class="combo-opt-code"><?= $dispCode ?></span>
+                                                <span class="combo-opt-name"><?= $dispNombre ?></span>
+                                                <span class="combo-opt-sec">Secc. <?= $dispSecc ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="combobox-empty" id="comboMateriaVacio" style="display: none;">
+                                        <i class="bx bx-info-circle"></i> No se encontraron materias inscritas con ese nombre o código.
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Día de la Semana -->
-                        <div class="campo-grupo">
-                            <label for="dia_semana"><i class="bx bx-calendar"></i> Día de la Semana:</label>
-                            <select name="dia_semana" id="dia_semana" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona el día --</option>
-                                <?php foreach ($diasSemana as $dia): ?>
-                                    <option value="<?= esc($dia) ?>"><?= esc($dia) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                        <!-- Día y Aula en fila doble compacta y ordenada -->
+                        <div class="campo-fila-doble">
+                            <!-- Día de la Semana -->
+                            <div class="campo-grupo">
+                                <label for="dia_semana"><i class="bx bx-calendar"></i> Día de la Semana:</label>
+                                <select name="dia_semana" id="dia_semana" required class="select-lay8">
+                                    <option value="" disabled selected>-- Selecciona el día --</option>
+                                    <?php foreach ($diasSemana as $dia): ?>
+                                        <option value="<?= esc($dia) ?>"><?= esc($dia) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <!-- Aula Física del Campus -->
+                            <div class="campo-grupo">
+                                <label for="aula"><i class="bx bx-map-pin"></i> Aula o Laboratorio:</label>
+                                <select name="aula" id="aula" required class="select-lay8">
+                                    <option value="" disabled selected>-- Selecciona el aula --</option>
+                                    <?php foreach ($todasAulas as $a): ?>
+                                        <option value="<?= esc($a['alias_pdf']) ?>"><?= esc($a['alias_pdf']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- Bloques Oficiales UMC (Multi-selección continua) -->
@@ -501,17 +607,6 @@
                                     <i class="bx bx-x"></i> Desmarcar
                                 </button>
                             </div>
-                        </div>
-
-                        <!-- Aula Física del Campus -->
-                        <div class="campo-grupo">
-                            <label for="aula"><i class="bx bx-map-pin"></i> Aula o Laboratorio:</label>
-                            <select name="aula" id="aula" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona el aula --</option>
-                                <?php foreach ($todasAulas as $a): ?>
-                                    <option value="<?= esc($a['alias_pdf']) ?>"><?= esc($a['alias_pdf']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
                         </div>
 
                         <button type="submit" class="btn-cta-submit" id="btnSubmitArmarHorario">

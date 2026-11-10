@@ -105,13 +105,36 @@
         </nav>
 
         <div class="docente-search-container">
-                <i class="bx bx-search docente-search-icon"></i>
-                <input type="text" id="filtro-secciones-docente" class="input-lay8 docente-search-input" placeholder="Buscar materia, sección o aula..." oninput="filtrarSeccionesDocente(this.value)">
-            </div>
+            <i class="bx bx-search docente-search-icon"></i>
+            <input type="text" 
+                   id="filtro-secciones-docente" 
+                   class="input-lay8 docente-search-input" 
+                   placeholder="Buscar materia, sección o aula..." 
+                   autocomplete="off"
+                   oninput="filtrarSeccionesDocente(this.value)">
+            <button type="button" 
+                    id="btn-limpiar-busqueda-docente" 
+                    class="btn-clear-search-docente" 
+                    style="display: none;" 
+                    onclick="limpiarBuscadorDocente()" 
+                    title="Limpiar búsqueda">
+                <i class="bx bx-x"></i>
+            </button>
+        </div>
     </div>
 
     <!-- PESTAÑA 1: SECCIONES Y TRANSMISIÓN DE ESTADO EN VIVO                      -->
     <div id="tab-doc-secciones" class="tab-contenido-docente">
+        <!-- Estado vacío cuando la búsqueda no arroja resultados -->
+        <div id="sin-resultados-docente" class="panel-vacio-docente" style="display: none;">
+            <div class="icono-vacio"><i class="bx bx-search-alt" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 8px;"></i></div>
+            <h3 style="margin: 0 0 6px 0;">No se encontraron secciones</h3>
+            <p id="texto-sin-resultados-docente" style="color: #64748b; margin: 0 0 16px 0; font-size: 0.88rem;">No hay secciones que coincidan con la búsqueda.</p>
+            <button type="button" class="btn-subir-cta" onclick="limpiarBuscadorDocente()">
+                <i class="bx bx-refresh"></i> Ver todas las secciones
+            </button>
+        </div>
+
         <?php if (!empty($secciones)): ?>
             <div class="grid-aportes grid-aulas-classroom">
                 <?php foreach ($secciones as $sec): ?>

@@ -87,25 +87,59 @@ class AulasController extends BaseController
 
         $seccionesIds = !empty($secciones) ? array_column($secciones, 'id') : [];
 
-        // 2. Enriquecer cada materia/sección con su estado en vivo, horarios y tareas pendientes
-        foreach ($secciones as &$sec) {
-            $secId = (int)$sec['id'];
-            $sec['estado_hoy'] = $estadoModel->obtenerEstadoHoy($secId);
+        // =========================================================================
+        // SISTEMA DE EAGER LOADING BATCH ANTIDAYANAS (OPTIMIZACIÓN DE QUERIES O(1))
+        // Dayana no nos va a raspar por colapsar el socket de MariaDB con 1776 queries
+        // =========================================================================
+        $estadosHoyMapa = [];
+        $horariosPorSeccion = [];
+        $actividadesConteoMapa = [];
 
-            // Horarios de esta sección
-            $sec['horarios'] = $claseModel
-                ->where('seccion_id', $secId)
+        if (!empty($seccionesIds)) {
+            // 1. Batch de Estados de Hoy (1 sola query en lugar de 592)
+            $estadosHoyRaw = $estadoModel->whereIn('seccion_id', $seccionesIds)
+                                         ->where('fecha', date('Y-m-d'))
+                                         ->orderBy('id', 'DESC')
+                                         ->findAll();
+            foreach ($estadosHoyRaw as $est) {
+                $sId = (int)$est['seccion_id'];
+                if (!isset($estadosHoyMapa[$sId])) {
+                    $estadosHoyMapa[$sId] = $est;
+                }
+            }
+
+            // 2. Batch de Horarios de Secciones (1 sola query con ordenamiento en base de datos)
+            $horariosRaw = $claseModel
+                ->whereIn('seccion_id', $seccionesIds)
                 ->groupStart()
                     ->where('estudiante_id', null)
                     ->orWhere('estudiante_id', $usuarioId)
                 ->groupEnd()
                 ->orderBy('hora_inicio', 'ASC')
                 ->findAll();
+            foreach ($horariosRaw as $h) {
+                $sId = (int)$h['seccion_id'];
+                $horariosPorSeccion[$sId][] = $h;
+            }
 
-            // Total de actividades de esta materia
-            $sec['total_actividades'] = $db->table('actividades_clase')
-                ->where('seccion_id', $secId)
-                ->countAllResults();
+            // 3. Batch de Total de Actividades por Sección (1 query con GROUP BY antidayanas)
+            $actividadesConteoRaw = $db->table('actividades_clase')
+                ->select('seccion_id, COUNT(*) as total')
+                ->whereIn('seccion_id', $seccionesIds)
+                ->groupBy('seccion_id')
+                ->get()
+                ->getResultArray();
+            foreach ($actividadesConteoRaw as $ac) {
+                $actividadesConteoMapa[(int)$ac['seccion_id']] = (int)$ac['total'];
+            }
+        }
+
+        // Mapeo en memoria RAM O(1) instantáneo (0 queries dentro del bucle, cero lag)
+        foreach ($secciones as &$sec) {
+            $secId = (int)$sec['id'];
+            $sec['estado_hoy'] = $estadosHoyMapa[$secId] ?? null;
+            $sec['horarios'] = $horariosPorSeccion[$secId] ?? [];
+            $sec['total_actividades'] = $actividadesConteoMapa[$secId] ?? 0;
         }
         unset($sec);
 
