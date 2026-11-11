@@ -13,29 +13,73 @@ class BibliotecaController extends BaseController
     {
         $aporteModel = new AporteBibliotecaModel();
 
-        // Filtros opcionales por GET
+        // Filtros opcionales por GET (Categoria, Carrera y Buscador)
         $categoriaSeleccionada = $this->request->getGet('categoria');
-        $busqueda = $this->request->getGet('q');
+        $carreraSeleccionada   = $this->request->getGet('carrera');
+        $busqueda              = $this->request->getGet('q');
 
         if ($categoriaSeleccionada === 'todas' || empty($categoriaSeleccionada)) {
             $categoriaSeleccionada = null;
         }
 
-        // Obtener aportes con los datos del usuario que lo subió
-        $aportes = $aporteModel->obtenerTodosConUsuario($categoriaSeleccionada, $busqueda);
+        if ($carreraSeleccionada === 'todas' || empty($carreraSeleccionada)) {
+            $carreraSeleccionada = null;
+        }
+
+        // Obtener aportes con los datos del usuario que lo subió y filtros aplicados
+        $aportes = $aporteModel->obtenerTodosConUsuario($categoriaSeleccionada, $busqueda, $carreraSeleccionada);
+
+        // Definición de carreras disponibles en la UMC
+        $carrerasDefinidas = [
+            'todas'   => ['nombre' => 'Todas las Carreras', 'icono' => 'bx-grid-alt', 'color' => '#2563eb'],
+            'ING-INF' => ['nombre' => 'Informática', 'escuela' => 'Ingeniería en Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
+            'ING-MAR' => ['nombre' => 'Marítima', 'escuela' => 'Ingeniería Marítima', 'icono' => 'bx-anchor', 'color' => '#0284c7'],
+            'ING-AMB' => ['nombre' => 'Ambiental', 'escuela' => 'Ingeniería Ambiental', 'icono' => 'bx-leaf', 'color' => '#10b981'],
+            'ADM'     => ['nombre' => 'Administración', 'escuela' => 'Licenciatura en Administración', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
+            'TUR'     => ['nombre' => 'Turismo', 'escuela' => 'Licenciatura en Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
+            'GENERAL' => ['nombre' => 'General / Tronco Común', 'escuela' => 'Materias Básicas y Generales', 'icono' => 'bx-book-open', 'color' => '#8b5cf6'],
+        ];
 
         // Conteos para los botones/tabs de categorías
+        $conteosBuilder = function($cat = null) use ($carreraSeleccionada) {
+            $m = new AporteBibliotecaModel();
+            if ($cat) {
+                $m->where('categoria', $cat);
+            }
+            if ($carreraSeleccionada) {
+                $m->groupStart()
+                  ->where('carrera', $carreraSeleccionada)
+                  ->orWhere('carrera', 'GENERAL')
+                  ->groupEnd();
+            }
+            return $m->countAllResults();
+        };
+
         $conteos = [
-            'todos'      => (new AporteBibliotecaModel())->countAllResults(),
-            'guias'      => (new AporteBibliotecaModel())->where('categoria', 'guias')->countAllResults(),
-            'ejercicios' => (new AporteBibliotecaModel())->where('categoria', 'ejercicios')->countAllResults(),
-            'resumenes'  => (new AporteBibliotecaModel())->where('categoria', 'resumenes')->countAllResults(),
-            'otros'      => (new AporteBibliotecaModel())->where('categoria', 'otros')->countAllResults(),
+            'todos'      => $conteosBuilder(),
+            'guias'      => $conteosBuilder('guias'),
+            'ejercicios' => $conteosBuilder('ejercicios'),
+            'resumenes'  => $conteosBuilder('resumenes'),
+            'otros'      => $conteosBuilder('otros'),
+        ];
+
+        // Conteos por carrera
+        $conteosCarreras = [
+            'todas'   => (new AporteBibliotecaModel())->countAllResults(),
+            'ING-INF' => (new AporteBibliotecaModel())->where('carrera', 'ING-INF')->countAllResults(),
+            'ING-MAR' => (new AporteBibliotecaModel())->where('carrera', 'ING-MAR')->countAllResults(),
+            'ING-AMB' => (new AporteBibliotecaModel())->where('carrera', 'ING-AMB')->countAllResults(),
+            'ADM'     => (new AporteBibliotecaModel())->where('carrera', 'ADM')->countAllResults(),
+            'TUR'     => (new AporteBibliotecaModel())->where('carrera', 'TUR')->countAllResults(),
+            'GENERAL' => (new AporteBibliotecaModel())->where('carrera', 'GENERAL')->countAllResults(),
         ];
 
         $datos = [
             'aportes'              => $aportes,
             'categoriaActual'      => $categoriaSeleccionada ?? 'todas',
+            'carreraActual'        => $carreraSeleccionada ?? 'todas',
+            'carrerasDefinidas'    => $carrerasDefinidas,
+            'conteosCarreras'      => $conteosCarreras,
             'busquedaActual'       => $busqueda ?? '',
             'conteos'              => $conteos,
             'totalAportes'         => count($aportes)
@@ -49,7 +93,21 @@ class BibliotecaController extends BaseController
      */
     public function formularioSubir()
     {
-        return view('Biblioteca/subirAporte');
+        $carrerasDefinidas = [
+            'GENERAL' => 'Tronco Común / Todas las Carreras (General)',
+            'ING-INF' => 'Ingeniería en Informática',
+            'ING-MAR' => 'Ingeniería Marítima',
+            'ING-AMB' => 'Ingeniería Ambiental',
+            'ADM'     => 'Licenciatura en Administración',
+            'TUR'     => 'Licenciatura en Turismo',
+        ];
+
+        $carreraUsuario = session('carrera') ?: 'GENERAL';
+
+        return view('Biblioteca/subirAporte', [
+            'carrerasDefinidas' => $carrerasDefinidas,
+            'carreraUsuario'    => $carreraUsuario,
+        ]);
     }
 
     /**
@@ -106,6 +164,13 @@ class BibliotecaController extends BaseController
             // 3. Movemos el archivo a la subcarpeta seleccionada
             $archivo->move($rutaDestino, $nuevoNombre);
 
+            // sanitizacion y asignacion de carrera antidayanas (evita carreras inexistentes)
+            $carreraInput = (string) $this->request->getPost('carrera');
+            $carrerasValidas = ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR', 'GENERAL'];
+            if (!in_array($carreraInput, $carrerasValidas, true)) {
+                $carreraInput = session('carrera') ?: 'GENERAL';
+            }
+
             // 4. Persistencia en Base de Datos para gestión, trazabilidad y control de administración
             $tituloInput = strip_tags(trim((string) $this->request->getPost('titulo')));
             $tituloFinal = !empty($tituloInput) ? $tituloInput : pathinfo($nombreOriginal, PATHINFO_FILENAME);
@@ -117,6 +182,7 @@ class BibliotecaController extends BaseController
                     'usuario_id'      => session('usuario_id') ? (int) session('usuario_id') : null,
                     'titulo'          => $tituloFinal,
                     'categoria'       => $categoria,
+                    'carrera'         => $carreraInput,
                     'nombre_original' => $nombreOriginal,
                     'nombre_guardado' => $nuevoNombre,
                     'ruta_archivo'    => 'uploads/biblioteca/' . $categoria . '/' . $nuevoNombre,

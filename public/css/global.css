@@ -1424,6 +1424,104 @@ body.dark-mode .estado-vacio h3 {
     color: white;
 }
 
+/* Filtros por Carrera de Biblioteca */
+.filtros-carreras-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.btn-filtro-carrera {
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-filtro-carrera:hover {
+    border-color: #3b82f6;
+    color: #1e3a8a;
+    background: #eff6ff;
+}
+
+.btn-filtro-carrera.activo {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.badge-conteo-carrera {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.btn-filtro-carrera.activo .badge-conteo-carrera {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+body.dark-mode .btn-filtro-carrera,
+html.dark-mode .btn-filtro-carrera {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .btn-filtro-carrera:hover,
+html.dark-mode .btn-filtro-carrera:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+    border-color: #60a5fa !important;
+}
+
+body.dark-mode .btn-filtro-carrera.activo,
+html.dark-mode .btn-filtro-carrera.activo {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+/* Badge de Carrera en la Tarjeta de Biblioteca */
+.badge-carrera-biblioteca {
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.badge-carrera-ing-inf { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-carrera-ing-mar { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.badge-carrera-ing-amb { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.badge-carrera-adm     { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-carrera-tur     { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+.badge-carrera-general { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+body.dark-mode .badge-carrera-ing-inf { background: #1e3a8a33 !important; color: #93c5fd !important; border-color: #1e40af !important; }
+body.dark-mode .badge-carrera-ing-mar { background: #0369a133 !important; color: #7dd3fc !important; border-color: #0284c7 !important; }
+body.dark-mode .badge-carrera-ing-amb { background: #065f4633 !important; color: #6ee7b7 !important; border-color: #059669 !important; }
+body.dark-mode .badge-carrera-adm     { background: #78350f33 !important; color: #fde68a !important; border-color: #d97706 !important; }
+body.dark-mode .badge-carrera-tur     { background: #83184333 !important; color: #f472b6 !important; border-color: #db2777 !important; }
+body.dark-mode .badge-carrera-general { background: #4c1d9533 !important; color: #c4b5fd !important; border-color: #7c3aed !important; }
+
 /* Grid de Tarjeticas de Aportes */
 .grid-aportes {
     display: grid;

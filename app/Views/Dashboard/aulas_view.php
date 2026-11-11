@@ -70,6 +70,25 @@
     <!-- PESTAÑA 1: MIS MATERIAS / AULAS VIRTUALES (Grid tipo Classroom)           -->
     <div id="tab-seccion-materias" class="tab-contenido-aulas">
         <?php if (!empty($secciones) && count($secciones) > 0): ?>
+            <!-- Filtros Rápidos por Carrera (Filtro por Carrera del Estudiante) -->
+            <div class="filtros-carrera-wrapper" style="margin-bottom: 14px;">
+                <div class="filtros-carrera-label" style="font-size: 0.82rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+                    <i class="bx bx-filter-alt"></i> Filtrar Materias por Carrera:
+                </div>
+                <div class="filtros-carreras-pills">
+                    <?php foreach ($carrerasDefinidas as $cod => $info): ?>
+                        <?php
+                            $activo = ($carreraActual === $cod);
+                            $conteoSec = $conteosSeccionesCarreras[$cod] ?? 0;
+                        ?>
+                        <a href="<?= base_url('aulas?carrera=' . urlencode($cod)) ?>" class="btn-filtro-carrera <?= $activo ? 'activo' : '' ?>">
+                            <i class="bx <?= esc($info['icono']) ?>"></i> <?= esc($info['nombre']) ?>
+                            <span class="badge-conteo-carrera"><?= (int)$conteoSec ?></span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
             <!-- Barra de Búsqueda y Filtros de Materias (Antidayanas & Case/Accent-Insensitive) -->
             <div class="aulas-search-toolbar">
                 <div class="aulas-search-input-wrapper">
@@ -124,6 +143,11 @@
                             <div class="aula-header-info">
                                 <span class="badge-codigo-materia"><?= esc($sec['codigo_materia']) ?></span>
                                 <span class="badge-seccion-materia">Secc. <?= esc($sec['codigo_seccion']) ?></span>
+                                <?php if (!empty($sec['carrera'])): ?>
+                                    <span class="badge-carrera-biblioteca badge-carrera-<?= strtolower(esc($sec['carrera'])) ?>" style="font-size: 0.68rem; padding: 2px 6px;">
+                                        <?= esc($sec['carrera']) ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($sec['semestre_trayecto'])): ?>
                                     <span class="badge-semestre">Semestre <?= esc($sec['semestre_trayecto']) ?></span>
                                 <?php endif; ?>

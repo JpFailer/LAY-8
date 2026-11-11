@@ -60,7 +60,23 @@ class AulasController extends BaseController
         $actividadModel   = new ActividadClaseModel();
         $aulasModel       = new AulasModel();
 
-        // sacar secciones segun el rol del usuario
+        // Obtener carrera del usuario (sesión o base de datos)
+        $usuarioCarrera = session()->get('carrera');
+        if (!$usuarioCarrera && $usuarioId) {
+            $u = (new \App\Models\UsuarioModel())->find($usuarioId);
+            $usuarioCarrera = $u['carrera'] ?? null;
+            if ($usuarioCarrera) {
+                session()->set('carrera', $usuarioCarrera);
+            }
+        }
+
+        // Filtro de carrera: Si el estudiante/usuario tiene una carrera marcada, filtrar por defecto solo su carrera
+        $carreraFiltro = $this->request->getGet('carrera');
+        if ($carreraFiltro === null) {
+            $carreraFiltro = !empty($usuarioCarrera) ? $usuarioCarrera : 'todas';
+        }
+
+        // sacar secciones segun el rol del usuario y carrera seleccionada
         $secciones = [];
         if ($rol === 'profesor') {
             $secciones = (new SeccionModel())
@@ -69,20 +85,43 @@ class AulasController extends BaseController
                 ->where('secciones.profesor_id', $usuarioId)
                 ->findAll();
         } elseif (in_array($rol, ['administrador', 'admin'], true)) {
-            // si es admin ve todo el campus sin estar inscrito
-            $secciones = (new SeccionModel())
+            // si es admin ve las secciones del campus filtradas por su carrera o la seleccionada
+            $builder = (new SeccionModel())
                 ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
                 ->join('materias', 'materias.id = secciones.materia_id')
-                ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
-                ->findAll();
+                ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
+
+            if ($carreraFiltro && $carreraFiltro !== 'todas') {
+                $builder->where('secciones.carrera', $carreraFiltro);
+            }
+            $secciones = $builder->findAll();
         } else {
-            $secciones = $inscripcionModel
+            $builder = $inscripcionModel
                 ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
                 ->join('secciones', 'secciones.id = inscripciones.seccion_id')
                 ->join('materias', 'materias.id = secciones.materia_id')
                 ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
-                ->where('inscripciones.estudiante_id', $usuarioId)
-                ->findAll();
+                ->where('inscripciones.estudiante_id', $usuarioId);
+
+            if ($carreraFiltro && $carreraFiltro !== 'todas') {
+                $builder->where('secciones.carrera', $carreraFiltro);
+            }
+            $secciones = $builder->findAll();
+
+            // Si el estudiante aun no ha registrado inscripciones, mostramos las secciones oficiales de su carrera
+            if (empty($secciones) && !empty($usuarioCarrera)) {
+                $secBuilder = (new SeccionModel())
+                    ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+                    ->join('materias', 'materias.id = secciones.materia_id')
+                    ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
+
+                if ($carreraFiltro && $carreraFiltro !== 'todas') {
+                    $secBuilder->where('secciones.carrera', $carreraFiltro);
+                } else {
+                    $secBuilder->where('secciones.carrera', $usuarioCarrera);
+                }
+                $secciones = $secBuilder->findAll();
+            }
         }
 
         $seccionesIds = !empty($secciones) ? array_column($secciones, 'id') : [];
@@ -205,9 +244,32 @@ class AulasController extends BaseController
         // 6. Lista de aulas del campus para el selector del armado de horario
         $todasAulas = $aulasModel->orderBy('alias_pdf', 'ASC')->findAll();
 
+        $carrerasDefinidas = [
+            'todas'   => ['nombre' => 'Todas las Carreras', 'icono' => 'bx-grid-alt'],
+            'ING-INF' => ['nombre' => 'Informática', 'icono' => 'bx-code-alt'],
+            'ING-MAR' => ['nombre' => 'Marítima', 'icono' => 'bx-anchor'],
+            'ING-AMB' => ['nombre' => 'Ambiental', 'icono' => 'bx-leaf'],
+            'ADM'     => ['nombre' => 'Administración', 'icono' => 'bx-briefcase-alt-2'],
+            'TUR'     => ['nombre' => 'Turismo', 'icono' => 'bx-compass'],
+        ];
+
+        // Conteos de secciones por carrera
+        $conteosSeccionesCarreras = [
+            'todas'   => (new SeccionModel())->countAllResults(),
+            'ING-INF' => (new SeccionModel())->where('carrera', 'ING-INF')->countAllResults(),
+            'ING-MAR' => (new SeccionModel())->where('carrera', 'ING-MAR')->countAllResults(),
+            'ING-AMB' => (new SeccionModel())->where('carrera', 'ING-AMB')->countAllResults(),
+            'ADM'     => (new SeccionModel())->where('carrera', 'ADM')->countAllResults(),
+            'TUR'     => (new SeccionModel())->where('carrera', 'TUR')->countAllResults(),
+        ];
+
         $datosVista = [
             'secciones'        => $secciones,
             'totalMaterias'    => count($secciones),
+            'carreraActual'    => $carreraFiltro ?? 'todas',
+            'usuarioCarrera'   => $usuarioCarrera,
+            'carrerasDefinidas'=> $carrerasDefinidas,
+            'conteosSeccionesCarreras' => $conteosSeccionesCarreras,
             'horarioSemanal'   => $horarioSemanal,
             'grillaHorarios'   => $grillaHorarios,
             'actividades'      => $actividades,

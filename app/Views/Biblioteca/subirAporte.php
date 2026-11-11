@@ -474,6 +474,21 @@
         </div>
 
         <div class="grupo-campo">
+            <label for="carrera">Carrera o Área de Estudio <span style="color:#ef4444;">*</span></label>
+            <select name="carrera" id="carrera" required>
+                <?php 
+                    $carrSeleccionada = old('carrera', $carreraUsuario ?? 'GENERAL');
+                ?>
+                <option value="GENERAL" <?= ($carrSeleccionada === 'GENERAL') ? 'selected' : '' ?>>Tronco Común / Todas las Carreras (General)</option>
+                <option value="ING-INF" <?= ($carrSeleccionada === 'ING-INF') ? 'selected' : '' ?>>Ingeniería en Informática</option>
+                <option value="ING-MAR" <?= ($carrSeleccionada === 'ING-MAR') ? 'selected' : '' ?>>Ingeniería Marítima</option>
+                <option value="ING-AMB" <?= ($carrSeleccionada === 'ING-AMB') ? 'selected' : '' ?>>Ingeniería Ambiental</option>
+                <option value="ADM" <?= ($carrSeleccionada === 'ADM') ? 'selected' : '' ?>>Licenciatura en Administración</option>
+                <option value="TUR" <?= ($carrSeleccionada === 'TUR') ? 'selected' : '' ?>>Licenciatura en Turismo</option>
+            </select>
+        </div>
+
+        <div class="grupo-campo">
             <label>Selecciona tu documento <span style="color:#ef4444;">*</span></label>
             <div class="dropzone-file">
                 <input type="file" name="aporte" id="input-aporte" accept=".pdf,.doc,.docx,.ppt,.pptx" required onchange="mostrarNombreArchivo(this)">

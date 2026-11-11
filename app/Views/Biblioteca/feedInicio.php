@@ -34,6 +34,9 @@
             <?php if ($categoriaActual && $categoriaActual !== 'todas'): ?>
                 <input type="hidden" name="categoria" value="<?= esc($categoriaActual) ?>">
             <?php endif; ?>
+            <?php if ($carreraActual && $carreraActual !== 'todas'): ?>
+                <input type="hidden" name="carrera" value="<?= esc($carreraActual) ?>">
+            <?php endif; ?>
             <input type="text" id="buscador-vivo" name="q" value="<?= esc($busquedaActual) ?>" placeholder="Buscar por título, materia o nombre del autor..." autocomplete="off">
             <button type="submit">
                 <i class="bx bx-search"></i> Buscar
@@ -41,33 +44,76 @@
         </form>
     </div>
 
+    <!-- Barra de Filtros por Carrera (Estudiantes y Docentes) -->
+    <div class="filtros-carrera-wrapper" style="margin-bottom: 16px;">
+        <div class="filtros-carrera-label" style="font-size: 0.82rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+            <i class="bx bx-filter-alt"></i> Filtrar por Carrera:
+        </div>
+        <div class="filtros-carreras-pills">
+            <?php foreach ($carrerasDefinidas as $cod => $info): ?>
+                <?php
+                    $activo = ($carreraActual === $cod);
+                    $urlFiltro = base_url('biblioteca?carrera=' . urlencode($cod));
+                    if ($categoriaActual && $categoriaActual !== 'todas') {
+                        $urlFiltro .= '&categoria=' . urlencode($categoriaActual);
+                    }
+                    if (!empty($busquedaActual)) {
+                        $urlFiltro .= '&q=' . urlencode($busquedaActual);
+                    }
+                    $conteoCar = $conteosCarreras[$cod] ?? 0;
+                ?>
+                <a href="<?= $urlFiltro ?>" class="btn-filtro-carrera <?= $activo ? 'activo' : '' ?>" data-carrera="<?= esc($cod) ?>">
+                    <i class="bx <?= esc($info['icono']) ?>"></i> <?= esc($info['nombre']) ?>
+                    <span class="badge-conteo-carrera"><?= (int)$conteoCar ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
     <!-- Pestañas de Filtros por Categoría (Chips) -->
+    <?php
+        $baseParams = [];
+        if ($carreraActual && $carreraActual !== 'todas') {
+            $baseParams['carrera'] = $carreraActual;
+        }
+        if (!empty($busquedaActual)) {
+            $baseParams['q'] = $busquedaActual;
+        }
+
+        $generarUrlCat = function($cat = null) use ($baseParams) {
+            $p = $baseParams;
+            if ($cat && $cat !== 'todas') {
+                $p['categoria'] = $cat;
+            }
+            return base_url('biblioteca' . (!empty($p) ? '?' . http_build_query($p) : ''));
+        };
+    ?>
     <nav class="filtros-categorias">
-        <a href="<?= base_url('biblioteca' . (!empty($busquedaActual) ? '?q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('todas') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'todas') ? 'activo' : '' ?>">
             <i class="bx bx-grid-alt"></i> Todos los Aportes
             <span class="badge-conteo"><?= (int) ($conteos['todos'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=guias' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('guias') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'guias') ? 'activo' : '' ?>">
             <i class="bx bx-book-bookmark"></i> Guías
             <span class="badge-conteo"><?= (int) ($conteos['guias'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=ejercicios' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('ejercicios') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'ejercicios') ? 'activo' : '' ?>">
             <i class="bx bx-edit-alt"></i> Ejercicios
             <span class="badge-conteo"><?= (int) ($conteos['ejercicios'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=resumenes' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('resumenes') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'resumenes') ? 'activo' : '' ?>">
             <i class="bx bx-file-blank"></i> Resúmenes
             <span class="badge-conteo"><?= (int) ($conteos['resumenes'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=otros' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('otros') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'otros') ? 'activo' : '' ?>">
             <i class="bx bx-folder"></i> Otros
             <span class="badge-conteo"><?= (int) ($conteos['otros'] ?? 0) ?></span>
@@ -126,7 +172,17 @@
                                 <i class="<?= $iconoTag ?>"></i>
                             </div>
                             <div class="tarjeta-info-top">
-                                <span class="badge-categoria <?= $catBadgeClass ?>"><?= $catTexto ?></span>
+                                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px;">
+                                    <span class="badge-categoria <?= $catBadgeClass ?>"><?= $catTexto ?></span>
+                                    <?php 
+                                        $carrCod = $aporte['carrera'] ?? ($aporte['autor_carrera'] ?? 'GENERAL');
+                                        if (empty($carrCod)) $carrCod = 'GENERAL';
+                                        $infoCarrera = $carrerasDefinidas[$carrCod] ?? null;
+                                    ?>
+                                    <span class="badge-carrera-biblioteca badge-carrera-<?= strtolower(esc($carrCod)) ?>">
+                                        <?= esc($infoCarrera['nombre'] ?? $carrCod) ?>
+                                    </span>
+                                </div>
                                 <h3 class="titulo-archivo" title="<?= esc($aporte['titulo']) ?>">
                                     <?= esc($aporte['titulo']) ?>
                                 </h3>
