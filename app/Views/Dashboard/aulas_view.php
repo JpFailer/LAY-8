@@ -19,6 +19,9 @@
                 <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
                     <i class="bx bx-calendar-plus"></i>  Armar / Cargar Horario
                 </button>
+                <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalExtemporanea()" title="Agregar materia extemporánea a tu registro">
+                    <i class="bx bx-plus-circle"></i> Agregar Materia Extemporánea
+                </button>
             <?php endif; ?>
             <?php if (in_array(session('rol'), ['profesor', 'administrador', 'admin'], true)): ?>
                 <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalNuevaActividad()">
@@ -70,25 +73,6 @@
     <!-- PESTAÑA 1: MIS MATERIAS / AULAS VIRTUALES (Grid tipo Classroom)           -->
     <div id="tab-seccion-materias" class="tab-contenido-aulas">
         <?php if (!empty($secciones) && count($secciones) > 0): ?>
-            <!-- Filtros Rápidos por Carrera (Filtro por Carrera del Estudiante) -->
-            <div class="filtros-carrera-wrapper" style="margin-bottom: 14px;">
-                <div class="filtros-carrera-label" style="font-size: 0.82rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
-                    <i class="bx bx-filter-alt"></i> Filtrar Materias por Carrera:
-                </div>
-                <div class="filtros-carreras-pills">
-                    <?php foreach ($carrerasDefinidas as $cod => $info): ?>
-                        <?php
-                            $activo = ($carreraActual === $cod);
-                            $conteoSec = $conteosSeccionesCarreras[$cod] ?? 0;
-                        ?>
-                        <a href="<?= base_url('aulas?carrera=' . urlencode($cod)) ?>" class="btn-filtro-carrera <?= $activo ? 'activo' : '' ?>">
-                            <i class="bx <?= esc($info['icono']) ?>"></i> <?= esc($info['nombre']) ?>
-                            <span class="badge-conteo-carrera"><?= (int)$conteoSec ?></span>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
             <!-- Barra de Búsqueda y Filtros de Materias (Antidayanas & Case/Accent-Insensitive) -->
             <div class="aulas-search-toolbar">
                 <div class="aulas-search-input-wrapper">
@@ -222,9 +206,16 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
-                                <i class="bx bx-plus"></i> Tarea
-                            </button>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
+                                    <i class="bx bx-plus"></i> Tarea
+                                </button>
+                                <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
+                                    <button type="button" class="btn-quitar-materia-mini" style="background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 4px 8px; font-size: 0.76rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;" onclick="confirmarDesinscribirMateria(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')" title="Desincorporar materia de tu registro">
+                                        <i class="bx bx-trash"></i> Desincorporar
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -597,9 +588,9 @@
                             <!-- Filtros rápidos por Turno -->
                             <div class="selector-turnos-bloques">
                                 <button type="button" class="btn-turno-filtro activo" data-filtro-turno="todos" onclick="filtrarTurnosBloques('todos')">Todos</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Mañana" onclick="filtrarTurnosBloques('Mañana')">☀️ Mañana</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Tarde" onclick="filtrarTurnosBloques('Tarde')">⛅ Tarde</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Noche" onclick="filtrarTurnosBloques('Noche')">🌙 Noche</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Mañana" onclick="filtrarTurnosBloques('Mañana')"><i class="bx bx-sun"></i> Mañana</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Tarde" onclick="filtrarTurnosBloques('Tarde')"><i class="bx bx-cloud"></i> Tarde</button>
+                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Noche" onclick="filtrarTurnosBloques('Noche')"><i class="bx bx-moon"></i> Noche</button>
                             </div>
 
                             <!-- Cuadrícula interactiva de bloques horarios -->
@@ -737,6 +728,48 @@
                 <i class="bx bx-check-shield"></i> Confirmar y Enviar al Profesor
             </button>
         </form>
+    </div>
+</div>
+
+<!-- Modal: Inscripción de Materia Extemporánea (Formal, sin emojis) -->
+<div id="modalInscripcionExtemporanea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalExtemporanea()">
+    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 650px;">
+        <div class="modal-aula-header">
+            <h3><i class="bx bx-plus-circle"></i> Inscripción de Asignatura Extemporánea</h3>
+            <span onclick="cerrarModalExtemporanea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
+        </div>
+        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 16px;">
+            Permite agregar asignaturas autorizadas por la coordinación docente o inscripciones extemporáneas fuera del registro oficial UPE-002.
+        </p>
+
+        <!-- Filtros y buscador del modal -->
+        <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 220px; position: relative;">
+                <input type="text" id="buscador-modal-extemporanea" class="input-lay8" placeholder="Buscar por asignatura o código (ej: Programación, CAL604)..." oninput="buscarMateriasExtemporaneas(this.value)">
+            </div>
+            <select id="filtro-carrera-extemporanea" class="input-lay8" style="width: auto; min-width: 170px;" onchange="buscarMateriasExtemporaneas(document.getElementById('buscador-modal-extemporanea').value)">
+                <option value="">Todas las carreras</option>
+                <option value="ING-INF" <?= ($usuarioCarrera === 'ING-INF') ? 'selected' : '' ?>>Informática</option>
+                <option value="ING-MAR" <?= ($usuarioCarrera === 'ING-MAR') ? 'selected' : '' ?>>Marítima</option>
+                <option value="ING-AMB" <?= ($usuarioCarrera === 'ING-AMB') ? 'selected' : '' ?>>Ambiental</option>
+                <option value="ADM" <?= ($usuarioCarrera === 'ADM') ? 'selected' : '' ?>>Administración</option>
+                <option value="TUR" <?= ($usuarioCarrera === 'TUR') ? 'selected' : '' ?>>Turismo</option>
+            </select>
+        </div>
+
+        <!-- Contenedor de resultados -->
+        <div id="lista-resultados-extemporanea" style="max-height: 340px; overflow-y: auto; border: 1px solid rgba(226, 232, 240, 0.15); border-radius: 8px; padding: 8px; background: rgba(15, 23, 42, 0.3);">
+            <div style="text-align: center; padding: 24px 10px; color: #94a3b8; font-size: 0.86rem;">
+                <i class="bx bx-search-alt" style="font-size: 1.8rem; display: block; margin-bottom: 6px;"></i>
+                Ingresa el nombre o código de la asignatura para buscar secciones disponibles.
+            </div>
+        </div>
+
+        <div style="margin-top: 14px; text-align: right;">
+            <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="cerrarModalExtemporanea()">
+                Cerrar
+            </button>
+        </div>
     </div>
 </div>
 

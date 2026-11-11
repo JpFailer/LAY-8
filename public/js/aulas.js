@@ -656,3 +656,167 @@ const BASE_URL = window.BASE_URL || '/';
             if (grid) grid.style.gridTemplateColumns = '';
         }
     }
+
+    // =========================================================================
+    // GESTIÓN DE ASIGNATURAS EXTEMPORÁNEAS (MODAL, BÚSQUEDA E INSCRIPCIÓN FORMAL)
+    // =========================================================================
+
+    let debounceExtemporaneaTimer = null;
+
+    function abrirModalExtemporanea() {
+        const modal = document.getElementById('modalInscripcionExtemporanea');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        const input = document.getElementById('buscador-modal-extemporanea');
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+        buscarMateriasExtemporaneas('');
+    }
+
+    function cerrarModalExtemporanea() {
+        const modal = document.getElementById('modalInscripcionExtemporanea');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function buscarMateriasExtemporaneas(termino) {
+        clearTimeout(debounceExtemporaneaTimer);
+        debounceExtemporaneaTimer = setTimeout(() => {
+            ejecutarBusquedaExtemporanea(termino);
+        }, 220);
+    }
+
+    function ejecutarBusquedaExtemporanea(termino) {
+        const contenedor = document.getElementById('lista-resultados-extemporanea');
+        const carreraSelect = document.getElementById('filtro-carrera-extemporanea');
+        const carrera = carreraSelect ? carreraSelect.value : '';
+
+        if (!contenedor) return;
+
+        contenedor.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #94a3b8; font-size: 0.86rem;">
+                <i class="bx bx-loader-alt bx-spin" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i>
+                Consultando oferta académica...
+            </div>
+        `;
+
+        const url = BASE_URL + 'api/aulas/buscar-extemporaneas?q=' + encodeURIComponent(termino) + '&carrera=' + encodeURIComponent(carrera);
+
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success || !data.secciones || data.secciones.length === 0) {
+                contenedor.innerHTML = `
+                    <div style="text-align: center; padding: 24px 10px; color: #94a3b8; font-size: 0.86rem;">
+                        <i class="bx bx-info-circle" style="font-size: 1.8rem; display: block; margin-bottom: 6px;"></i>
+                        No se encontraron asignaturas disponibles con los criterios seleccionados.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+            data.secciones.forEach(sec => {
+                const prof = (sec.prof_nombre || sec.prof_apellido) ? `${sec.prof_nombre || ''} ${sec.prof_apellido || ''}`.trim() : 'Docente UMC por asignar';
+                const yaInscrita = !!sec.ya_inscrita;
+                const materiaEscapada = (sec.materia || '').replace(/'/g, "\\'");
+
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(30, 41, 59, 0.6); border-radius: 8px; border: 1px solid rgba(226, 232, 240, 0.08); gap: 10px;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <span style="font-size: 0.72rem; padding: 2px 6px; background: #2563eb; color: #fff; border-radius: 4px; font-weight: 600;">${sec.codigo_materia || ''}</span>
+                                <span style="font-size: 0.72rem; padding: 2px 6px; background: rgba(226, 232, 240, 0.1); color: #cbd5e1; border-radius: 4px;">Secc. ${sec.codigo_seccion || ''}</span>
+                                <span style="font-size: 0.72rem; padding: 2px 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-radius: 4px;">${sec.carrera || ''}</span>
+                                ${sec.semestre_trayecto ? `<span style="font-size: 0.72rem; color: #94a3b8;">Semestre ${sec.semestre_trayecto}</span>` : ''}
+                            </div>
+                            <div style="font-size: 0.92rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                ${sec.materia || ''}
+                            </div>
+                            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">
+                                <i class="bx bx-user"></i> ${prof}
+                            </div>
+                        </div>
+                        <div>
+                            ${yaInscrita ? `
+                                <span style="font-size: 0.78rem; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(16, 185, 129, 0.1); border-radius: 6px;">
+                                    <i class="bx bx-check"></i> Inscrita
+                                </span>
+                            ` : `
+                                <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="inscribirMateriaExtemporanea(${sec.id}, '${materiaEscapada}')">
+                                    <i class="bx bx-plus"></i> Inscribir
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            contenedor.innerHTML = html;
+        })
+        .catch(() => {
+            contenedor.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #ef4444; font-size: 0.86rem;">
+                    <i class="bx bx-error" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i>
+                    Error de comunicación al consultar el catálogo de asignaturas.
+                </div>
+            `;
+        });
+    }
+
+    function inscribirMateriaExtemporanea(seccionId, nombreMateria) {
+        if (!confirm('¿Deseas formalizar la inscripción extemporánea de la asignatura ' + nombreMateria + '?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('seccion_id', seccionId);
+
+        fetch(BASE_URL + 'api/aulas/inscribir-extemporanea', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.mensaje || 'Asignatura inscrita correctamente.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo inscribir la asignatura.'));
+            }
+        })
+        .catch(() => {
+            alert('Error de conexión al procesar la inscripción.');
+        });
+    }
+
+    function confirmarDesinscribirMateria(seccionId, nombreMateria) {
+        if (!confirm('¿Confirmas que deseas desincorporar la asignatura ' + nombreMateria + ' de tu registro académico?\n\nEsta acción quitará el aula y sus horarios asociados.')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('seccion_id', seccionId);
+
+        fetch(BASE_URL + 'api/aulas/desinscribir-materia', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.mensaje || 'Asignatura desincorporada correctamente.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo desincorporar la asignatura.'));
+            }
+        })
+        .catch(() => {
+            alert('Error de red al procesar la desincorporación.');
+        });
+    }

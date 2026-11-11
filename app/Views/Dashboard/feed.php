@@ -104,9 +104,15 @@
               <a href="<?= base_url('biblioteca') ?>" class="btn-empty-jornada-cta">
                 <i class="bx bx-book-reader"></i> Explorar Biblioteca
               </a>
-              <a href="<?= base_url('aulas') ?>" class="btn-empty-jornada-secondary">
-                <i class="bx bx-time"></i> Ver Horario Semanal
-              </a>
+              <?php if ($userRol === 'profesor'): ?>
+                <a href="<?= base_url('docente') ?>" class="btn-empty-jornada-secondary">
+                  <i class="bx bx-chalkboard"></i> Ir a Panel Docente
+                </a>
+              <?php else: ?>
+                <a href="<?= base_url('aulas?tab=horario') ?>" class="btn-empty-jornada-secondary">
+                  <i class="bx bx-time"></i> Ver Horario Semanal
+                </a>
+              <?php endif; ?>
             </div>
           </div>
         <?php endif; ?>
@@ -399,26 +405,51 @@
             <span>Mapa UMC</span>
           </a>
 
-          <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #f3e8ff; color: #7c3aed;">
-              <i class="bx bx-time"></i>
-            </div>
-            <span>Mi Horario</span>
-          </a>
+          <?php if ($userRol === 'profesor'): ?>
+            <!-- Accesos rápidos exclusivos para Profesores (Sin aulas ni horario de estudiantes) -->
+            <a href="<?= base_url('docente') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #dcfce7; color: #059669;">
+                <i class="bx bx-chalkboard"></i>
+              </div>
+              <span>Panel Docente</span>
+            </a>
 
-          <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #dcfce7; color: #166534;">
-              <i class="bx bx-cloud-upload"></i>
-            </div>
-            <span>Subir Aporte</span>
-          </a>
+            <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #e0f2fe; color: #0284c7;">
+                <i class="bx bx-cloud-upload"></i>
+              </div>
+              <span>Subir Aporte</span>
+            </a>
 
-          <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #ffedd5; color: #c2410c;">
-              <i class="bx bx-door-open"></i>
-            </div>
-            <span>Aulas UMC</span>
-          </a>
+            <a href="<?= base_url('biblioteca') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #fef3c7; color: #d97706;">
+                <i class="bx bx-book-reader"></i>
+              </div>
+              <span>Biblioteca</span>
+            </a>
+          <?php else: ?>
+            <!-- Accesos rápidos para Estudiantes y Administradores -->
+            <a href="<?= base_url('aulas?tab=horario') ?>" class="btn-acceso-rapido" title="Ver mi horario de clases semanal">
+              <div class="icono-acceso-rapido" style="background: #f3e8ff; color: #7c3aed;">
+                <i class="bx bx-time"></i>
+              </div>
+              <span>Mi Horario</span>
+            </a>
+
+            <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #dcfce7; color: #166534;">
+                <i class="bx bx-cloud-upload"></i>
+              </div>
+              <span>Subir Aporte</span>
+            </a>
+
+            <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido" title="Explorar aulas y materias de mi carrera">
+              <div class="icono-acceso-rapido" style="background: #ffedd5; color: #c2410c;">
+                <i class="bx bx-door-open"></i>
+              </div>
+              <span>Aulas UMC</span>
+            </a>
+          <?php endif; ?>
         </div>
       </div>
 

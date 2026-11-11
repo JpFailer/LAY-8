@@ -67,6 +67,9 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('/aulas/eliminar-actividad/(:num)', 'AulasController::eliminarActividad/$1');
     $routes->post('/aulas/entregar-tarea/(:num)', 'AulasController::entregarTarea/$1');
     $routes->get('/aulas/descargar-mi-entrega/(:num)', 'AulasController::descargarMiEntrega/$1');
+    $routes->get('/api/aulas/buscar-extemporaneas', 'AulasController::buscarExtemporaneas');
+    $routes->post('/api/aulas/inscribir-extemporanea', 'AulasController::inscribirExtemporanea');
+    $routes->post('/api/aulas/desinscribir-materia', 'AulasController::desinscribirMateria');
     
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');

@@ -1150,7 +1150,7 @@ class AdminController extends BaseController
         }
 
         $secciones = $db->table('secciones')
-            ->select('secciones.id, secciones.codigo_seccion, materias.nombre as materia, materias.codigo_materia, materias.carrera')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.carrera, materias.nombre as materia, materias.codigo_materia')
             ->join('materias', 'materias.id = secciones.materia_id')
             ->where('secciones.profesor_id', $profesorId)
             ->orderBy('materias.nombre', 'ASC')
@@ -1173,7 +1173,7 @@ class AdminController extends BaseController
         $db = \Config\Database::connect();
 
         $builder = $db->table('secciones')
-            ->select('secciones.id, secciones.codigo_seccion, secciones.profesor_id, materias.nombre as materia, materias.codigo_materia, materias.carrera, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.profesor_id, secciones.carrera, materias.nombre as materia, materias.codigo_materia, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
             ->join('materias', 'materias.id = secciones.materia_id')
             ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
 
@@ -1182,7 +1182,7 @@ class AdminController extends BaseController
                 ->like('materias.nombre', $q)
                 ->orLike('materias.codigo_materia', $q)
                 ->orLike('secciones.codigo_seccion', $q)
-                ->orLike('materias.carrera', $q)
+                ->orLike('secciones.carrera', $q)
                 ->groupEnd();
         }
 

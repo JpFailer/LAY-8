@@ -154,7 +154,7 @@ function desbanearUsuario(id, username) {
 }
 
 function eliminarUsuario(id, username) {
-    if (!confirm('⚠️ ¿Estás seguro de eliminar PERMANENTEMENTE a @' + username + '? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Estás seguro de eliminar permanentemente a @' + username + '? Esta acción no se puede deshacer.')) return;
 
     fetch(BASE_URL + 'api/admin/usuarios/eliminar/' + id, {
         method: 'POST',

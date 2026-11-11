@@ -388,11 +388,15 @@
 
         </a>
 
-        <a href="<?= base_url('/aulas'); ?>" class="<?= ($segmentoActual === 'aulas') ? 'active' : '' ?>">
+        <?php if ($userRol !== 'profesor'): ?>
 
-          <i class="bx bx-door-open" style="margin-right: 8px;"></i> Aulas
+          <a href="<?= base_url('/aulas'); ?>" class="<?= ($segmentoActual === 'aulas') ? 'active' : '' ?>">
 
-        </a>
+            <i class="bx bx-door-open" style="margin-right: 8px;"></i> Aulas
+
+          </a>
+
+        <?php endif; ?>
 
         <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
 

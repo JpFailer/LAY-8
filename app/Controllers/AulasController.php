@@ -53,6 +53,12 @@ class AulasController extends BaseController
         $usuarioId = (int) session()->get('usuario_id');
         $rol       = session()->get('rol') ?? 'estudiante';
 
+        // Redireccion de rol antidayanas:
+        // Los profesores gestionan sus materias, secciones, calificaciones y Classroom en su Panel Docente (/docente)
+        if ($rol === 'profesor') {
+            return redirect()->to(base_url('docente'))->with('info', 'Como profesor oficial de la UMC, gestionas tus materias y aulas virtuales desde tu Panel Docente.');
+        }
+
         $db = \Config\Database::connect();
         $inscripcionModel = new InscripcionModel();
         $claseModel       = new ClaseProgramadaModel();
@@ -76,53 +82,16 @@ class AulasController extends BaseController
             $carreraFiltro = !empty($usuarioCarrera) ? $usuarioCarrera : 'todas';
         }
 
-        // sacar secciones segun el rol del usuario y carrera seleccionada
-        $secciones = [];
-        if ($rol === 'profesor') {
-            $secciones = (new SeccionModel())
-                ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto')
-                ->join('materias', 'materias.id = secciones.materia_id')
-                ->where('secciones.profesor_id', $usuarioId)
-                ->findAll();
-        } elseif (in_array($rol, ['administrador', 'admin'], true)) {
-            // si es admin ve las secciones del campus filtradas por su carrera o la seleccionada
-            $builder = (new SeccionModel())
-                ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
-                ->join('materias', 'materias.id = secciones.materia_id')
-                ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
-
-            if ($carreraFiltro && $carreraFiltro !== 'todas') {
-                $builder->where('secciones.carrera', $carreraFiltro);
-            }
-            $secciones = $builder->findAll();
-        } else {
-            $builder = $inscripcionModel
-                ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
-                ->join('secciones', 'secciones.id = inscripciones.seccion_id')
-                ->join('materias', 'materias.id = secciones.materia_id')
-                ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
-                ->where('inscripciones.estudiante_id', $usuarioId);
-
-            if ($carreraFiltro && $carreraFiltro !== 'todas') {
-                $builder->where('secciones.carrera', $carreraFiltro);
-            }
-            $secciones = $builder->findAll();
-
-            // Si el estudiante aun no ha registrado inscripciones, mostramos las secciones oficiales de su carrera
-            if (empty($secciones) && !empty($usuarioCarrera)) {
-                $secBuilder = (new SeccionModel())
-                    ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
-                    ->join('materias', 'materias.id = secciones.materia_id')
-                    ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
-
-                if ($carreraFiltro && $carreraFiltro !== 'todas') {
-                    $secBuilder->where('secciones.carrera', $carreraFiltro);
-                } else {
-                    $secBuilder->where('secciones.carrera', $usuarioCarrera);
-                }
-                $secciones = $secBuilder->findAll();
-            }
-        }
+        // Mis Materias: Únicamente las asignaturas en las que el estudiante/usuario está formalmente inscrito
+        // en base a su Registro de Inscripción oficial UMC (UPE-002) y/o materias extemporáneas agregadas
+        $secciones = $inscripcionModel
+            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->join('secciones', 'secciones.id = inscripciones.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
+            ->where('inscripciones.estudiante_id', $usuarioId)
+            ->orderBy('materias.nombre', 'ASC')
+            ->findAll();
 
         $seccionesIds = !empty($secciones) ? array_column($secciones, 'id') : [];
 
@@ -292,6 +261,10 @@ class AulasController extends BaseController
             return redirect()->to('/login')->with('error', 'Sesión expirada.');
         }
 
+        if (session('rol') === 'profesor') {
+            return redirect()->to(base_url('docente'))->with('error', 'La carga de registros de inscripción es de uso exclusivo para estudiantes.');
+        }
+
         $archivo = $this->request->getFile('documento_pdf');
         if (!$archivo || !$archivo->isValid() || $archivo->getClientMimeType() !== 'application/pdf') {
             return redirect()->back()->with('error', 'Por favor selecciona un archivo PDF válido emitido por la UMC.');
@@ -376,6 +349,13 @@ class AulasController extends BaseController
                 return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada. Inicia sesión nuevamente.']);
             }
             return redirect()->to('/login')->with('error', 'Sesión expirada');
+        }
+
+        if ($rol === 'profesor') {
+            if ($esAjax) {
+                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Los profesores no arman horarios de estudiante.']);
+            }
+            return redirect()->to(base_url('docente'));
         }
 
         $seccionId = (int) $this->request->getPost('seccion_id');
@@ -944,5 +924,156 @@ class AulasController extends BaseController
         }
 
         return "¡Proceso exitoso! Aulas nuevas: {$importadas}, Aulas actualizadas: {$actualizadas}. Ya puedes <a href='" . base_url('mapa') . "'>ver el mapa</a>.";
+    }
+
+    /**
+     * Búsqueda en tiempo real de materias y secciones para inscripción extemporánea
+     */
+    public function buscarExtemporaneas()
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        if (!$usuarioId) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+        }
+
+        $q = trim((string)$this->request->getGet('q'));
+        $carrera = trim((string)$this->request->getGet('carrera'));
+        if (empty($carrera) || $carrera === 'todas') {
+            $carrera = null;
+        }
+
+        $db = \Config\Database::connect();
+
+        // Secciones en las que el alumno ya está inscrito
+        $inscritasRows = $db->table('inscripciones')->select('seccion_id')->where('estudiante_id', $usuarioId)->get()->getResultArray();
+        $inscritasIds = !empty($inscritasRows) ? array_map('intval', array_column($inscritasRows, 'seccion_id')) : [];
+
+        $builder = $db->table('secciones')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.carrera, materias.nombre as materia, materias.codigo_materia, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
+
+        if (!empty($carrera)) {
+            $builder->where('secciones.carrera', $carrera);
+        }
+
+        if (!empty($q)) {
+            $builder->groupStart()
+                ->like('materias.nombre', $q)
+                ->orLike('materias.codigo_materia', $q)
+                ->orLike('secciones.codigo_seccion', $q)
+                ->groupEnd();
+        }
+
+        $secciones = $builder->orderBy('materias.nombre', 'ASC')->limit(25)->get()->getResultArray();
+
+        foreach ($secciones as &$s) {
+            $s['ya_inscrita'] = in_array((int)$s['id'], $inscritasIds, true);
+        }
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'secciones' => $secciones
+        ]);
+    }
+
+    /**
+     * Inscribe una materia extemporánea al registro del estudiante
+     */
+    public function inscribirExtemporanea()
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        if (!$usuarioId) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+        }
+
+        if (session('rol') === 'profesor') {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Los profesores no inscriben asignaturas estudiantiles.']);
+        }
+
+        $seccionId = (int) $this->request->getPost('seccion_id');
+        if ($seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificador de sección inválido.']);
+        }
+
+        $db = \Config\Database::connect();
+
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección académica no encontrada.']);
+        }
+
+        // Verificar si ya está inscrita
+        $existe = $db->table('inscripciones')
+            ->where('estudiante_id', $usuarioId)
+            ->where('seccion_id', $seccionId)
+            ->countAllResults();
+
+        if ($existe > 0) {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Ya te encuentras inscrito en esta sección.']);
+        }
+
+        // Inscribir en base de datos
+        $db->table('inscripciones')->insert([
+            'estudiante_id' => $usuarioId,
+            'seccion_id'    => $seccionId,
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Asignatura {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}) inscrita exitosamente como extemporánea."
+        ]);
+    }
+
+    /**
+     * Desincorpora una materia del registro del estudiante
+     */
+    public function desinscribirMateria()
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        if (!$usuarioId) {
+            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
+        }
+
+        $seccionId = (int) $this->request->getPost('seccion_id');
+        if ($seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificador de sección inválido.']);
+        }
+
+        $db = \Config\Database::connect();
+
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
+        }
+
+        // Eliminar inscripción
+        $db->table('inscripciones')
+            ->where('estudiante_id', $usuarioId)
+            ->where('seccion_id', $seccionId)
+            ->delete();
+
+        // Eliminar bloques horarios personalizados de esta sección si existieran
+        $db->table('clases_programadas')
+            ->where('estudiante_id', $usuarioId)
+            ->where('seccion_id', $seccionId)
+            ->delete();
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Asignatura {$seccion['materia']} desincorporada de tu registro académico."
+        ]);
     }
 }
