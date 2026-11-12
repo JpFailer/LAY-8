@@ -3,20 +3,21 @@
 namespace App\Controllers;
 
 use App\Models\AporteBibliotecaModel;
+use App\Services\BibliotecaService;
 
 class BibliotecaController extends BaseController
 {
     /**
-     * Muestra la lista de aportes y materiales de la biblioteca estudiantil
+     * Muestra la lista paginada de aportes y materiales de la biblioteca estudiantil
      */
     public function index()
     {
-        $aporteModel = new AporteBibliotecaModel();
+        $bibliotecaService = new BibliotecaService();
 
-        // Filtros opcionales por GET (Categoria, Carrera y Buscador)
         $categoriaSeleccionada = $this->request->getGet('categoria');
         $carreraSeleccionada   = $this->request->getGet('carrera');
         $busqueda              = $this->request->getGet('q');
+        $pagina                = max(1, (int) $this->request->getGet('page'));
 
         if ($categoriaSeleccionada === 'todas' || empty($categoriaSeleccionada)) {
             $categoriaSeleccionada = null;
@@ -26,10 +27,15 @@ class BibliotecaController extends BaseController
             $carreraSeleccionada = null;
         }
 
-        // Obtener aportes con los datos del usuario que lo subió y filtros aplicados
-        $aportes = $aporteModel->obtenerTodosConUsuario($categoriaSeleccionada, $busqueda, $carreraSeleccionada);
+        $resultado = $bibliotecaService->obtenerAportesPaginados(
+            $categoriaSeleccionada,
+            $busqueda,
+            $carreraSeleccionada,
+            $pagina,
+            18
+        );
+        $contadores = $bibliotecaService->obtenerContadores($carreraSeleccionada);
 
-        // Definición de carreras disponibles en la UMC
         $carrerasDefinidas = [
             'todas'   => ['nombre' => 'Todas las Carreras', 'icono' => 'bx-grid-alt', 'color' => '#2563eb'],
             'ING-INF' => ['nombre' => 'Informática', 'escuela' => 'Ingeniería en Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
@@ -37,52 +43,20 @@ class BibliotecaController extends BaseController
             'ING-AMB' => ['nombre' => 'Ambiental', 'escuela' => 'Ingeniería Ambiental', 'icono' => 'bx-leaf', 'color' => '#10b981'],
             'ADM'     => ['nombre' => 'Administración', 'escuela' => 'Licenciatura en Administración', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
             'TUR'     => ['nombre' => 'Turismo', 'escuela' => 'Licenciatura en Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
-            'GENERAL' => ['nombre' => 'General / Tronco Común', 'escuela' => 'Materias Básicas y Generales', 'icono' => 'bx-book-open', 'color' => '#8b5cf6'],
-        ];
-
-        // Conteos para los botones/tabs de categorías
-        $conteosBuilder = function($cat = null) use ($carreraSeleccionada) {
-            $m = new AporteBibliotecaModel();
-            if ($cat) {
-                $m->where('categoria', $cat);
-            }
-            if ($carreraSeleccionada) {
-                $m->groupStart()
-                  ->where('carrera', $carreraSeleccionada)
-                  ->orWhere('carrera', 'GENERAL')
-                  ->groupEnd();
-            }
-            return $m->countAllResults();
-        };
-
-        $conteos = [
-            'todos'      => $conteosBuilder(),
-            'guias'      => $conteosBuilder('guias'),
-            'ejercicios' => $conteosBuilder('ejercicios'),
-            'resumenes'  => $conteosBuilder('resumenes'),
-            'otros'      => $conteosBuilder('otros'),
-        ];
-
-        // Conteos por carrera
-        $conteosCarreras = [
-            'todas'   => (new AporteBibliotecaModel())->countAllResults(),
-            'ING-INF' => (new AporteBibliotecaModel())->where('carrera', 'ING-INF')->countAllResults(),
-            'ING-MAR' => (new AporteBibliotecaModel())->where('carrera', 'ING-MAR')->countAllResults(),
-            'ING-AMB' => (new AporteBibliotecaModel())->where('carrera', 'ING-AMB')->countAllResults(),
-            'ADM'     => (new AporteBibliotecaModel())->where('carrera', 'ADM')->countAllResults(),
-            'TUR'     => (new AporteBibliotecaModel())->where('carrera', 'TUR')->countAllResults(),
-            'GENERAL' => (new AporteBibliotecaModel())->where('carrera', 'GENERAL')->countAllResults(),
+            'GENERAL' => ['nombre' => 'Materias Generales', 'escuela' => 'Materias Básicas y Generales', 'icono' => 'bx-book-open', 'color' => '#8b5cf6'],
         ];
 
         $datos = [
-            'aportes'              => $aportes,
-            'categoriaActual'      => $categoriaSeleccionada ?? 'todas',
-            'carreraActual'        => $carreraSeleccionada ?? 'todas',
-            'carrerasDefinidas'    => $carrerasDefinidas,
-            'conteosCarreras'      => $conteosCarreras,
-            'busquedaActual'       => $busqueda ?? '',
-            'conteos'              => $conteos,
-            'totalAportes'         => count($aportes)
+            'aportes'           => $resultado['aportes'],
+            'paginaActual'      => $resultado['paginaActual'],
+            'totalPaginas'      => $resultado['totalPaginas'],
+            'totalAportes'      => $resultado['total'],
+            'categoriaActual'   => $categoriaSeleccionada ?? 'todas',
+            'carreraActual'     => $carreraSeleccionada ?? 'todas',
+            'carrerasDefinidas' => $carrerasDefinidas,
+            'conteosCarreras'   => $contadores['conteosCarreras'],
+            'busquedaActual'    => $busqueda ?? '',
+            'conteos'           => $contadores['conteos'],
         ];
 
         return view('Biblioteca/feedInicio', $datos);
@@ -94,7 +68,7 @@ class BibliotecaController extends BaseController
     public function formularioSubir()
     {
         $carrerasDefinidas = [
-            'GENERAL' => 'Tronco Común / Todas las Carreras (General)',
+            'GENERAL' => 'Materias Generales (Todas las Carreras)',
             'ING-INF' => 'Ingeniería en Informática',
             'ING-MAR' => 'Ingeniería Marítima',
             'ING-AMB' => 'Ingeniería Ambiental',
@@ -240,41 +214,5 @@ class BibliotecaController extends BaseController
         $nombreLimpio = preg_replace('/[\r\n\t"]+/', '_', basename($aporte['nombre_original'] ?? 'documento.pdf'));
         return $this->response->download($rutaAbsoluta, null)
                               ->setFileName($nombreLimpio);
-    }
-
-    /**
-     * Visualizador nativo en línea (stream inline sin forzar descarga externa)
-     */
-    public function ver(int $id)
-    {
-        $aporteModel = new AporteBibliotecaModel();
-        $aporte = $aporteModel->find($id);
-
-        if (!$aporte) {
-            return $this->response->setStatusCode(404)->setBody('Archivo no encontrado');
-        }
-
-        $rutaAbsoluta = WRITEPATH . $aporte['ruta_archivo'];
-
-        if (!file_exists($rutaAbsoluta)) {
-            return $this->response->setStatusCode(404)->setBody('El archivo físico no se encuentra en el servidor');
-        }
-
-        // sistema de deteccion real de mime antidayanas (no se fia del content-type del cliente)
-        $mime = null;
-        if (function_exists('mime_content_type')) {
-            $mime = @mime_content_type($rutaAbsoluta);
-        }
-        if (empty($mime)) {
-            $ext = strtolower(pathinfo($aporte['nombre_original'] ?? $aporte['ruta_archivo'], PATHINFO_EXTENSION));
-            $mime = \Config\Mimes::guessTypeFromExtension($ext) ?: 'application/pdf';
-        }
-
-        // sanitizacion contra header injection por si el nombre del archivo trae cosas raras
-        $nombreLimpio = preg_replace('/[\r\n\t"]+/', '_', basename($aporte['nombre_original'] ?? 'documento.pdf'));
-        return $this->response
-            ->setHeader('Content-Type', $mime)
-            ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($nombreLimpio) . '"')
-            ->setBody(file_get_contents($rutaAbsoluta));
     }
 }

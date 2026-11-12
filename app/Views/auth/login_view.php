@@ -24,8 +24,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- stylesheets-->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
-  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=' . time())?>">
+  <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/registro.css') ?>">
 </head>
 
 <body data-tema-default="light">
@@ -188,7 +188,7 @@
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=' . time())?>"></script>
+  <script src="<?= asset_url('js/main.js') ?>"></script>
   <script>
     function abrirModalRecuperacionLogin() {
       const m = document.getElementById('modal-recuperacion-login');

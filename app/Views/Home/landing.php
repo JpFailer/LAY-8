@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
     <!-- stylesheets-->
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('css/global.css') . '?v=' . time() ?>">
-    <link rel="stylesheet" href="<?= base_url('css/landing.css') . '?v=' . time() ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/landing.css') ?>">
   
     
   </head>
@@ -418,7 +418,7 @@
     </footer>
 
     <script>window.BASE_URL = '<?= base_url() ?>';</script>
-    <script src="<?= base_url('js/landing.js?v=' . time()) ?>"></script>
+    <script src="<?= asset_url('js/landing.js') ?>"></script>
 
     
 

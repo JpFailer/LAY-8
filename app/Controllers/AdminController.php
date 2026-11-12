@@ -9,11 +9,16 @@ use App\Models\NotificacionModel;
 use App\Models\AulasModel;
 use App\Models\InscripcionModel;
 use App\Models\SeccionModel;
+use App\Services\AdminGestionService;
+use CodeIgniter\HTTP\RequestInterface;
+use CodeIgniter\HTTP\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 class AdminController extends BaseController
 {
     protected UsuarioModel $usuarioModel;
     protected AuditoriaAdminModel $auditoriaModel;
+    protected AdminGestionService $adminService;
     protected int $adminId;
 
     /**
@@ -21,115 +26,16 @@ class AdminController extends BaseController
      */
     public function index()
     {
-        $db = \Config\Database::connect();
-
-        // 1. Métricas clave
-        $totalEstudiantes = $db->table('usuarios')->where('rol', 'estudiante')->countAllResults();
-        $totalProfesores  = $db->table('usuarios')->where('rol', 'profesor')->countAllResults();
-        $totalAdmins      = $db->table('usuarios')->whereIn('rol', ['administrador', 'admin'])->countAllResults();
-        $totalBaneados    = $db->fieldExists('estado_cuenta', 'usuarios') 
-            ? $db->table('usuarios')->where('estado_cuenta', 'baneado')->countAllResults() 
-            : 0;
-
-        // 2. Solicitudes de profesores pendientes
-        $solicitudes = $this->usuarioModel
-            ->where('estado_verificacion', 'pendiente')
-            ->orderBy('id', 'ASC')
-            ->findAll();
-
-        // lista de profes pa asignarles aulas
-        $profesoresActivos = $this->usuarioModel
-            ->select('usuarios.id, usuarios.cedula, usuarios.primer_nombre, usuarios.apellidos, usuarios.nombre_usuario, usuarios.correo, COUNT(secciones.id) as total_secciones_asignadas')
-            ->join('secciones', 'secciones.profesor_id = usuarios.id', 'left')
-            ->where('usuarios.rol', 'profesor')
-            ->groupBy('usuarios.id')
-            ->orderBy('usuarios.primer_nombre', 'ASC')
-            ->findAll();
-
-        // 3. Usuarios registrados (últimos 100)
-        $usuarios = $this->usuarioModel
-            ->select('id, cedula, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
-            ->orderBy('id', 'DESC')
-            ->findAll(100);
-
-        // 4. Aportes de biblioteca
-        $aporteModel = new AporteBibliotecaModel();
-        $aportes = [];
-        try {
-            $aportes = $aporteModel->obtenerTodosConUsuario();
-        } catch (\Throwable $e) {}
-
-        // 5. Historial de auditoría
-        $auditoriaLogs = $this->auditoriaModel->ultimosRegistros(40);
-
-        // 6. Información del horario del mapa por carreras y general
-        $carrerasDefinidas = [
-            'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
-            'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor', 'color' => '#0284c7'],
-            'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf', 'color' => '#10b981'],
-            'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
-            'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
-        ];
-
-        $carpetaScripts = ROOTPATH . 'scripts_python';
-        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
-        $claseModel = new \App\Models\ClaseProgramadaModel();
-
-        $carrerasHorarios = [];
-        foreach ($carrerasDefinidas as $cod => $info) {
-            $rutaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . "horario_{$cod}.pdf";
-            if (!file_exists($rutaPdf) && $cod === 'ING-INF') {
-                $rutaPdf = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
-            }
-
-            $existe = file_exists($rutaPdf);
-            $totalClasesCarrera = $claseModel->where('carrera', $cod)->countAllResults();
-
-            $carrerasHorarios[$cod] = array_merge($info, [
-                'codigo'              => $cod,
-                'existe_archivo'      => $existe,
-                'tamano_kb'           => $existe ? round(filesize($rutaPdf) / 1024, 2) : 0,
-                'ultima_modificacion' => $existe ? date('d/m/Y H:i', filemtime($rutaPdf)) : 'No cargado',
-                'total_clases'        => $totalClasesCarrera,
-                'nombre_archivo'      => $existe ? basename($rutaPdf) : "horario_{$cod}.pdf"
-            ]);
-        }
-
-        $rutaPdfHorario = ROOTPATH . 'scripts_python' . DIRECTORY_SEPARATOR . 'horario.pdf';
-        $horarioInfo = [
-            'existe_archivo'      => file_exists($rutaPdfHorario),
-            'tamano_kb'           => file_exists($rutaPdfHorario) ? round(filesize($rutaPdfHorario) / 1024, 2) : 0,
-            'ultima_modificacion' => file_exists($rutaPdfHorario) ? date('d/m/Y H:i', filemtime($rutaPdfHorario)) : 'No cargado',
-            'total_clases'        => $claseModel->countAllResults(),
-            'total_aulas'         => (new AulasModel())->countAllResults()
-        ];
-
-        $datos = [
-            'metricas' => [
-                'estudiantes'            => $totalEstudiantes,
-                'profesores'             => $totalProfesores,
-                'admins'                 => $totalAdmins,
-                'baneados'               => $totalBaneados,
-                'total_usuarios'         => $totalEstudiantes + $totalProfesores + $totalAdmins,
-                'solicitudes_pendientes' => count($solicitudes),
-                'total_aportes'          => count($aportes),
-            ],
-            'solicitudes'       => $solicitudes,
-            'profesoresActivos' => $profesoresActivos,
-            'usuarios'          => $usuarios,
-            'aportes'          => $aportes,
-            'auditoria'        => $auditoriaLogs,
-            'horarioInfo'      => $horarioInfo,
-            'carrerasHorarios' => $carrerasHorarios
-        ];
-
+        $datos = $this->adminService->obtenerDatosDashboard($this->usuarioModel, $this->auditoriaModel);
         return view('admin/dashboard_view', $datos);
     }
 
-    public function __construct()
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
+        parent::initController($request, $response, $logger);
         $this->usuarioModel   = new UsuarioModel();
         $this->auditoriaModel = new AuditoriaAdminModel();
+        $this->adminService   = new AdminGestionService();
         $this->adminId        = (int) (session('usuario_id') ?? 0);
     }
 
@@ -142,82 +48,9 @@ class AdminController extends BaseController
      */
     public function metricas()
     {
-        $db = \Config\Database::connect();
-
-        // 1. Usuarios por rol
-        $estudiantes = $db->table('usuarios')->where('rol', 'estudiante')->countAllResults();
-        $profesores  = $db->table('usuarios')->where('rol', 'profesor')->countAllResults();
-        $admins      = $db->table('usuarios')->whereIn('rol', ['administrador', 'admin'])->countAllResults();
-        
-        $baneados = 0;
-        if ($db->fieldExists('estado_cuenta', 'usuarios')) {
-            $baneados = $db->table('usuarios')->where('estado_cuenta', 'baneado')->countAllResults();
-        }
-
-        // 2. Solicitudes docentes pendientes
-        $solicitudesPendientes = $db->table('usuarios')
-                                    ->where('estado_verificacion', 'pendiente')
-                                    ->countAllResults();
-
-        // 3. Biblioteca: Aportes y espacio en disco
-        $aporteModel = new AporteBibliotecaModel();
-        $totalAportes = 0;
-        $espacioTotalBytes = 0;
-        $aportesPorCategoria = [];
-
-        try {
-            $totalAportes = $aporteModel->countAllResults();
-            $espacioTotalBytes = $aporteModel->espacioTotalBytes();
-            $categoriasQuery = $aporteModel->select('categoria, count(id) as total')
-                                           ->groupBy('categoria')
-                                           ->findAll();
-            foreach ($categoriasQuery as $c) {
-                $aportesPorCategoria[$c['categoria']] = (int) $c['total'];
-            }
-        } catch (\Throwable $e) {
-            // Silenciar si la tabla aún no se ha migrado
-        }
-
-        // 4. Aulas y clases programadas
-        $aulasModel = new AulasModel();
-        $totalAulas = 0;
-        $aulasDisponibles = 0;
-        $aulasMantenimiento = 0;
-
-        try {
-            $totalAulas = $aulasModel->countAllResults();
-            if ($db->fieldExists('estado', 'aulas')) {
-                $aulasDisponibles = $aulasModel->where('estado', 'disponible')->countAllResults();
-                $aulasMantenimiento = $aulasModel->whereIn('estado', ['mantenimiento', 'inhabilitada'])->countAllResults();
-            } else {
-                $aulasDisponibles = $totalAulas;
-            }
-        } catch (\Throwable $e) {}
-
         return $this->response->setJSON([
-            'success' => true,
-            'metricas' => [
-                'usuarios' => [
-                    'total'         => $estudiantes + $profesores + $admins,
-                    'estudiantes'   => $estudiantes,
-                    'profesores'    => $profesores,
-                    'administradores' => $admins,
-                    'baneados'      => $baneados,
-                ],
-                'profesores' => [
-                    'solicitudes_pendientes' => $solicitudesPendientes,
-                ],
-                'biblioteca' => [
-                    'total_aportes'       => $totalAportes,
-                    'espacio_ocupado_mb'  => round($espacioTotalBytes / 1048576, 2),
-                    'por_categoria'       => $aportesPorCategoria,
-                ],
-                'aulas' => [
-                    'total'               => $totalAulas,
-                    'disponibles'         => $aulasDisponibles,
-                    'en_mantenimiento'    => $aulasMantenimiento,
-                ]
-            ]
+            'success'  => true,
+            'metricas' => $this->adminService->obtenerMetricasGlobales(),
         ]);
     }
 
@@ -583,78 +416,8 @@ class AdminController extends BaseController
             ]);
         }
 
-        $db = \Config\Database::connect();
         $borrarAportes = $this->request->getPost('borrar_aportes') === 'true';
-
-        $db->transStart();
-
-        // 1. Limpiar notificaciones asociadas
-        try {
-            $db->table('notificaciones')
-               ->where('estudiante_id', $id)
-               ->orWhere('profesor_id', $id)
-               ->delete();
-        } catch (\Throwable $e) {}
-
-        // 2. Limpiar inscripciones y bloques de horario individuales
-        try {
-            $db->table('inscripciones')
-               ->where('estudiante_id', $id)
-               ->delete();
-            $db->table('clases_programadas')
-               ->where('estudiante_id', $id)
-               ->delete();
-        } catch (\Throwable $e) {}
-
-        // 3. Limpiar interacciones en feed y aulas
-        try {
-            $db->table('noticias_likes')->where('usuario_id', $id)->delete();
-            $db->table('noticias_comentarios')->where('usuario_id', $id)->delete();
-            $db->table('actividades_estudiante_estado')->where('estudiante_id', $id)->delete();
-            $db->table('estados_clase_profesor')->where('profesor_id', $id)->delete();
-
-            // Limpiar actividades creadas por el usuario
-            $actividades = $db->table('actividades_clase')->select('id')->where('creado_por', $id)->get()->getResultArray();
-            if (!empty($actividades)) {
-                $actIds = array_column($actividades, 'id');
-                $db->table('actividades_estudiante_estado')->whereIn('actividad_id', $actIds)->delete();
-                $db->table('actividades_clase')->whereIn('id', $actIds)->delete();
-            }
-
-            // Limpiar noticias publicadas en el muro por el usuario
-            $noticias = $db->table('noticias_muro')->select('id')->where('autor_id', $id)->get()->getResultArray();
-            if (!empty($noticias)) {
-                $nIds = array_column($noticias, 'id');
-                $db->table('noticias_likes')->whereIn('noticia_id', $nIds)->delete();
-                $db->table('noticias_comentarios')->whereIn('noticia_id', $nIds)->delete();
-                $db->table('noticias_muro')->whereIn('id', $nIds)->delete();
-            }
-        } catch (\Throwable $e) {}
-
-        // 4. Limpiar o anonimizar aportes de biblioteca
-        $aporteModel = new AporteBibliotecaModel();
-        try {
-            if ($borrarAportes) {
-                // Borrar archivos físicos y registros
-                $aportes = $aporteModel->where('usuario_id', $id)->findAll();
-                foreach ($aportes as $ap) {
-                    $ruta = WRITEPATH . $ap['ruta_archivo'];
-                    if (file_exists($ruta)) {
-                        @unlink($ruta);
-                    }
-                    $aporteModel->delete($ap['id']);
-                }
-            } else {
-                // Preservar aportes educativos desacoplándolos del usuario
-                $db->table('aportes_biblioteca')
-                   ->where('usuario_id', $id)
-                   ->update(['usuario_id' => null]);
-            }
-        } catch (\Throwable $e) {}
-
-        // 5. Eliminar el usuario físicamente
-        $this->usuarioModel->delete($id);
-        $db->transComplete();
+        $this->adminService->eliminarUsuarioConLimpieza($this->usuarioModel, $id, $borrarAportes);
 
         $this->auditoriaModel->registrar(
             $this->adminId,
@@ -1211,6 +974,10 @@ class AdminController extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
         }
 
+        if ($profesor['rol'] === 'profesor' && ($profesor['estado_verificacion'] ?? '') !== 'aprobado') {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Solo se pueden asignar secciones a docentes previamente aprobados.']);
+        }
+
         $db = \Config\Database::connect();
         $seccion = $db->table('secciones')
             ->select('secciones.*, materias.nombre as materia')
@@ -1225,11 +992,12 @@ class AdminController extends BaseController
 
         $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => $profesorId]);
 
-        $this->registrarAuditoria(
+        $this->auditoriaModel->registrar(
+            $this->adminId,
             'asignar_seccion_docente',
             'secciones',
             $seccionId,
-            json_encode(['profesor_id' => $profesorId, 'profesor' => $profesor['nombre_usuario'], 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']])
+            ['profesor_id' => $profesorId, 'profesor' => $profesor['nombre_usuario'], 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']]
         );
 
         return $this->response->setJSON([
@@ -1263,11 +1031,12 @@ class AdminController extends BaseController
         $profAnterior = $seccion['profesor_id'];
         $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => null]);
 
-        $this->registrarAuditoria(
+        $this->auditoriaModel->registrar(
+            $this->adminId,
             'desasignar_seccion_docente',
             'secciones',
             $seccionId,
-            json_encode(['profesor_anterior' => $profAnterior, 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']])
+            ['profesor_anterior' => $profAnterior, 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']]
         );
 
         return $this->response->setJSON([

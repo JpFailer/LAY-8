@@ -1,523 +1,105 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subir Material - Biblioteca LAY-8</title>
-
-    <!-- Script anti-flicker de Modo Oscuro -->
-    <script>
-        (function() {
-            try {
-                var tema = localStorage.getItem('lay8_theme');
-                if (tema === 'dark') {
-                    document.documentElement.classList.add('dark-mode');
-                    document.addEventListener('DOMContentLoaded', function() {
-                        document.body.classList.add('dark-mode');
-                    });
-                }
-            } catch(e) {}
-        })();
-    </script>
-
-    <!-- Fuentes oficiales del proyecto -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Iconografía Boxicons -->
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('css/global.css') ?>">
-
-    <style>
-        :root {
-            --color-primary: #1e3a8a;
-            --color-primary-hover: #1d4ed8;
-            --color-secundary: #3b82f6;
-            --color-border: #e2e8f0;
-        }
-
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background: #f0f4f8;
-            background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
-            color: #1e293b;
-            margin: 0;
-            padding: 30px 15px;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-        }
-
-        .contenedor-subida {
-            background: #ffffff;
-            padding: 35px 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 540px;
-            border: 1px solid var(--color-border);
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header-subida {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f1f5f9;
-        }
-
-        .header-subida h2 {
-            margin: 0;
-            color: var(--color-primary);
-            font-size: 1.35rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-volver-biblio {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            text-decoration: none;
-            color: #64748b;
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            background: #f1f5f9;
-            transition: all 0.2s ease;
-        }
-
-        .btn-volver-biblio:hover {
-            color: var(--color-primary);
-            background: #e2e8f0;
-            transform: translateX(-2px);
-        }
-
-        .descripcion-subida {
-            font-size: 0.92rem;
-            color: #64748b;
-            margin-bottom: 22px;
-            line-height: 1.45;
-            font-family: 'Hind', sans-serif;
-        }
-
-        /* Alertas */
-        .alerta {
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            font-family: 'Hind', sans-serif;
-        }
-
-        .alerta-danger {
-            background-color: #fef2f2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-
-        .alerta-success {
-            background-color: #ecfdf5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-
-        .alerta ul {
-            margin: 0;
-            padding-left: 18px;
-        }
-
-        /* Formularios */
-        .grupo-campo {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.88rem;
-            color: #334155;
-        }
-
-        label span.opcional {
-            font-weight: 400;
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        input[type="text"],
-        select {
-            display: block;
-            width: 100%;
-            padding: 11px 14px;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: 0.92rem;
-            color: #1e293b;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input[type="text"]:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--color-secundary);
-            background: #ffffff;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-
-        /* Zona de Carga de Archivos */
-        .dropzone-file {
-            position: relative;
-            border: 2px dashed #cbd5e1;
-            border-radius: 10px;
-            padding: 24px 15px;
-            text-align: center;
-            background: #f8fafc;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .dropzone-file:hover {
-            border-color: var(--color-secundary);
-            background: #f0f7ff;
-        }
-
-        .dropzone-file input[type="file"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .dropzone-icono {
-            font-size: 2.4rem;
-            color: var(--color-secundary);
-            margin-bottom: 6px;
-        }
-
-        .dropzone-texto {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 3px;
-        }
-
-        .dropzone-subtexto {
-            font-size: 0.78rem;
-            color: #64748b;
-            font-family: 'Hind', sans-serif;
-        }
-
-        .nombre-archivo-seleccionado {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #10b981;
-            display: none;
-        }
-
-        /* Botón de Enviar */
-        .btn-enviar-aporte {
-            background-color: var(--color-primary);
-            color: white;
-            border: none;
-            padding: 13px 20px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            border-radius: 8px;
-            width: 100%;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .btn-enviar-aporte:hover {
-            background-color: var(--color-primary-hover);
-            transform: translateY(-1px);
-        }
-
-        /* Caja informativa */
-        .info-restricciones {
-            margin-top: 22px;
-            background-color: #eff6ff;
-            border-left: 4px solid var(--color-secundary);
-            padding: 12px 14px;
-            border-radius: 0 8px 8px 0;
-            font-size: 0.8rem;
-            color: #1e40af;
-            font-family: 'Hind', sans-serif;
-        }
-
-        .info-restricciones ul {
-            margin: 4px 0 0 0;
-            padding-left: 18px;
-        }
-
-        /* Adaptación de Modo Oscuro */
-        body.dark-mode {
-            background: #0b1120;
-            color: #f1f5f9;
-        }
-
-        body.dark-mode .contenedor-subida {
-            background: #0f172a;
-            border-color: #334155;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        body.dark-mode .header-subida {
-            border-bottom-color: #1e293b;
-        }
-
-        body.dark-mode .header-subida h2 {
-            color: #60a5fa;
-        }
-
-        body.dark-mode .btn-volver-biblio {
-            background: #1e293b;
-            color: #cbd5e1;
-        }
-
-        body.dark-mode .btn-volver-biblio:hover {
-            background: #334155;
-            color: #f8fafc;
-        }
-
-        body.dark-mode .descripcion-subida {
-            color: #94a3b8;
-        }
-
-        body.dark-mode label {
-            color: #cbd5e1;
-        }
-
-        body.dark-mode input[type="text"],
-        body.dark-mode select {
-            background: #1e293b;
-            border-color: #334155;
-            color: #f8fafc;
-        }
-
-        body.dark-mode input[type="text"]:focus,
-        body.dark-mode select:focus {
-            background: #1e293b;
-            border-color: #3b82f6;
-        }
-
-        body.dark-mode .dropzone-file {
-            background: #1e293b;
-            border-color: #334155;
-        }
-
-        body.dark-mode .dropzone-file:hover {
-            background: #172554;
-            border-color: #3b82f6;
-        }
-
-        body.dark-mode .dropzone-texto {
-            color: #f1f5f9;
-        }
-
-        body.dark-mode .dropzone-subtexto {
-            color: #94a3b8;
-        }
-
-        body.dark-mode .info-restricciones {
-            background-color: #172554;
-            border-left-color: #3b82f6;
-            color: #93c5fd;
-        }
-    
-        /* Soporte integral de Modo Oscuro (Revisión Haryerit) */
-        body.dark-mode, html.dark-mode body {
-            background: #0b1329 !important;
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode .contenedor-subida, html.dark-mode .contenedor-subida {
-            background: #0f172a !important;
-            border-color: #334155 !important;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.6) !important;
-        }
-
-        body.dark-mode .header-subida h2, html.dark-mode .header-subida h2 {
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode .header-subida p, html.dark-mode .header-subida p {
-            color: #94a3b8 !important;
-        }
-
-        body.dark-mode .btn-volver, html.dark-mode .btn-volver {
-            background: #1e293b !important;
-            color: #f8fafc !important;
-            border: 1px solid #334155 !important;
-        }
-
-        body.dark-mode .btn-volver:hover, html.dark-mode .btn-volver:hover {
-            background: #334155 !important;
-        }
-
-        body.dark-mode .form-label, html.dark-mode .form-label {
-            color: #cbd5e1 !important;
-        }
-
-        body.dark-mode .input-texto, html.dark-mode .input-texto,
-        body.dark-mode .select-estilo, html.dark-mode .select-estilo {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-            color: #f8fafc !important;
-        }
-
-        body.dark-mode .zona-arrastre, html.dark-mode .zona-arrastre {
-            background: #1e293b !important;
-            border-color: #475569 !important;
-        }
-
-        body.dark-mode .zona-arrastre p, html.dark-mode .zona-arrastre p {
-            color: #cbd5e1 !important;
-        }
-
-        body.dark-mode .zona-arrastre span, html.dark-mode .zona-arrastre span {
-            color: #94a3b8 !important;
-        }
-
-        body.dark-mode .tarjeta-archivo, html.dark-mode .tarjeta-archivo {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        body.dark-mode .tarjeta-archivo .nombre-archivo, html.dark-mode .tarjeta-archivo .nombre-archivo {
-            color: #f8fafc !important;
-        }
-    </style>
-</head>
-<body>
-
-<div class="contenedor-subida">
-    
-    <div class="header-subida">
-        <h2><i class="bx bx-cloud-upload"></i> Subir Material</h2>
-        <a href="<?= base_url('biblioteca') ?>" class="btn-volver-biblio">
-            <i class="bx bx-arrow-back"></i> Volver
-        </a>
-    </div>
-
-    <p class="descripcion-subida">
-        Comparte tus guías de estudio, exámenes resueltos o resúmenes para apoyar a la comunidad de la UMC.
-    </p>
-
-    <!-- Alertas -->
-    <?php if (session()->getFlashdata('errores')): ?>
-        <div class="alerta alerta-danger">
-            <i class="bx bx-error-circle" style="font-size: 1.2rem;"></i>
-            <ul>
-            <?php foreach (session()->getFlashdata('errores') as $error): ?>
-                <li><?= esc($error) ?></li>
-            <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
-
-    <?php if (session()->getFlashdata('error')): ?>
-        <div class="alerta alerta-danger">
-            <i class="bx bx-error-circle" style="font-size: 1.2rem;"></i>
-            <span><?= esc(session()->getFlashdata('error')) ?></span>
-        </div>
-    <?php endif; ?>
-
-    <!-- Formulario -->
-    <form action="<?= base_url('biblioteca/subirAporte') ?>" method="post" enctype="multipart/form-data">
-        <?= csrf_field() ?>
-
-        <div class="grupo-campo">
-            <label for="titulo">Título descriptivo del aporte <span class="opcional">(Opcional)</span></label>
-            <input type="text" name="titulo" id="titulo" placeholder="Ej: Guía de Ejercicios - Cálculo Vectorial Tema 2" maxlength="150" value="<?= old('titulo') ?>">
+<?= $this->extend('Dashboard/main_view') ?>
+
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= asset_url('css/biblioteca-subir.css') ?>">
+<?= $this->endSection() ?>
+
+<?= $this->section('content') ?>
+<div class="subir-aporte-wrap">
+    <div class="contenedor-subida">
+        <div class="header-subida">
+            <h2><i class="bx bx-cloud-upload"></i> Subir Material</h2>
+            <a href="<?= base_url('biblioteca') ?>" class="btn-volver-biblio">
+                <i class="bx bx-arrow-back"></i> Volver
+            </a>
         </div>
 
-        <div class="grupo-campo">
-            <label for="categoria">Categoría del recurso <span style="color:#ef4444;">*</span></label>
-            <select name="categoria" id="categoria" required>
-                <option value="" disabled selected>Selecciona una categoría...</option>
-                <option value="guias" <?= (old('categoria') === 'guias') ? 'selected' : '' ?>>Guía de estudio</option>
-                <option value="ejercicios" <?= (old('categoria') === 'ejercicios') ? 'selected' : '' ?>>Ejercicios propuestos / resueltos</option>
-                <option value="resumenes" <?= (old('categoria') === 'resumenes') ? 'selected' : '' ?>>Resumen / Apuntes de clase</option>
-                <option value="otros" <?= (old('categoria') === 'otros') ? 'selected' : '' ?>>Otro material académico</option>
-            </select>
-        </div>
+        <p class="descripcion-subida">
+            Comparte tus guías de estudio, exámenes resueltos o resúmenes para apoyar a la comunidad de la UMC.
+        </p>
 
-        <div class="grupo-campo">
-            <label for="carrera">Carrera o Área de Estudio <span style="color:#ef4444;">*</span></label>
-            <select name="carrera" id="carrera" required>
-                <?php 
-                    $carrSeleccionada = old('carrera', $carreraUsuario ?? 'GENERAL');
-                ?>
-                <option value="GENERAL" <?= ($carrSeleccionada === 'GENERAL') ? 'selected' : '' ?>>Tronco Común / Todas las Carreras (General)</option>
-                <option value="ING-INF" <?= ($carrSeleccionada === 'ING-INF') ? 'selected' : '' ?>>Ingeniería en Informática</option>
-                <option value="ING-MAR" <?= ($carrSeleccionada === 'ING-MAR') ? 'selected' : '' ?>>Ingeniería Marítima</option>
-                <option value="ING-AMB" <?= ($carrSeleccionada === 'ING-AMB') ? 'selected' : '' ?>>Ingeniería Ambiental</option>
-                <option value="ADM" <?= ($carrSeleccionada === 'ADM') ? 'selected' : '' ?>>Licenciatura en Administración</option>
-                <option value="TUR" <?= ($carrSeleccionada === 'TUR') ? 'selected' : '' ?>>Licenciatura en Turismo</option>
-            </select>
-        </div>
+        <?php if (session()->getFlashdata('errores')): ?>
+            <div class="alerta-notif alerta-error">
+                <i class="bx bx-error-circle"></i>
+                <ul>
+                <?php foreach (session()->getFlashdata('errores') as $error): ?>
+                    <li><?= esc($error) ?></li>
+                <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-        <div class="grupo-campo">
-            <label>Selecciona tu documento <span style="color:#ef4444;">*</span></label>
-            <div class="dropzone-file">
-                <input type="file" name="aporte" id="input-aporte" accept=".pdf,.doc,.docx,.ppt,.pptx" required onchange="mostrarNombreArchivo(this)">
-                <i class="bx bx-file-blank dropzone-icono"></i>
-                <div class="dropzone-texto">Haz clic para buscar o arrastra tu archivo aquí</div>
-                <div class="dropzone-subtexto">Admite PDF, Word (.doc, .docx) y PowerPoint (.ppt, .pptx)</div>
-                <div class="nombre-archivo-seleccionado" id="nombre-archivo-seleccionado">
-                    <i class="bx bx-check-circle"></i> Archivo seleccionado: <span id="texto-nombre"></span>
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="alerta-notif alerta-error">
+                <i class="bx bx-error-circle"></i>
+                <span><?= esc(session()->getFlashdata('error')) ?></span>
+            </div>
+        <?php endif; ?>
+
+        <form action="<?= base_url('biblioteca/subirAporte') ?>" method="post" enctype="multipart/form-data">
+            <?= csrf_field() ?>
+
+            <div class="grupo-campo">
+                <label for="titulo">Título descriptivo del aporte <span class="opcional">(Opcional)</span></label>
+                <input type="text" name="titulo" id="titulo" placeholder="Ej: Guía de Ejercicios - Cálculo Vectorial Tema 2" maxlength="150" value="<?= old('titulo') ?>">
+            </div>
+
+            <div class="grupo-campo">
+                <label for="categoria">Categoría del recurso <span style="color:#ef4444;">*</span></label>
+                <select name="categoria" id="categoria" required>
+                    <option value="" disabled selected>Selecciona una categoría...</option>
+                    <option value="guias" <?= (old('categoria') === 'guias') ? 'selected' : '' ?>>Guía de estudio</option>
+                    <option value="ejercicios" <?= (old('categoria') === 'ejercicios') ? 'selected' : '' ?>>Ejercicios propuestos / resueltos</option>
+                    <option value="resumenes" <?= (old('categoria') === 'resumenes') ? 'selected' : '' ?>>Resumen / Apuntes de clase</option>
+                    <option value="otros" <?= (old('categoria') === 'otros') ? 'selected' : '' ?>>Otro material académico</option>
+                </select>
+            </div>
+
+            <div class="grupo-campo">
+                <label for="carrera">Carrera o Área de Estudio <span style="color:#ef4444;">*</span></label>
+                <select name="carrera" id="carrera" required>
+                    <?php $carrSeleccionada = old('carrera', $carreraUsuario ?? 'GENERAL'); ?>
+                    <?php foreach ($carrerasDefinidas as $cod => $nombreCar): ?>
+                        <option value="<?= esc($cod) ?>" <?= ($carrSeleccionada === $cod) ? 'selected' : '' ?>>
+                            <?= esc($nombreCar) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="grupo-campo">
+                <label>Selecciona tu documento <span style="color:#ef4444;">*</span></label>
+                <div class="dropzone-file">
+                    <input type="file" name="aporte" id="input-aporte" accept=".pdf,.doc,.docx,.ppt,.pptx" required onchange="mostrarNombreArchivoAporte(this)">
+                    <i class="bx bx-file-blank dropzone-icono"></i>
+                    <div class="dropzone-texto">Haz clic para buscar o arrastra tu archivo aquí</div>
+                    <div class="dropzone-subtexto">Admite PDF, Word (.doc, .docx) y PowerPoint (.ppt, .pptx)</div>
+                    <div class="nombre-archivo-seleccionado" id="nombre-archivo-seleccionado">
+                        <i class="bx bx-check-circle"></i> Archivo seleccionado: <span id="texto-nombre"></span>
+                    </div>
                 </div>
             </div>
+
+            <button type="submit" class="btn-enviar-aporte">
+                <i class="bx bx-send"></i> Publicar Aporte en la Biblioteca
+            </button>
+        </form>
+
+        <div class="info-restricciones">
+            <strong>Requisitos de publicación:</strong>
+            <ul>
+                <li>Formatos permitidos: <strong>.pdf, .doc, .docx, .ppt, .pptx</strong></li>
+                <li>Tamaño máximo permitido: <strong>5 MB</strong></li>
+                <li>El material quedará accesible para todos los estudiantes de la comunidad UMC.</li>
+            </ul>
         </div>
-
-        <button type="submit" class="btn-enviar-aporte">
-            <i class="bx bx-send"></i> Publicar Aporte en la Biblioteca
-        </button>
-    </form>
-
-    <div class="info-restricciones">
-        <strong>Requisitos de publicación:</strong>
-        <ul>
-            <li>Formatos permitidos: <strong>.pdf, .doc, .docx, .ppt, .pptx</strong></li>
-            <li>Tamaño máximo permitido: <strong>5 MB</strong></li>
-            <li>El material quedará accesible para todos los estudiantes de la comunidad UMC.</li>
-        </ul>
     </div>
 </div>
+<?= $this->endSection() ?>
 
+<?= $this->section('scripts') ?>
 <script>
-    function mostrarNombreArchivo(input) {
+    function mostrarNombreArchivoAporte(input) {
         const contenedor = document.getElementById('nombre-archivo-seleccionado');
         const texto = document.getElementById('texto-nombre');
         if (input.files && input.files[0]) {
@@ -528,6 +110,4 @@
         }
     }
 </script>
-
-</body>
-</html>
+<?= $this->endSection() ?>

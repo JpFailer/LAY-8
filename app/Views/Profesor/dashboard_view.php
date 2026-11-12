@@ -1,7 +1,7 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('css/docente.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= asset_url('css/docente.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -124,7 +124,18 @@
     </div>
 
     <!-- PESTAÑA 1: SECCIONES Y TRANSMISIÓN DE ESTADO EN VIVO                      -->
-    <div id="tab-doc-secciones" class="tab-contenido-docente">
+    <?php
+        $esModoServidor = !empty($esModoServidor);
+        $pag = $paginacion ?? [
+            'totalFiltradas' => count($secciones),
+            'paginaActual'   => 1,
+            'totalPaginas'   => max(1, (int) ceil(count($secciones) / 12)),
+            'porPagina'      => 12,
+        ];
+        $inicioPag = $pag['totalFiltradas'] > 0 ? (($pag['paginaActual'] - 1) * $pag['porPagina']) + 1 : 0;
+        $finPag = min($pag['paginaActual'] * $pag['porPagina'], $pag['totalFiltradas']);
+    ?>
+    <div id="tab-doc-secciones" class="tab-contenido-docente" data-modo-servidor="<?= $esModoServidor ? '1' : '0' ?>" data-total-paginas="<?= (int) $pag['totalPaginas'] ?>">
         <!-- Estado vacío cuando la búsqueda no arroja resultados -->
         <div id="sin-resultados-docente" class="panel-vacio-docente" style="display: none;">
             <div class="icono-vacio"><i class="bx bx-search-alt" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 8px;"></i></div>
@@ -136,64 +147,58 @@
         </div>
 
         <?php if (!empty($secciones)): ?>
+            <?php if (!empty($carrerasPresentesDoc) && count($carrerasPresentesDoc) > 1): ?>
+                <div class="docente-filtros-carrera-bar" id="docente-filtros-carrera">
+                    <span class="docente-filtros-label"><i class="bx bx-filter-alt"></i> Carrera:</span>
+                    <button type="button" class="btn-carrera-docente activo" data-carrera="" onclick="filtrarCarreraDocente('', this)">
+                        Todas (<?= (int) $totalSecciones ?>)
+                    </button>
+                    <?php foreach ($carrerasPresentesDoc as $codCar => $metaCar): ?>
+                        <button type="button" class="btn-carrera-docente" data-carrera="<?= esc($codCar) ?>" onclick="filtrarCarreraDocente('<?= esc($codCar, 'js') ?>', this)">
+                            <?= esc($metaCar['etiqueta']) ?> (<?= (int) $metaCar['total'] ?>)
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <div id="docente-paginacion-top" class="docente-paginacion-bar" style="<?= $pag['totalFiltradas'] <= 1 ? 'display: none;' : '' ?>">
+                <div class="docente-pag-info" id="docente-pag-info-top">
+                    Mostrando <?= $inicioPag ?> - <?= $finPag ?> de <?= (int) $pag['totalFiltradas'] ?> secciones
+                </div>
+                <div class="docente-paginacion-controles">
+                    <label for="docente-tamano-pagina" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Por página:</label>
+                    <select id="docente-tamano-pagina" class="docente-select-tamano" onchange="cambiarTamanoPaginaDocente(this.value)">
+                        <option value="12" <?= $pag['porPagina'] === 12 ? 'selected' : '' ?>>12</option>
+                        <option value="24" <?= $pag['porPagina'] === 24 ? 'selected' : '' ?>>24</option>
+                        <option value="48" <?= $pag['porPagina'] === 48 ? 'selected' : '' ?>>48</option>
+                    </select>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-prev-top" onclick="cambiarPaginaDocente(-1)" <?= $pag['paginaActual'] <= 1 ? 'disabled' : '' ?>>
+                        <i class="bx bx-chevron-left"></i> Anterior
+                    </button>
+                    <span class="docente-pag-indicador" id="docente-pag-indicador-top">Pág. <?= (int) $pag['paginaActual'] ?> / <?= (int) $pag['totalPaginas'] ?></span>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-next-top" onclick="cambiarPaginaDocente(1)" <?= $pag['paginaActual'] >= $pag['totalPaginas'] ? 'disabled' : '' ?>>
+                        Siguiente <i class="bx bx-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="grid-aportes grid-aulas-classroom">
-                <?php foreach ($secciones as $sec): ?>
-                    <?php
-                        $est = $sec['estado_hoy'];
-                        $esOnline = ($est && $est['modalidad'] === 'online');
-                        $aulasSec = [];
-                        if (!empty($sec['horarios'])) {
-                            foreach ($sec['horarios'] as $h) {
-                                if (!in_array($h['aula'], $aulasSec, true)) $aulasSec[] = $h['aula'];
-                            }
-                        }
-                    ?>
-                    <article class="tarjeta-aporte tarjeta-aula-classroom" style="display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div class="cabecera-tarjeta-aula">
-                                <div class="aula-header-info">
-                                    <span class="badge-codigo-materia"><?= esc($sec['codigo_materia']) ?></span>
-                                    <span class="badge-seccion-materia">Secc. <?= esc($sec['codigo_seccion']) ?></span>
-                                    <span class="badge-conteo" style="background: #eff6ff; color: #2563eb;">
-                                        <i class="bx bx-user"></i> <?= (int)$sec['total_estudiantes'] ?> alumnos
-                                    </span>
-                                </div>
-                                <h3 class="titulo-materia-aula"><?= esc($sec['materia']) ?></h3>
-                                <p class="profesor-materia" style="color: #64748b;">
-                                    <i class="bx bx-map-pin"></i> Aula: <strong><?= !empty($aulasSec) ? esc(implode(', ', $aulasSec)) : 'Por definir' ?></strong>
-                                </p>
-                            </div>
+                <?= view('Profesor/_tarjetas_secciones', ['secciones' => $secciones, 'esModoServidor' => $esModoServidor]) ?>
+            </div>
 
-                            <!-- Estado actual reportado -->
-                            <div class="estado-docente-box <?= $esOnline ? 'box-online' : 'box-presencial' ?>" style="margin-top: 10px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <strong><i class="bx <?= $esOnline ? 'bx-video' : 'bx-walk' ?>"></i> Estado Hoy:</strong>
-                                    <span style="font-size: 0.76rem; text-transform: uppercase; font-weight: 700;"><?= $esOnline ? 'Clase Virtual' : 'Presencial' ?></span>
-                                </div>
-                                <div style="font-size: 0.88rem; margin-top: 4px; font-weight: 600;">
-                                    <?= $est ? esc($est['estado_rapido']) : 'Sin estado reportado hoy' ?>
-                                </div>
-                                <?php if ($est && !empty($est['enlace_virtual'])): ?>
-                                    <div style="margin-top: 6px;">
-                                        <a href="<?= esc($est['enlace_virtual']) ?>" target="_blank" style="color: #2563eb; font-size: 0.8rem; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
-                                            <i class="bx bx-link-external"></i> Ir a sala virtual
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Botones de Acción para la Sección -->
-                        <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn-subir-cta" style="flex: 1; padding: 8px 12px; font-size: 0.82rem;" onclick="abrirModalEstadoSeccion(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>', '<?= esc($sec['codigo_seccion'], 'js') ?>')">
-                                <i class="bx bx-broadcast"></i> Cambiar Estado
-                            </button>
-                            <button type="button" class="btn-subir-cta btn-secundario-aulas" style="flex: 1; padding: 8px 12px; font-size: 0.82rem;" onclick="preseleccionarSeccionTarea(<?= (int)$sec['id'] ?>)">
-                                <i class="bx bx-plus"></i> Asignar Tarea
-                            </button>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+            <div id="docente-paginacion-bottom" class="docente-paginacion-bar bottom" style="display: <?= $pag['totalFiltradas'] > $pag['porPagina'] ? 'flex' : 'none' ?>;">
+                <div class="docente-pag-info" id="docente-pag-info-bottom">
+                    Mostrando <?= $inicioPag ?> - <?= $finPag ?> de <?= (int) $pag['totalFiltradas'] ?> secciones
+                </div>
+                <div class="docente-paginacion-controles">
+                    <button type="button" class="btn-pag-docente" id="btn-pag-prev-bottom" onclick="cambiarPaginaDocente(-1)" <?= $pag['paginaActual'] <= 1 ? 'disabled' : '' ?>>
+                        <i class="bx bx-chevron-left"></i> Anterior
+                    </button>
+                    <span class="docente-pag-indicador" id="docente-pag-indicador-bottom">Pág. <?= (int) $pag['paginaActual'] ?> / <?= (int) $pag['totalPaginas'] ?></span>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-next-bottom" onclick="cambiarPaginaDocente(1)" <?= $pag['paginaActual'] >= $pag['totalPaginas'] ? 'disabled' : '' ?>>
+                        Siguiente <i class="bx bx-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         <?php else: ?>
             <div class="estado-vacio">
@@ -349,7 +354,7 @@
                 <label for="tarea_seccion_id"><i class="bx bx-door-open"></i> Asignatura & Sección:</label>
                 <select name="seccion_id" id="tarea_seccion_id" required class="select-lay8">
                     <option value="" disabled selected>-- Selecciona la sección --</option>
-                    <?php foreach ($secciones as $sec): ?>
+                    <?php foreach (($seccionesSelect ?? $secciones) as $sec): ?>
                         <option value="<?= (int)$sec['id'] ?>"><?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)</option>
                     <?php endforeach; ?>
                 </select>
@@ -421,7 +426,7 @@
 </div>
 
 <?= $this->section('scripts') ?>
-<script src="<?= base_url('js/docente.js?v=' . time()) ?>"></script>
+<script src="<?= asset_url('js/docente.js') ?>"></script>
 <?= $this->endSection() ?>
 
 <?= $this->endSection() ?>

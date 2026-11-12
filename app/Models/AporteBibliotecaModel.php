@@ -26,14 +26,9 @@ class AporteBibliotecaModel extends Model
     ];
 
     /**
-     * Obtiene los aportes con información del usuario que los subió y filtros por carrera y categoría
-     *
-     * @param string|null $categoria
-     * @param string|null $busqueda
-     * @param string|null $carrera
-     * @return array
+     * Construye el query builder de aportes con joins y filtros aplicados.
      */
-    public function obtenerTodosConUsuario(?string $categoria = null, ?string $busqueda = null, ?string $carrera = null)
+    public function construirBuilderFiltrado(?string $categoria = null, ?string $busqueda = null, ?string $carrera = null)
     {
         $builder = $this->select('aportes_biblioteca.*, usuarios.nombre_usuario, usuarios.nombre_usuario as autor_usuario, usuarios.primer_nombre, usuarios.apellidos, usuarios.correo, usuarios.carrera as autor_carrera')
                         ->join('usuarios', 'usuarios.id = aportes_biblioteca.usuario_id', 'left')
@@ -44,7 +39,6 @@ class AporteBibliotecaModel extends Model
         }
 
         if ($carrera && $carrera !== 'todas') {
-            // Aportes de la carrera seleccionada, o generales de libre consulta
             $builder->groupStart()
                     ->where('aportes_biblioteca.carrera', $carrera)
                     ->orWhere('aportes_biblioteca.carrera', 'GENERAL')
@@ -66,7 +60,20 @@ class AporteBibliotecaModel extends Model
                     ->groupEnd();
         }
 
-        return $builder->findAll();
+        return $builder;
+    }
+
+    /**
+     * Obtiene los aportes con información del usuario que los subió y filtros por carrera y categoría
+     *
+     * @param string|null $categoria
+     * @param string|null $busqueda
+     * @param string|null $carrera
+     * @return array
+     */
+    public function obtenerTodosConUsuario(?string $categoria = null, ?string $busqueda = null, ?string $carrera = null)
+    {
+        return $this->construirBuilderFiltrado($categoria, $busqueda, $carrera)->findAll();
     }
 
     /**

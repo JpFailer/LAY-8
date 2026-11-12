@@ -152,3 +152,159 @@ body.dark-mode .chip-estado-sugerido:hover {
     background: #3b82f6;
     color: #ffffff;
 }
+
+
+/* ============================================================================ */
+/* FILTROS DE CARRERA Y PAGINACIÓN DE SECCIONES (PANEL DOCENTE)                 */
+/* ============================================================================ */
+.docente-filtros-carrera-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.docente-filtros-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    margin-right: 4px;
+}
+
+.btn-carrera-docente {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-carrera-docente:hover {
+    border-color: #1e3a8a;
+    color: #1e3a8a;
+    background: #eff6ff;
+}
+
+.btn-carrera-docente.activo {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #ffffff;
+}
+
+.docente-paginacion-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+
+.docente-paginacion-bar.bottom {
+    margin-top: 22px;
+    margin-bottom: 0;
+}
+
+.docente-pag-info {
+    font-size: 0.84rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.docente-paginacion-controles {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.docente-select-tamano {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-pag-docente {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.btn-pag-docente:hover:not(:disabled) {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #ffffff;
+}
+
+.btn-pag-docente:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.docente-pag-indicador {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    padding: 0 6px;
+}
+
+body.dark-mode .docente-filtros-label,
+body.dark-mode .docente-pag-info {
+    color: #94a3b8;
+}
+
+body.dark-mode .btn-carrera-docente,
+body.dark-mode .docente-select-tamano,
+body.dark-mode .btn-pag-docente {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .btn-carrera-docente:hover,
+body.dark-mode .btn-pag-docente:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+body.dark-mode .btn-carrera-docente.activo {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+body.dark-mode .docente-paginacion-bar {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode .docente-pag-indicador {
+    color: #e2e8f0;
+}

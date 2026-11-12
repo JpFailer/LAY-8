@@ -41,21 +41,14 @@ const BASE_URL = window.BASE_URL || '/';
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Transmitiendo estado...';
 
         try {
-            const formData = new FormData(form);
-            const resp = await fetch(BASE_URL + 'docente/actualizar-estado', {
+            const res = await window.Lay8UI.apiFetch(BASE_URL + 'docente/actualizar-estado', {
                 method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                body: new FormData(form)
             });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Estado transmitido correctamente a los alumnos!');
-                window.location.reload();
-            } else {
-                alert(res.error || (res.errores ? Object.values(res.errores).join('\\n') : 'Error al guardar estado.'));
-            }
-        } catch(err) {
-            alert('Error de red al actualizar estado.');
+            window.Lay8UI.toast(res.mensaje || 'Estado transmitido correctamente a los alumnos.', 'exito');
+            setTimeout(() => window.location.reload(), 700);
+        } catch (err) {
+            window.Lay8UI.toast(err.message || 'Error al guardar estado.', 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = origText;
@@ -85,21 +78,14 @@ const BASE_URL = window.BASE_URL || '/';
         btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Publicando evaluación...';
 
         try {
-            const formData = new FormData(form);
-            const resp = await fetch(BASE_URL + 'docente/crear-tarea', {
+            const res = await window.Lay8UI.apiFetch(BASE_URL + 'docente/crear-tarea', {
                 method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                body: new FormData(form)
             });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Evaluación publicada con éxito!');
-                window.location.reload();
-            } else {
-                alert(res.error || (res.errores ? Object.values(res.errores).join('\\n') : 'Error al crear la evaluación.'));
-            }
+            window.Lay8UI.toast(res.mensaje || 'Evaluación publicada con éxito.', 'exito');
+            setTimeout(() => window.location.reload(), 700);
         } catch (err) {
-            alert('Error de conexión al crear la tarea.');
+            window.Lay8UI.toast(err.message || 'Error al crear la evaluación.', 'error');
         } finally {
             btn.disabled = false;
             btn.innerHTML = origText;
@@ -158,7 +144,6 @@ const BASE_URL = window.BASE_URL || '/';
                         </div>
                     </div>
 
-                    // form rapido de calificar
                     <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <label style="font-size: 0.82rem; font-weight: 700;">Calificación:</label>
@@ -167,7 +152,7 @@ const BASE_URL = window.BASE_URL || '/';
                         <div style="flex: 1; min-width: 180px;">
                             <input type="text" id="feedback_entrega_${ent.id}" value="${ent.feedback_profesor || ''}" placeholder="Retroalimentación para el alumno..." class="input-lay8" style="width: 100%; padding: 6px 10px;">
                         </div>
-                        <button type="button" class="btn-subir-cta" onclick="guardarCalificacionEntrega(${ent.id})" style="padding: 6px 14px; font-size: 0.82rem;">
+                        <button type="button" class="btn-subir-cta" id="btn_calificar_entrega_${ent.id}" onclick="guardarCalificacionEntrega(${ent.id}, this)" style="padding: 6px 14px; font-size: 0.82rem;">
                             <i class="bx bx-save"></i> ${calificada ? 'Actualizar Nota' : 'Calificar'}
                         </button>
                     </div>
@@ -185,12 +170,13 @@ const BASE_URL = window.BASE_URL || '/';
         document.getElementById('modalRevisarEntregas').style.display = 'none';
     }
 
-    async function guardarCalificacionEntrega(entregaId) {
+    async function guardarCalificacionEntrega(entregaId, btnElem) {
         const notaInput = document.getElementById('nota_entrega_' + entregaId);
         const fbInput = document.getElementById('feedback_entrega_' + entregaId);
+        const btn = btnElem || document.getElementById('btn_calificar_entrega_' + entregaId);
 
         if (!notaInput || notaInput.value === '') {
-            alert('Por favor ingresa una nota numérica.');
+            window.Lay8UI.toast('Por favor ingresa una nota numérica.', 'warning');
             return;
         }
 
@@ -199,30 +185,26 @@ const BASE_URL = window.BASE_URL || '/';
         formData.append('calificacion', notaInput.value);
         formData.append('feedback', fbInput ? fbInput.value : '');
 
-        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const csrfTokenName = window.CSRF_TOKEN || 'csrf_test_name';
-        const csrfHeaderName = window.CSRF_HEADER || 'X-CSRF-TOKEN';
-        const csrfInput = document.querySelector(`input[name="${csrfTokenName}"]`) || document.querySelector('#global-csrf-container input');
-        if (csrfInput && csrfInput.value) {
-            formData.append(csrfTokenName, csrfInput.value);
-            // sistema de cabeceras csrf antidayanas (inyeccion de token en cada peticion)
-            headers[csrfHeaderName] = csrfInput.value;
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
         }
 
         try {
-            const resp = await fetch(BASE_URL + 'docente/calificar', {
+            const res = await window.Lay8UI.apiFetch(BASE_URL + 'docente/calificar', {
                 method: 'POST',
-                body: formData,
-                headers: headers
+                body: formData
             });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Calificación registrada con éxito!');
-            } else {
-                alert(res.error || 'Error al guardar la calificación.');
+            if (btn) {
+                btn.innerHTML = '<i class="bx bx-save"></i> Actualizar Nota';
             }
-        } catch(e) {
-            alert('Error de conexión al calificar.');
+            window.Lay8UI.toast(res.mensaje || 'Calificación registrada con éxito.', 'exito');
+        } catch (e) {
+            if (btn) btn.innerHTML = origHtml;
+            window.Lay8UI.toast(e.message || 'Error al guardar la calificación.', 'error');
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
 
@@ -241,72 +223,309 @@ const BASE_URL = window.BASE_URL || '/';
     }
 
     let tarjetasDocenteCache = [];
+    let tarjetasFiltradasDocente = [];
     let totalDocenteOriginal = 0;
+    let carreraActivaDocente = '';
+    let terminoActivoDocente = '';
+    let paginaActualDocente = 1;
+    let totalPaginasServidorDocente = 1;
+    let tamanoPaginaDocente = 12;
+    let debounceDocenteTimer = null;
 
-    function inicializarBuscadorDocente() {
-        const tarjetas = document.querySelectorAll('#tab-doc-secciones .tarjeta-aula-classroom');
-        totalDocenteOriginal = tarjetas.length;
-        tarjetasDocenteCache = Array.from(tarjetas).map(t => {
-            const texto = t.textContent || '';
-            return {
-                element: t,
-                searchCorpus: normalizarTextoDocente(texto)
-            };
+    function esModoServidorDocente() {
+        const cont = document.getElementById('tab-doc-secciones');
+        return !!(cont && cont.dataset.modoServidor === '1');
+    }
+
+    /**
+     * Reubica los modales directamente en document.body para garantizar
+     * su posicionamiento fijo respecto al viewport sin importar el scroll.
+     */
+    function asegurarModalesEnBodyDocente() {
+        ['modalEstadoSeccion', 'modalTareaDocente', 'modalRevisarEntregas'].forEach(id => {
+            const modal = document.getElementById(id);
+            if (modal && modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
         });
     }
 
-    function filtrarSeccionesDocente(termino) {
-        if (tarjetasDocenteCache.length === 0) {
-            inicializarBuscadorDocente();
+    function inicializarBuscadorDocente() {
+        const cont = document.getElementById('tab-doc-secciones');
+        if (cont && cont.dataset.totalPaginas) {
+            totalPaginasServidorDocente = Math.max(1, parseInt(cont.dataset.totalPaginas, 10) || 1);
         }
+        if (esModoServidorDocente()) {
+            return;
+        }
+        const tarjetas = document.querySelectorAll('#tab-doc-secciones .tarjeta-aula-classroom');
+        totalDocenteOriginal = tarjetas.length;
+        tarjetasDocenteCache = Array.from(tarjetas).map(t => ({
+            element: t,
+            carrera: (t.getAttribute('data-carrera') || '').trim().toUpperCase(),
+            searchCorpus: normalizarTextoDocente(t.textContent || '')
+        }));
+        aplicarFiltrosYRenderizarDocente(false);
+    }
 
-        const rawTermino = (termino || '').trim();
-        const normTermino = normalizarTextoDocente(rawTermino);
-        const badge = document.getElementById('badge-conteo-secciones');
-        const btnClear = document.getElementById('btn-limpiar-busqueda-docente');
-        const sinResultados = document.getElementById('sin-resultados-docente');
+    async function cargarSeccionesServidorDocente(hacerScroll) {
         const grid = document.querySelector('#tab-doc-secciones .grid-aulas-classroom');
+        const sinResultados = document.getElementById('sin-resultados-docente');
         const txtTermino = document.getElementById('texto-sin-resultados-docente');
+        const barTop = document.getElementById('docente-paginacion-top');
+        const barBottom = document.getElementById('docente-paginacion-bottom');
+        const badge = document.getElementById('badge-conteo-secciones');
 
+        if (grid) grid.style.opacity = '0.55';
+
+        try {
+            const params = new URLSearchParams({
+                ajax_secciones: '1',
+                carrera: carreraActivaDocente,
+                q: terminoActivoDocente,
+                page: String(paginaActualDocente),
+                por_pagina: String(tamanoPaginaDocente)
+            });
+
+            const res = await window.Lay8UI.apiFetch(BASE_URL + 'docente?' + params.toString());
+            paginaActualDocente = res.paginaActual || 1;
+            totalPaginasServidorDocente = Math.max(1, res.totalPaginas || 1);
+            const totalFiltradas = res.totalFiltradas || 0;
+
+            if (badge) badge.textContent = totalFiltradas;
+
+            if (totalFiltradas === 0) {
+                if (grid) {
+                    grid.innerHTML = '';
+                    grid.style.display = 'none';
+                }
+                if (barTop) barTop.style.display = 'none';
+                if (barBottom) barBottom.style.display = 'none';
+                if (sinResultados) {
+                    sinResultados.style.display = 'block';
+                    if (txtTermino) {
+                        if (terminoActivoDocente) {
+                            const escaped = terminoActivoDocente.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${escaped}</b>".`;
+                        } else {
+                            txtTermino.textContent = 'No hay secciones registradas para este filtro.';
+                        }
+                    }
+                }
+                return;
+            }
+
+            if (sinResultados) sinResultados.style.display = 'none';
+            if (grid) {
+                grid.innerHTML = res.cardsHtml || '';
+                grid.style.display = 'grid';
+                grid.style.opacity = '1';
+            }
+
+            const inicio = ((paginaActualDocente - 1) * tamanoPaginaDocente) + 1;
+            const fin = Math.min(paginaActualDocente * tamanoPaginaDocente, totalFiltradas);
+            const etiqueta = totalFiltradas === 1 ? 'sección' : 'secciones';
+            const textoInfo = `Mostrando ${inicio} - ${fin} de ${totalFiltradas} ${etiqueta}`;
+            const textoPagina = `Pág. ${paginaActualDocente} / ${totalPaginasServidorDocente}`;
+
+            ['top', 'bottom'].forEach(pos => {
+                const infoEl = document.getElementById(`docente-pag-info-${pos}`);
+                const indEl = document.getElementById(`docente-pag-indicador-${pos}`);
+                const prevEl = document.getElementById(`btn-pag-prev-${pos}`);
+                const nextEl = document.getElementById(`btn-pag-next-${pos}`);
+                if (infoEl) infoEl.textContent = textoInfo;
+                if (indEl) indEl.textContent = textoPagina;
+                if (prevEl) prevEl.disabled = (paginaActualDocente <= 1);
+                if (nextEl) nextEl.disabled = (paginaActualDocente >= totalPaginasServidorDocente);
+            });
+
+            if (barTop) barTop.style.display = totalFiltradas > 1 ? 'flex' : 'none';
+            if (barBottom) barBottom.style.display = totalFiltradas > tamanoPaginaDocente ? 'flex' : 'none';
+
+            if (hacerScroll && barTop) {
+                barTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        } catch (err) {
+            if (grid) grid.style.opacity = '1';
+            window.Lay8UI.toast(err.message || 'Error al cargar secciones.', 'error');
+        }
+    }
+
+    function filtrarSeccionesDocente(termino) {
+        terminoActivoDocente = (termino || '').trim();
+        paginaActualDocente = 1;
+
+        const btnClear = document.getElementById('btn-limpiar-busqueda-docente');
         if (btnClear) {
-            btnClear.style.display = rawTermino.length > 0 ? 'inline-flex' : 'none';
+            btnClear.style.display = terminoActivoDocente.length > 0 ? 'inline-flex' : 'none';
         }
 
-        if (!normTermino) {
-            tarjetasDocenteCache.forEach(item => item.element.style.display = 'flex');
-            if (badge) badge.textContent = totalDocenteOriginal;
-            if (sinResultados) sinResultados.style.display = 'none';
-            if (grid) grid.style.display = 'grid';
+        if (esModoServidorDocente()) {
+            clearTimeout(debounceDocenteTimer);
+            debounceDocenteTimer = setTimeout(() => cargarSeccionesServidorDocente(false), 240);
+            return;
+        }
+        aplicarFiltrosYRenderizarDocente(false);
+    }
+
+    function filtrarCarreraDocente(carrera, botonActivo) {
+        carreraActivaDocente = (carrera || '').trim().toUpperCase();
+        paginaActualDocente = 1;
+
+        document.querySelectorAll('#docente-filtros-carrera .btn-carrera-docente').forEach(btn => {
+            const btnCar = (btn.getAttribute('data-carrera') || '').trim().toUpperCase();
+            btn.classList.toggle('activo', btnCar === carreraActivaDocente);
+        });
+        if (botonActivo) {
+            botonActivo.classList.add('activo');
+        }
+
+        if (esModoServidorDocente()) {
+            cargarSeccionesServidorDocente(false);
+            return;
+        }
+        aplicarFiltrosYRenderizarDocente(false);
+    }
+
+    function cambiarPaginaDocente(delta) {
+        if (esModoServidorDocente()) {
+            const nuevaPag = Math.min(totalPaginasServidorDocente, Math.max(1, paginaActualDocente + delta));
+            if (nuevaPag === paginaActualDocente) return;
+            paginaActualDocente = nuevaPag;
+            cargarSeccionesServidorDocente(true);
             return;
         }
 
-        // separacion por tokens para busqueda de multiples palabras (ej: 'calculo a')
-        const tokens = normTermino.split(/\s+/).filter(Boolean);
-        let visibles = 0;
+        const totalPaginas = Math.max(1, Math.ceil(tarjetasFiltradasDocente.length / tamanoPaginaDocente));
+        const nuevaPagina = Math.min(totalPaginas, Math.max(1, paginaActualDocente + delta));
+        if (nuevaPagina === paginaActualDocente) return;
 
-        tarjetasDocenteCache.forEach(item => {
-            const matchesAll = tokens.every(token => item.searchCorpus.includes(token));
-            if (matchesAll) {
-                item.element.style.display = 'flex';
-                visibles++;
-            } else {
-                item.element.style.display = 'none';
+        paginaActualDocente = nuevaPagina;
+        renderizarPaginaSeccionesDocente(true);
+    }
+
+    function cambiarTamanoPaginaDocente(nuevoTamano) {
+        const parsed = parseInt(nuevoTamano, 10);
+        tamanoPaginaDocente = [12, 24, 48].includes(parsed) ? parsed : 12;
+        paginaActualDocente = 1;
+
+        if (esModoServidorDocente()) {
+            cargarSeccionesServidorDocente(false);
+            return;
+        }
+        renderizarPaginaSeccionesDocente(false);
+    }
+
+    function aplicarFiltrosYRenderizarDocente(hacerScroll) {
+        if (tarjetasDocenteCache.length === 0 && document.querySelector('#tab-doc-secciones .tarjeta-aula-classroom')) {
+            const tarjetas = document.querySelectorAll('#tab-doc-secciones .tarjeta-aula-classroom');
+            totalDocenteOriginal = tarjetas.length;
+            tarjetasDocenteCache = Array.from(tarjetas).map(t => ({
+                element: t,
+                carrera: (t.getAttribute('data-carrera') || '').trim().toUpperCase(),
+                searchCorpus: normalizarTextoDocente(t.textContent || '')
+            }));
+        }
+
+        const btnClear = document.getElementById('btn-limpiar-busqueda-docente');
+        if (btnClear) {
+            btnClear.style.display = terminoActivoDocente.length > 0 ? 'inline-flex' : 'none';
+        }
+
+        const normTermino = normalizarTextoDocente(terminoActivoDocente);
+        const tokens = normTermino ? normTermino.split(/\s+/).filter(Boolean) : [];
+
+        tarjetasFiltradasDocente = tarjetasDocenteCache.filter(item => {
+            if (carreraActivaDocente && item.carrera !== carreraActivaDocente) {
+                return false;
             }
+            if (tokens.length > 0 && !tokens.every(token => item.searchCorpus.includes(token))) {
+                return false;
+            }
+            return true;
         });
 
-        if (badge) badge.textContent = visibles;
+        const badge = document.getElementById('badge-conteo-secciones');
+        if (badge) {
+            badge.textContent = tarjetasFiltradasDocente.length;
+        }
 
-        if (visibles === 0) {
+        const totalPaginas = Math.max(1, Math.ceil(tarjetasFiltradasDocente.length / tamanoPaginaDocente));
+        paginaActualDocente = Math.min(totalPaginas, Math.max(1, paginaActualDocente));
+
+        renderizarPaginaSeccionesDocente(hacerScroll);
+    }
+
+    function renderizarPaginaSeccionesDocente(hacerScroll) {
+        const sinResultados = document.getElementById('sin-resultados-docente');
+        const grid = document.querySelector('#tab-doc-secciones .grid-aulas-classroom');
+        const txtTermino = document.getElementById('texto-sin-resultados-docente');
+        const barTop = document.getElementById('docente-paginacion-top');
+        const barBottom = document.getElementById('docente-paginacion-bottom');
+
+        // Ocultar todas las tarjetas primero y luego mostrar solo el lote de la pagina actual
+        tarjetasDocenteCache.forEach(item => {
+            item.element.style.display = 'none';
+        });
+
+        const totalFiltradas = tarjetasFiltradasDocente.length;
+
+        if (totalFiltradas === 0) {
             if (grid) grid.style.display = 'none';
+            if (barTop) barTop.style.display = 'none';
+            if (barBottom) barBottom.style.display = 'none';
             if (sinResultados) {
                 sinResultados.style.display = 'block';
                 if (txtTermino) {
-                    txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${rawTermino.replace(/</g, '&lt;')}</b>".`;
+                    if (terminoActivoDocente) {
+                        const escaped = terminoActivoDocente.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${escaped}</b>".`;
+                    } else {
+                        txtTermino.textContent = 'No hay secciones registradas para este filtro.';
+                    }
                 }
             }
-        } else {
-            if (grid) grid.style.display = 'grid';
-            if (sinResultados) sinResultados.style.display = 'none';
+            return;
+        }
+
+        if (sinResultados) sinResultados.style.display = 'none';
+        if (grid) grid.style.display = 'grid';
+
+        const totalPaginas = Math.max(1, Math.ceil(totalFiltradas / tamanoPaginaDocente));
+        paginaActualDocente = Math.min(totalPaginas, Math.max(1, paginaActualDocente));
+
+        const inicio = (paginaActualDocente - 1) * tamanoPaginaDocente;
+        const fin = Math.min(inicio + tamanoPaginaDocente, totalFiltradas);
+
+        for (let i = inicio; i < fin; i++) {
+            tarjetasFiltradasDocente[i].element.style.display = 'flex';
+        }
+
+        const etiqueta = totalFiltradas === 1 ? 'sección' : 'secciones';
+        const textoInfo = `Mostrando ${inicio + 1} - ${fin} de ${totalFiltradas} ${etiqueta}`;
+        const textoPagina = `Pág. ${paginaActualDocente} / ${totalPaginas}`;
+
+        ['top', 'bottom'].forEach(pos => {
+            const infoEl = document.getElementById(`docente-pag-info-${pos}`);
+            const indEl = document.getElementById(`docente-pag-indicador-${pos}`);
+            const prevEl = document.getElementById(`btn-pag-prev-${pos}`);
+            const nextEl = document.getElementById(`btn-pag-next-${pos}`);
+
+            if (infoEl) infoEl.textContent = textoInfo;
+            if (indEl) indEl.textContent = textoPagina;
+            if (prevEl) prevEl.disabled = (paginaActualDocente <= 1);
+            if (nextEl) nextEl.disabled = (paginaActualDocente >= totalPaginas);
+        });
+
+        if (barTop) {
+            barTop.style.display = totalDocenteOriginal > 1 ? 'flex' : 'none';
+        }
+        if (barBottom) {
+            barBottom.style.display = totalFiltradas > tamanoPaginaDocente ? 'flex' : 'none';
+        }
+
+        if (hacerScroll && barTop) {
+            barTop.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 
@@ -316,9 +535,26 @@ const BASE_URL = window.BASE_URL || '/';
             input.value = '';
             input.focus();
         }
-        filtrarSeccionesDocente('');
+        terminoActivoDocente = '';
+        carreraActivaDocente = '';
+        paginaActualDocente = 1;
+
+        document.querySelectorAll('#docente-filtros-carrera .btn-carrera-docente').forEach(btn => {
+            const btnCar = (btn.getAttribute('data-carrera') || '').trim();
+            btn.classList.toggle('activo', btnCar === '');
+        });
+
+        const btnClear = document.getElementById('btn-limpiar-busqueda-docente');
+        if (btnClear) btnClear.style.display = 'none';
+
+        if (esModoServidorDocente()) {
+            cargarSeccionesServidorDocente(false);
+            return;
+        }
+        aplicarFiltrosYRenderizarDocente(false);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        asegurarModalesEnBodyDocente();
         inicializarBuscadorDocente();
     });

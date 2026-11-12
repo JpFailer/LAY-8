@@ -1,7 +1,7 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('css/admin.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= asset_url('css/admin.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -263,9 +263,9 @@
                 <td>#<?= (int)$u['id'] ?></td>
                 <td>
                   <strong><?= esc($u['primer_nombre'] . ' ' . $u['apellidos']) ?></strong>
-                  <?php if (in_array($u['rol'], ['admin', 'administrador'])): ?>
+                  <?php if (in_array($u['rol'], ['admin', 'administrador'], true)): ?>
                     <i class="bx bxs-check-circle" style="color: #2563eb; vertical-align: middle; margin-left: 2px;" title="Administrador Verificado"></i>
-                  <?php elseif ($u['rol'] === 'profesor'): ?>
+                  <?php elseif ($u['rol'] === 'profesor' && ($u['estado_verificacion'] ?? '') === 'aprobado'): ?>
                     <i class="bx bxs-check-circle" style="color: #10b981; vertical-align: middle; margin-left: 2px;" title="Profesor Verificado"></i>
                   <?php endif; ?>
                 </td>
@@ -292,14 +292,14 @@
                         <i class="bx bx-undo"></i> Reactivar
                       </button>
                     <?php else: ?>
-                      <?php if ($u['rol'] !== 'administrador'): ?>
+                      <?php if (!in_array($u['rol'], ['administrador', 'admin'], true)): ?>
                         <button type="button" class="btn-accion-admin btn-banear" onclick="abrirModalBanear(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
                           <i class="bx bx-block"></i> Banear
                         </button>
                       <?php endif; ?>
                     <?php endif; ?>
 
-                    <?php if ($u['rol'] !== 'administrador'): ?>
+                    <?php if (!in_array($u['rol'], ['administrador', 'admin'], true)): ?>
                       <button type="button" class="btn-accion-admin btn-eliminar" onclick="eliminarUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-trash"></i>
                       </button>
@@ -654,5 +654,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="<?= base_url('js/admin.js?v=' . time()) ?>"></script>
+<script src="<?= asset_url('js/admin.js') ?>"></script>
 <?= $this->endSection() ?>

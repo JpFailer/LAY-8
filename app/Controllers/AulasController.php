@@ -9,7 +9,7 @@ use App\Models\ClaseProgramadaModel;
 use App\Models\EstadoClaseModel;
 use App\Models\ActividadClaseModel;
 use App\Models\UsuarioModel;
-use App\Services\VerificadorInscripcionService;
+use App\Services\HorarioAulasService;
 
 class AulasController extends BaseController 
 {
@@ -50,446 +50,33 @@ class AulasController extends BaseController
      */
     public function index() 
     {
-        $usuarioId = (int) session()->get('usuario_id');
-        $rol       = session()->get('rol') ?? 'estudiante';
+        $usuarioId   = (int) session()->get('usuario_id');
+        $rol         = session()->get('rol') ?? 'estudiante';
+        $estadoVerif = session()->get('estado_verificacion') ?? 'no_aplica';
 
         // Redireccion de rol antidayanas:
-        // Los profesores gestionan sus materias, secciones, calificaciones y Classroom en su Panel Docente (/docente)
+        // Solo profesores aprobados gestionan materias desde Panel Docente (/docente)
         if ($rol === 'profesor') {
-            return redirect()->to(base_url('docente'))->with('info', 'Como profesor oficial de la UMC, gestionas tus materias y aulas virtuales desde tu Panel Docente.');
+            if ($estadoVerif === 'aprobado') {
+                return redirect()->to(base_url('docente'))->with('info', 'Como profesor oficial de la UMC, gestionas tus materias y aulas virtuales desde tu Panel Docente.');
+            }
+            return redirect()->to(base_url('dashboard'))->with('error', 'Tu solicitud de rol docente está pendiente de verificación por un administrador.');
         }
 
-        $db = \Config\Database::connect();
-        $inscripcionModel = new InscripcionModel();
-        $claseModel       = new ClaseProgramadaModel();
-        $estadoModel      = new EstadoClaseModel();
-        $actividadModel   = new ActividadClaseModel();
-        $aulasModel       = new AulasModel();
-
-        // Obtener carrera del usuario (sesión o base de datos)
         $usuarioCarrera = session()->get('carrera');
         if (!$usuarioCarrera && $usuarioId) {
-            $u = (new \App\Models\UsuarioModel())->find($usuarioId);
+            $u = (new UsuarioModel())->find($usuarioId);
             $usuarioCarrera = $u['carrera'] ?? null;
             if ($usuarioCarrera) {
                 session()->set('carrera', $usuarioCarrera);
             }
         }
 
-        // Filtro de carrera: Si el estudiante/usuario tiene una carrera marcada, filtrar por defecto solo su carrera
-        $carreraFiltro = $this->request->getGet('carrera');
-        if ($carreraFiltro === null) {
-            $carreraFiltro = !empty($usuarioCarrera) ? $usuarioCarrera : 'todas';
-        }
-
-        // Mis Materias: Únicamente las asignaturas en las que el estudiante/usuario está formalmente inscrito
-        // en base a su Registro de Inscripción oficial UMC (UPE-002) y/o materias extemporáneas agregadas
-        $secciones = $inscripcionModel
-            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia, materias.unidades_credito, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
-            ->join('secciones', 'secciones.id = inscripciones.seccion_id')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left')
-            ->where('inscripciones.estudiante_id', $usuarioId)
-            ->orderBy('materias.nombre', 'ASC')
-            ->findAll();
-
-        $seccionesIds = !empty($secciones) ? array_column($secciones, 'id') : [];
-
-        // =========================================================================
-        // SISTEMA DE EAGER LOADING BATCH ANTIDAYANAS (OPTIMIZACIÓN DE QUERIES O(1))
-        // Dayana no nos va a raspar por colapsar el socket de MariaDB con 1776 queries
-        // =========================================================================
-        $estadosHoyMapa = [];
-        $horariosPorSeccion = [];
-        $actividadesConteoMapa = [];
-
-        if (!empty($seccionesIds)) {
-            // 1. Batch de Estados de Hoy (1 sola query en lugar de 592)
-            $estadosHoyRaw = $estadoModel->whereIn('seccion_id', $seccionesIds)
-                                         ->where('fecha', date('Y-m-d'))
-                                         ->orderBy('id', 'DESC')
-                                         ->findAll();
-            foreach ($estadosHoyRaw as $est) {
-                $sId = (int)$est['seccion_id'];
-                if (!isset($estadosHoyMapa[$sId])) {
-                    $estadosHoyMapa[$sId] = $est;
-                }
-            }
-
-            // 2. Batch de Horarios de Secciones (1 sola query con ordenamiento en base de datos)
-            $horariosRaw = $claseModel
-                ->whereIn('seccion_id', $seccionesIds)
-                ->groupStart()
-                    ->where('estudiante_id', null)
-                    ->orWhere('estudiante_id', $usuarioId)
-                ->groupEnd()
-                ->orderBy('hora_inicio', 'ASC')
-                ->findAll();
-            foreach ($horariosRaw as $h) {
-                $sId = (int)$h['seccion_id'];
-                $horariosPorSeccion[$sId][] = $h;
-            }
-
-            // 3. Batch de Total de Actividades por Sección (1 query con GROUP BY antidayanas)
-            $actividadesConteoRaw = $db->table('actividades_clase')
-                ->select('seccion_id, COUNT(*) as total')
-                ->whereIn('seccion_id', $seccionesIds)
-                ->groupBy('seccion_id')
-                ->get()
-                ->getResultArray();
-            foreach ($actividadesConteoRaw as $ac) {
-                $actividadesConteoMapa[(int)$ac['seccion_id']] = (int)$ac['total'];
-            }
-        }
-
-        // Mapeo en memoria RAM O(1) instantáneo (0 queries dentro del bucle, cero lag)
-        foreach ($secciones as &$sec) {
-            $secId = (int)$sec['id'];
-            $sec['estado_hoy'] = $estadosHoyMapa[$secId] ?? null;
-            $sec['horarios'] = $horariosPorSeccion[$secId] ?? [];
-            $sec['total_actividades'] = $actividadesConteoMapa[$secId] ?? 0;
-        }
-        unset($sec);
-
-        // 3. Obtener el Horario Semanal Completo del Estudiante (Excluyendo bloques descartados)
-        $horarioSemanal = [];
-        if (!empty($seccionesIds)) {
-            $db = \Config\Database::connect();
-            $bloquesExcluidos = $db->table('estudiante_bloques_excluidos')
-                ->select('clase_id')
-                ->where('estudiante_id', $usuarioId)
-                ->get()
-                ->getResultArray();
-            $idsExcluidos = !empty($bloquesExcluidos) ? array_column($bloquesExcluidos, 'clase_id') : [];
-
-            $builderClases = $claseModel
-                ->select('clases_programadas.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
-                ->join('secciones', 'secciones.id = clases_programadas.seccion_id')
-                ->join('materias', 'materias.id = secciones.materia_id')
-                ->whereIn('clases_programadas.seccion_id', $seccionesIds)
-                ->groupStart()
-                    ->where('clases_programadas.estudiante_id', null)
-                    ->orWhere('clases_programadas.estudiante_id', $usuarioId)
-                ->groupEnd();
-
-            if (!empty($idsExcluidos)) {
-                $builderClases->whereNotIn('clases_programadas.id', $idsExcluidos);
-            }
-
-            $horarioSemanal = $builderClases->findAll();
-        }
-
-        // 4. Mapear horarios en una matriz [Dia][Intervalo] para renderizar la grilla oficial
-        $grillaHorarios = [];
-        $diasSemana = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-        foreach ($diasSemana as $d) {
-            $grillaHorarios[$d] = [];
-        }
-
-        foreach ($horarioSemanal as $bloque) {
-            $dia = $bloque['dia_semana'];
-            if (isset($grillaHorarios[$dia])) {
-                $inicioFormato = date('H:i', strtotime($bloque['hora_inicio']));
-                $finFormato    = date('H:i', strtotime($bloque['hora_fin']));
-                $claveIntervalo = $inicioFormato . ' - ' . $finFormato;
-                $grillaHorarios[$dia][] = [
-                    'id'          => $bloque['id'],
-                    'seccion_id'  => $bloque['seccion_id'],
-                    'materia'     => $bloque['materia'],
-                    'codigo'      => $bloque['codigo_materia'],
-                    'seccion'     => $bloque['codigo_seccion'],
-                    'aula'        => $bloque['aula'],
-                    'hora_inicio' => $bloque['hora_inicio'],
-                    'hora_fin'    => $bloque['hora_fin'],
-                    'intervalo'   => $claveIntervalo,
-                    'es_personal' => true, // Todos los bloques tienen botón de descarte personal
-                ];
-            }
-        }
-
-        // 5. Cronograma de Actividades / Pendientes tipo Classroom
-        $actividades = $actividadModel->obtenerParaEstudiante($usuarioId);
-
-        // 6. Lista de aulas del campus para el selector del armado de horario
-        $todasAulas = $aulasModel->orderBy('alias_pdf', 'ASC')->findAll();
-
-        $carrerasDefinidas = [
-            'todas'   => ['nombre' => 'Todas las Carreras', 'icono' => 'bx-grid-alt'],
-            'ING-INF' => ['nombre' => 'Informática', 'icono' => 'bx-code-alt'],
-            'ING-MAR' => ['nombre' => 'Marítima', 'icono' => 'bx-anchor'],
-            'ING-AMB' => ['nombre' => 'Ambiental', 'icono' => 'bx-leaf'],
-            'ADM'     => ['nombre' => 'Administración', 'icono' => 'bx-briefcase-alt-2'],
-            'TUR'     => ['nombre' => 'Turismo', 'icono' => 'bx-compass'],
-        ];
-
-        // Conteos de secciones por carrera
-        $conteosSeccionesCarreras = [
-            'todas'   => (new SeccionModel())->countAllResults(),
-            'ING-INF' => (new SeccionModel())->where('carrera', 'ING-INF')->countAllResults(),
-            'ING-MAR' => (new SeccionModel())->where('carrera', 'ING-MAR')->countAllResults(),
-            'ING-AMB' => (new SeccionModel())->where('carrera', 'ING-AMB')->countAllResults(),
-            'ADM'     => (new SeccionModel())->where('carrera', 'ADM')->countAllResults(),
-            'TUR'     => (new SeccionModel())->where('carrera', 'TUR')->countAllResults(),
-        ];
-
-        $datosVista = [
-            'secciones'        => $secciones,
-            'totalMaterias'    => count($secciones),
-            'carreraActual'    => $carreraFiltro ?? 'todas',
-            'usuarioCarrera'   => $usuarioCarrera,
-            'carrerasDefinidas'=> $carrerasDefinidas,
-            'conteosSeccionesCarreras' => $conteosSeccionesCarreras,
-            'horarioSemanal'   => $horarioSemanal,
-            'grillaHorarios'   => $grillaHorarios,
-            'actividades'      => $actividades,
-            'todasAulas'       => $todasAulas,
-            'bloquesOficiales' => $this->bloquesOficiales,
-            'diasSemana'       => $diasSemana,
-            'rolUsuario'       => $rol,
-        ];
+        $datosVista = (new HorarioAulasService())->obtenerDatosVistaAulas($usuarioId, $this->bloquesOficiales);
+        $datosVista['usuarioCarrera'] = $usuarioCarrera;
+        $datosVista['rolUsuario']     = $rol;
 
         return view('Dashboard/aulas_view', $datosVista); 
-    }
-
-    /**
-     * Procesa la subida del Registro de Inscripción o del Horario en PDF
-     */
-    public function subirDocumentoHorario()
-    {
-        $usuarioId = (int) session()->get('usuario_id');
-        if (!$usuarioId) {
-            return redirect()->to('/login')->with('error', 'Sesión expirada.');
-        }
-
-        if (session('rol') === 'profesor') {
-            return redirect()->to(base_url('docente'))->with('error', 'La carga de registros de inscripción es de uso exclusivo para estudiantes.');
-        }
-
-        $archivo = $this->request->getFile('documento_pdf');
-        if (!$archivo || !$archivo->isValid() || $archivo->getClientMimeType() !== 'application/pdf') {
-            return redirect()->back()->with('error', 'Por favor selecciona un archivo PDF válido emitido por la UMC.');
-        }
-
-        $carpetaUploads = WRITEPATH . 'uploads/documentos_aulas';
-        if (!is_dir($carpetaUploads)) {
-            mkdir($carpetaUploads, 0777, true);
-        }
-
-        $nuevoNombre = $archivo->getRandomName();
-        $archivo->move($carpetaUploads, $nuevoNombre);
-        $rutaCompleta = $carpetaUploads . '/' . $nuevoNombre;
-
-        try {
-            $verificador = new VerificadorInscripcionService();
-            $analisis = $verificador->verificar($rutaCompleta);
-
-            if ($analisis['es_valido'] && !empty($analisis['materias'])) {
-                // Comprobación de Titularidad: Cotejo de Cédula con la cuenta del usuario en sesión
-                $usuarioModel = new \App\Models\UsuarioModel();
-                $usuario = $usuarioModel->find($usuarioId);
-                $cedulaPdf = preg_replace('/\D/', '', (string)($analisis['cedula'] ?? ''));
-                $cedulaUsuario = preg_replace('/\D/', '', (string)($usuario['cedula'] ?? ''));
-                $esAdmin = ($usuario['rol'] ?? session('rol')) === 'administrador';
-
-                if (!$esAdmin && !empty($cedulaPdf) && !empty($cedulaUsuario) && $cedulaPdf !== $cedulaUsuario) {
-                    @unlink($rutaCompleta);
-                    return redirect()->back()->with('error', "Seguridad UMC: El documento pertenece a la cédula {$cedulaPdf}, la cual no coincide con tu usuario ({$cedulaUsuario}).");
-                }
-
-                // Autocompletar la cédula del usuario en BD si aún no la tenía
-                if (empty($cedulaUsuario) && !empty($cedulaPdf)) {
-                    $usuarioModel->update($usuarioId, ['cedula' => $cedulaPdf]);
-                    session()->set('cedula', $cedulaPdf);
-                }
-
-                // Sincronizar carrera del usuario si fue certificada en el documento oficial
-                if (!empty($analisis['carrera_codigo']) && (empty($usuario['carrera']) || $usuario['carrera'] !== $analisis['carrera_codigo'])) {
-                    $usuarioModel->update($usuarioId, ['carrera' => $analisis['carrera_codigo']]);
-                    session()->set('carrera', $analisis['carrera_codigo']);
-                }
-
-                // Es un Registro de Inscripción UMC oficial (UPE-002 o Forma 006 REE)
-                $inscritas = $verificador->inscribirEstudianteEnMaterias($usuarioId, $analisis['materias'], $analisis['periodo'], true, $analisis['carrera_codigo'] ?? null);
-                @unlink($rutaCompleta);
-
-                return redirect()->to('/aulas')->with('mensaje', "¡Registro de Inscripción validado con éxito! Se certificaron y asignaron {$inscritas} materias/aulas a tu cuenta.");
-            }
-
-            // Si no fue detectado como Registro de Inscripción, verificar si es Horario Académico General (CGD-001)
-            $textoLineas = $verificador->extraerLineasDePdf($rutaCompleta);
-            $textoCompleto = implode(' ', $textoLineas);
-
-            if (preg_match('/HORARIO\s+ACAD[EÉ]MICO/i', $textoCompleto) || preg_match('/CGD-001/i', $textoCompleto)) {
-                @unlink($rutaCompleta);
-                return redirect()->to('/aulas')->with('error', 'El documento adjunto es un Horario Académico General institucional (CGD-001). Los horarios generales son configurados por el Administrador. Para sincronizar tus asignaturas debes subir tu Registro de Inscripción Estudiantil individual (Formato Web UPE-002 o Forma 006).');
-            }
-
-            @unlink($rutaCompleta);
-            return redirect()->back()->with('error', 'El documento no coincide con el formato oficial de Registro de Inscripción (UPE-002) ni Horario Académico (CGD-001) de la UMC.');
-
-        } catch (\Throwable $e) {
-            if (file_exists($rutaCompleta)) @unlink($rutaCompleta);
-            return redirect()->back()->with('error', 'Error al procesar el documento PDF: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Guarda uno o varios bloques de clase de forma manual asistida por plantilla
-     * Admite selección múltiple de bloques continuos para materias de 2 o más horas académicas
-     * Regla estricta: La materia DEBE estar inscrita por el estudiante
-     */
-    public function guardarBloqueManual()
-    {
-        $usuarioId = (int) session()->get('usuario_id');
-        $rol       = session()->get('rol') ?? 'estudiante';
-        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
-
-        if (!$usuarioId) {
-            if ($esAjax) {
-                return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada. Inicia sesión nuevamente.']);
-            }
-            return redirect()->to('/login')->with('error', 'Sesión expirada');
-        }
-
-        if ($rol === 'profesor') {
-            if ($esAjax) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Los profesores no arman horarios de estudiante.']);
-            }
-            return redirect()->to(base_url('docente'));
-        }
-
-        $seccionId = (int) $this->request->getPost('seccion_id');
-        $diaSemana = trim((string) $this->request->getPost('dia_semana'));
-        $aula      = trim((string) $this->request->getPost('aula'));
-
-        // Puede recibir un arreglo de bloques ("bloques_horas[]") o un solo string ("bloque_horas")
-        $bloquesRaw = $this->request->getPost('bloques_horas');
-        if (empty($bloquesRaw)) {
-            $single = $this->request->getPost('bloque_horas');
-            $bloquesRaw = !empty($single) ? [$single] : [];
-        }
-        if (is_string($bloquesRaw)) {
-            $bloquesRaw = explode(',', $bloquesRaw);
-        }
-        $bloquesRaw = array_values(array_filter(array_map('trim', (array)$bloquesRaw)));
-
-        $diasValidos = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-        if (empty($seccionId) || empty($diaSemana) || empty($aula) || !in_array($diaSemana, $diasValidos, true)) {
-            $err = 'Por favor completa todos los campos requeridos con un día de la semana válido (Lunes a Sábado).';
-            if ($esAjax) {
-                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
-            }
-            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
-        }
-        $aula = strip_tags($aula);
-
-        if (empty($bloquesRaw)) {
-            $err = 'Por favor selecciona al menos un bloque de hora oficial de la UMC.';
-            if ($esAjax) {
-                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
-            }
-            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
-        }
-
-        // sistema de proteccion contra idor antidayanas (un estudiante no puede alterar materias ajenas) (o sea profesor/admin)
-        $db = \Config\Database::connect();
-        $estaInscrito = $db->table('inscripciones')
-            ->where('estudiante_id', $usuarioId)
-            ->where('seccion_id', $seccionId)
-            ->countAllResults();
-
-        $esProfesorSeccion = false;
-        if ($rol === 'profesor') {
-            $esProfesorSeccion = ($db->table('secciones')
-                ->where('id', $seccionId)
-                ->where('profesor_id', $usuarioId)
-                ->countAllResults() > 0);
-        }
-
-        if ($estaInscrito === 0 && !$esProfesorSeccion && $rol !== 'administrador') {
-            $err = 'Acceso restringido: Solo puedes programar horarios de materias que tengas formalmente inscritas en tu registro.';
-            if ($esAjax) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => $err]);
-            }
-            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
-        }
-
-        // Obtener datos de la sección y materia para reportes
-        $seccionData = $db->table('secciones')
-            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('secciones.id', $seccionId)
-            ->get()
-            ->getRowArray();
-
-        $carreraBloque = $seccionData['carrera'] ?? (session('carrera') ?: 'ING-INF');
-        $nombreMateria = $seccionData['materia'] ?? 'la asignatura';
-
-        // 2. Procesar cada uno de los bloques horarios seleccionados (multi-selección continua)
-        $claseModel = new ClaseProgramadaModel();
-        $insertados = 0;
-        $duplicados = 0;
-
-        foreach ($bloquesRaw as $bStr) {
-            $partesHoras = explode('|', $bStr);
-            if (count($partesHoras) !== 2) {
-                continue;
-            }
-            $horaInicio = trim($partesHoras[0]);
-            $horaFin    = trim($partesHoras[1]);
-            if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $horaInicio) || !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $horaFin)) {
-                continue;
-            }
-
-            // Chequeo de duplicado idéntico para este usuario o sección
-            $duplicado = $claseModel->where('seccion_id', $seccionId)
-                ->where('dia_semana', $diaSemana)
-                ->where('hora_inicio', $horaInicio)
-                ->groupStart()
-                    ->where('estudiante_id', null)
-                    ->orWhere('estudiante_id', $usuarioId)
-                ->groupEnd()
-                ->first();
-
-            if ($duplicado) {
-                $duplicados++;
-                continue;
-            }
-
-            $claseModel->insert([
-                'seccion_id'    => $seccionId,
-                'estudiante_id' => ($rol === 'administrador' || $rol === 'profesor') ? null : $usuarioId,
-                'carrera'       => $carreraBloque,
-                'dia_semana'    => $diaSemana,
-                'hora_inicio'   => $horaInicio,
-                'hora_fin'      => $horaFin,
-                'aula'          => $aula
-            ]);
-            $insertados++;
-        }
-
-        if ($insertados === 0) {
-            $err = 'Los bloques de horario seleccionados ya se encontraban registrados en tu horario para esta materia.';
-            if ($esAjax) {
-                return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $err]);
-            }
-            return redirect()->to(base_url('aulas?tab=cargar'))->with('error', $err);
-        }
-
-        $mensajeExito = "¡Se programaron con éxito {$insertados} bloque(s) de {$nombreMateria} para el día {$diaSemana} en {$aula}!";
-
-        if ($esAjax) {
-            return $this->response->setJSON([
-                'success'    => true,
-                'mensaje'    => $mensajeExito,
-                'insertados' => $insertados,
-                'dia'        => $diaSemana,
-                'aula'       => $aula,
-                'materia'    => $nombreMateria
-            ]);
-        }
-
-        return redirect()->to(base_url('aulas?tab=cargar'))->with('mensaje', $mensajeExito);
     }
 
     /**
@@ -659,16 +246,31 @@ class AulasController extends BaseController
                 ->where('estudiante_id', $usuarioId)
                 ->where('seccion_id', $actividad['seccion_id'])
                 ->countAllResults() > 0);
-            if (!$estaInscrito && session('rol') !== 'administrador') {
+            if (!$estaInscrito && !in_array(session('rol'), ['administrador', 'admin'], true)) {
                 if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.']);
                 return redirect()->back()->with('error', 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.');
             }
+        }
+
+        $entregaModel = new \App\Models\EntregaActividadModel();
+        $existente = $entregaModel->obtenerEntregaEstudiante($actividadId, $usuarioId);
+
+        if ($existente && isset($existente['calificacion']) && $existente['calificacion'] !== '' && $existente['calificacion'] !== null) {
+            $errCalificada = 'Esta tarea ya fue evaluada y calificada por el profesor; no se admiten cambios en la entrega.';
+            if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => $errCalificada]);
+            return redirect()->to(base_url('aulas?tab=actividades'))->with('error', $errCalificada);
         }
 
         $archivo = $this->request->getFile('archivo_tarea');
         $comentario = strip_tags(trim((string)$this->request->getPost('comentario')));
         $rutaDestino = null;
         $nombreOriginal = null;
+
+        if ($archivo && $archivo->getError() !== UPLOAD_ERR_NO_FILE && !$archivo->isValid()) {
+            $errSubida = 'No se pudo procesar el archivo adjunto: ' . $archivo->getErrorString();
+            if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $errSubida]);
+            return redirect()->back()->with('error', $errSubida);
+        }
 
         if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
             $extPermitidas = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg'];
@@ -692,8 +294,11 @@ class AulasController extends BaseController
             $rutaDestino = 'uploads/entregas/' . $nuevoNombre;
         }
 
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $existente = $entregaModel->obtenerEntregaEstudiante($actividadId, $usuarioId);
+        if (!$existente && !$rutaDestino && $comentario === '') {
+            $errVacio = 'Debes adjuntar un archivo o escribir un comentario para enviar tu entrega.';
+            if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $errVacio]);
+            return redirect()->back()->with('error', $errVacio);
+        }
 
         $datosEntrega = [
             'actividad_id'      => $actividadId,
@@ -830,7 +435,7 @@ class AulasController extends BaseController
             'ponderacion'   => $ponderacion ?: 0.00,
         ]);
 
-        return redirect()->to(base_url('aulas?tab=cronograma'))->with('mensaje', '¡Actividad agregada al cronograma con éxito!');
+        return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', '¡Actividad agregada al cronograma con éxito!');
     }
 
     /**
@@ -876,7 +481,7 @@ class AulasController extends BaseController
         }
 
         $actividadModel->delete($id);
-        return redirect()->to(base_url('aulas?tab=cronograma'))->with('mensaje', 'Actividad eliminada del cronograma.');
+        return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', 'Actividad eliminada del cronograma.');
     }
 
     /**
@@ -1028,52 +633,6 @@ class AulasController extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'mensaje' => "Asignatura {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}) inscrita exitosamente como extemporánea."
-        ]);
-    }
-
-    /**
-     * Desincorpora una materia del registro del estudiante
-     */
-    public function desinscribirMateria()
-    {
-        $usuarioId = (int) session()->get('usuario_id');
-        if (!$usuarioId) {
-            return $this->response->setStatusCode(401)->setJSON(['success' => false, 'error' => 'Sesión expirada.']);
-        }
-
-        $seccionId = (int) $this->request->getPost('seccion_id');
-        if ($seccionId <= 0) {
-            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificador de sección inválido.']);
-        }
-
-        $db = \Config\Database::connect();
-
-        $seccion = $db->table('secciones')
-            ->select('secciones.*, materias.nombre as materia')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('secciones.id', $seccionId)
-            ->get()
-            ->getRowArray();
-
-        if (!$seccion) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
-        }
-
-        // Eliminar inscripción
-        $db->table('inscripciones')
-            ->where('estudiante_id', $usuarioId)
-            ->where('seccion_id', $seccionId)
-            ->delete();
-
-        // Eliminar bloques horarios personalizados de esta sección si existieran
-        $db->table('clases_programadas')
-            ->where('estudiante_id', $usuarioId)
-            ->where('seccion_id', $seccionId)
-            ->delete();
-
-        return $this->response->setJSON([
-            'success' => true,
-            'mensaje' => "Asignatura {$seccion['materia']} desincorporada de tu registro académico."
         ]);
     }
 }

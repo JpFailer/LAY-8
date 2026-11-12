@@ -33,26 +33,34 @@ function actualizarNombreHorario(input) {
     }
 }
 
-// aceptar o mandarle f al registro del docente
+/**
+ * Ejecuta peticiones AJAX administrativas delegando en Lay8UI.apiFetch.
+ */
+async function adminFetchJson(url, options = {}) {
+    if (window.Lay8UI) {
+        return window.Lay8UI.apiFetch(url, options);
+    }
+    const resp = await fetch(url, options);
+    return resp.json();
+}
+
+// aceptar o rechazar el registro del docente
 let docenteSeleccionadoId = null;
 
-function aprobarProfesor(id, username) {
-    if (!confirm('¿Confirmas aprobar al usuario @' + username + ' como Profesor oficial de la UMC?')) return;
+async function aprobarProfesor(id, username) {
+    const ok = await window.Lay8UI.confirm('¿Confirmas aprobar al usuario @' + username + ' como Profesor oficial de la UMC?', {
+        title: 'Aprobar solicitud docente',
+        confirmText: 'Aprobar'
+    });
+    if (!ok) return;
 
-    fetch(BASE_URL + 'api/admin/aprobar-profesor/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo aprobar.'));
-        }
-    })
-    .catch(() => alert('Error al procesar la solicitud.'));
+    try {
+        const data = await adminFetchJson(BASE_URL + 'api/admin/aprobar-profesor/' + id, { method: 'POST' });
+        window.Lay8UI.toast(data.mensaje, 'exito');
+        setTimeout(() => location.reload(), 700);
+    } catch (err) {
+        window.Lay8UI.toast('Error: ' + err.message, 'error');
+    }
 }
 
 function abrirModalDenegarProfesor(id, username) {
@@ -69,31 +77,25 @@ function cerrarModalDenegar() {
 function confirmarDenegarProfesor() {
     const motivo = document.getElementById('motivo-denegar-input').value.trim();
     if (!motivo) {
-        alert('Por favor ingresa un motivo para el rechazo.');
+        window.Lay8UI.toast('Por favor ingresa un motivo para el rechazo.', 'warning');
         return;
     }
 
     const formData = new FormData();
     formData.append('motivo', motivo);
 
-    fetch(BASE_URL + 'api/admin/denegar-profesor/' + docenteSeleccionadoId, {
+    adminFetchJson(BASE_URL + 'api/admin/denegar-profesor/' + docenteSeleccionadoId, {
         method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo rechazar.'));
-        }
-    })
-    .catch(() => alert('Error de conexión.'));
+        .then(data => {
+            window.Lay8UI.toast(data.mensaje, 'exito');
+            setTimeout(() => location.reload(), 700);
+        })
+        .catch(err => window.Lay8UI.toast('Error: ' + err.message, 'error'));
 }
 
-// ban martillo, desbanear y borrar cuentas
+// suspension, reactivacion y eliminacion de cuentas
 let usuarioSeleccionadoId = null;
 
 function abrirModalBanear(id, username) {
@@ -110,69 +112,57 @@ function cerrarModalBanear() {
 function confirmarBanearUsuario() {
     const motivo = document.getElementById('motivo-banear-input').value.trim();
     if (!motivo) {
-        alert('Por favor ingresa un motivo para el baneo.');
+        window.Lay8UI.toast('Por favor ingresa un motivo para el baneo.', 'warning');
         return;
     }
 
     const formData = new FormData();
     formData.append('motivo', motivo);
 
-    fetch(BASE_URL + 'api/admin/usuarios/banear/' + usuarioSeleccionadoId, {
+    adminFetchJson(BASE_URL + 'api/admin/usuarios/banear/' + usuarioSeleccionadoId, {
         method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo banear.'));
-        }
-    })
-    .catch(() => alert('Error de red.'));
+        .then(data => {
+            window.Lay8UI.toast(data.mensaje, 'exito');
+            setTimeout(() => location.reload(), 700);
+        })
+        .catch(err => window.Lay8UI.toast('Error: ' + err.message, 'error'));
 }
 
-function desbanearUsuario(id, username) {
-    if (!confirm('¿Reactivar la cuenta de @' + username + '?')) return;
+async function desbanearUsuario(id, username) {
+    const ok = await window.Lay8UI.confirm('¿Reactivar la cuenta de @' + username + '?', {
+        title: 'Reactivar cuenta',
+        confirmText: 'Reactivar'
+    });
+    if (!ok) return;
 
-    fetch(BASE_URL + 'api/admin/usuarios/desbanear/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo desbanear.'));
-        }
-    })
-    .catch(() => alert('Error al procesar la solicitud.'));
+    try {
+        const data = await adminFetchJson(BASE_URL + 'api/admin/usuarios/desbanear/' + id, { method: 'POST' });
+        window.Lay8UI.toast(data.mensaje, 'exito');
+        setTimeout(() => location.reload(), 700);
+    } catch (err) {
+        window.Lay8UI.toast('Error: ' + err.message, 'error');
+    }
 }
 
-function eliminarUsuario(id, username) {
-    if (!confirm('¿Estás seguro de eliminar permanentemente a @' + username + '? Esta acción no se puede deshacer.')) return;
+async function eliminarUsuario(id, username) {
+    const ok = await window.Lay8UI.confirm(
+        '¿Estás seguro de eliminar permanentemente a @' + username + '? Esta acción no se puede deshacer.',
+        { title: 'Eliminar cuenta', confirmText: 'Eliminar cuenta', danger: true }
+    );
+    if (!ok) return;
 
-    fetch(BASE_URL + 'api/admin/usuarios/eliminar/' + id, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo eliminar el usuario.'));
-        }
-    })
-    .catch(() => alert('Error de conexión.'));
+    try {
+        const data = await adminFetchJson(BASE_URL + 'api/admin/usuarios/eliminar/' + id, { method: 'POST' });
+        window.Lay8UI.toast(data.mensaje, 'exito');
+        setTimeout(() => location.reload(), 700);
+    } catch (err) {
+        window.Lay8UI.toast('Error: ' + err.message, 'error');
+    }
 }
 
-// limpiar archivos que no van en la biblioteca
+// moderacion de aportes en biblioteca
 let aporteSeleccionadoId = null;
 
 function abrirModalEliminarAporte(id, titulo) {
@@ -191,21 +181,15 @@ function confirmarEliminarAporte() {
     const formData = new FormData();
     if (motivo) formData.append('motivo', motivo);
 
-    fetch(BASE_URL + 'api/admin/biblioteca/eliminar/' + aporteSeleccionadoId, {
+    adminFetchJson(BASE_URL + 'api/admin/biblioteca/eliminar/' + aporteSeleccionadoId, {
         method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.mensaje);
-            location.reload();
-        } else {
-            alert('Error: ' + (data.error || 'No se pudo eliminar el recurso.'));
-        }
-    })
-    .catch(() => alert('Error de red.'));
+        .then(data => {
+            window.Lay8UI.toast(data.mensaje, 'exito');
+            setTimeout(() => location.reload(), 700);
+        })
+        .catch(err => window.Lay8UI.toast('Error: ' + err.message, 'error'));
 }
 
 // procesar el pdf de horarios de cada carrera
@@ -248,18 +232,13 @@ async function subirHorarioCarrera(codCarrera) {
     const banner = document.getElementById('banner-feedback-horarios');
 
     if (!input || !input.files || !input.files[0]) {
-        alert('Por favor selecciona un archivo PDF de horario primero.');
+        window.Lay8UI.toast('Por favor selecciona un archivo PDF de horario primero.', 'warning');
         return;
     }
 
     const formData = new FormData();
     formData.append('horario_pdf', input.files[0]);
     formData.append('carrera', codCarrera);
-
-    const csrfInput = document.querySelector('input[name="csrf_token_name"]') || (document.querySelector(`input[name=\"${window.CSRF_TOKEN || 'csrf_test_name'}\"]`) || document.querySelector('#global-csrf-container input'));
-    if (csrfInput) {
-        formData.append(csrfInput.name, csrfInput.value);
-    }
 
     btnSubir.disabled = true;
     btnSubir.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Procesando...';
@@ -273,44 +252,35 @@ async function subirHorarioCarrera(codCarrera) {
     }
 
     try {
-        const res = await fetch((window.BASE_URL || '/') + 'api/admin/horario/actualizar', {
+        const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/horario/actualizar', {
             method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
+            body: formData
         });
 
-        const data = await res.json();
-        if (data.success) {
-            if (banner) {
-                banner.style.background = '#ecfdf5';
-                banner.style.color = '#065f46';
-                banner.style.border = '1px solid #a7f3d0';
-                banner.innerHTML = '<i class="bx bx-check-circle"></i> ¡Éxito! Se sincronizaron <strong>' + data.clases_cargadas + '</strong> bloques de clases para <strong>' + codCarrera + '</strong> con horas exactas en el mapa.';
-            }
-
-            const card = document.getElementById('card-horario-' + codCarrera);
-            if (card) {
-                const metaStatus = card.querySelector('.carrera-meta-status');
-                if (metaStatus) {
-                    metaStatus.innerHTML = '<span class="badge-status-ok" style="color: #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="bx bxs-check-circle"></i> <span id="conteo-clases-' + codCarrera + '">' + data.clases_cargadas + '</span> bloques sincronizados</span><span style="color: #94a3b8; margin: 0 4px;">•</span><span style="color: #64748b;" id="fecha-sync-' + codCarrera + '">' + data.fecha + '</span>';
-                }
-            }
-
-            btnSubir.innerHTML = '<i class="bx bx-check"></i> Sincronizado';
-            setTimeout(() => {
-                btnSubir.innerHTML = '<i class="bx bx-sync"></i> Procesar';
-                btnSubir.disabled = true;
-                btnSubir.style.opacity = '0.6';
-                const labelFile = document.getElementById('label-file-' + codCarrera);
-                if (labelFile) labelFile.innerText = 'Seleccionar PDF';
-                input.value = '';
-            }, 3000);
-        } else {
-            throw new Error(data.error || 'Error al procesar el horario');
+        if (banner) {
+            banner.style.background = '#ecfdf5';
+            banner.style.color = '#065f46';
+            banner.style.border = '1px solid #a7f3d0';
+            banner.innerHTML = '<i class="bx bx-check-circle"></i> ¡Éxito! Se sincronizaron <strong>' + data.clases_cargadas + '</strong> bloques de clases para <strong>' + codCarrera + '</strong> con horas exactas en el mapa.';
         }
+
+        const card = document.getElementById('card-horario-' + codCarrera);
+        if (card) {
+            const metaStatus = card.querySelector('.carrera-meta-status');
+            if (metaStatus) {
+                metaStatus.innerHTML = '<span class="badge-status-ok" style="color: #059669; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="bx bxs-check-circle"></i> <span id="conteo-clases-' + codCarrera + '">' + data.clases_cargadas + '</span> bloques sincronizados</span><span style="color: #94a3b8; margin: 0 4px;">•</span><span style="color: #64748b;" id="fecha-sync-' + codCarrera + '">' + data.fecha + '</span>';
+            }
+        }
+
+        btnSubir.innerHTML = '<i class="bx bx-check"></i> Sincronizado';
+        setTimeout(() => {
+            btnSubir.innerHTML = '<i class="bx bx-sync"></i> Procesar';
+            btnSubir.disabled = true;
+            btnSubir.style.opacity = '0.6';
+            const labelFile = document.getElementById('label-file-' + codCarrera);
+            if (labelFile) labelFile.innerText = 'Seleccionar PDF';
+            input.value = '';
+        }, 3000);
     } catch (err) {
         if (banner) {
             banner.style.background = '#fef2f2';
@@ -344,9 +314,8 @@ async function cargarSeccionesDocente(profId) {
     const cont = document.getElementById('lista-secciones-asignadas');
     cont.innerHTML = '<div style="text-align: center; padding: 15px; color: #64748b;"><i class="bx bx-loader-alt bx-spin"></i> Cargando secciones...</div>';
     try {
-        const resp = await fetch((window.BASE_URL || '/') + 'api/admin/profesor-secciones/' + profId);
-        const data = await resp.json();
-        if (data.success && data.secciones && data.secciones.length > 0) {
+        const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/profesor-secciones/' + profId);
+        if (data.secciones && data.secciones.length > 0) {
             cont.innerHTML = data.secciones.map(s => `
                 <div class="item-seccion-asignada" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
                     <div>
@@ -361,8 +330,8 @@ async function cargarSeccionesDocente(profId) {
         } else {
             cont.innerHTML = '<p style="font-size: 0.85rem; color: #94a3b8; margin: 0; padding: 10px; text-align: center; background: #f8fafc; border-radius: 8px;">Este docente no tiene secciones asignadas actualmente.</p>';
         }
-    } catch(e) {
-        cont.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error al cargar las secciones.</p>';
+    } catch (e) {
+        cont.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error al cargar las secciones: ' + e.message + '</p>';
     }
 }
 
@@ -379,9 +348,8 @@ function buscarSeccionesDisponibles(q) {
     timerBusquedaSecciones = setTimeout(async () => {
         resCont.innerHTML = '<div style="text-align: center; padding: 10px; color: #64748b;"><i class="bx bx-loader-alt bx-spin"></i> Buscando secciones...</div>';
         try {
-            const resp = await fetch((window.BASE_URL || '/') + 'api/admin/buscar-secciones?q=' + encodeURIComponent(q));
-            const data = await resp.json();
-            if (data.success && data.secciones && data.secciones.length > 0) {
+            const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/buscar-secciones?q=' + encodeURIComponent(q));
+            if (data.secciones && data.secciones.length > 0) {
                 resCont.innerHTML = data.secciones.map(s => {
                     const docenteActual = s.prof_nombre ? `${s.prof_nombre} ${s.prof_apellido}` : '<span style="color:#059669; font-weight:600;">Disponible (Sin docente)</span>';
                     return `
@@ -399,8 +367,8 @@ function buscarSeccionesDisponibles(q) {
             } else {
                 resCont.innerHTML = '<p style="font-size: 0.82rem; color: #94a3b8; margin: 0;">No se encontraron secciones con ese criterio.</p>';
             }
-        } catch(e) {
-            resCont.innerHTML = '<p style="color: #ef4444; font-size: 0.82rem;">Error al buscar secciones.</p>';
+        } catch (e) {
+            resCont.innerHTML = '<p style="color: #ef4444; font-size: 0.82rem;">Error al buscar secciones: ' + e.message + '</p>';
         }
     }, 280);
 }
@@ -411,52 +379,37 @@ async function asignarSeccion(seccionId) {
     formData.append('profesor_id', profIdActualAsignar);
     formData.append('seccion_id', seccionId);
 
-    const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-    const csrfInput = (document.querySelector(`input[name=\"${window.CSRF_TOKEN || 'csrf_test_name'}\"]`) || document.querySelector('#global-csrf-container input'));
-    if (csrfInput) {
-        formData.append(window.CSRF_TOKEN || 'csrf_test_name', csrfInput.value);
-        // sistema de cabeceras csrf antidayanas (inyeccion de token en cada peticion)
-        headers[window.CSRF_HEADER || 'X-CSRF-TOKEN'] = csrfInput.value;
-    }
-
     try {
-        const resp = await fetch((window.BASE_URL || '/') + 'api/admin/asignar-seccion', { method: 'POST', body: formData, headers: headers });
-        const res = await resp.json();
-        if (res.success) {
-            cargarSeccionesDocente(profIdActualAsignar);
-            buscarSeccionesDisponibles(document.getElementById('input-buscar-seccion').value);
-        } else {
-            alert(res.error || 'No se pudo asignar la sección.');
-        }
-    } catch(e) {
-        alert('Error al procesar la asignación.');
+        await adminFetchJson((window.BASE_URL || '/') + 'api/admin/asignar-seccion', {
+            method: 'POST',
+            body: formData
+        });
+        cargarSeccionesDocente(profIdActualAsignar);
+        buscarSeccionesDisponibles(document.getElementById('input-buscar-seccion').value);
+    } catch (e) {
+        window.Lay8UI.toast('Error al asignar sección: ' + e.message, 'error');
     }
 }
 
 async function desasignarSeccion(seccionId) {
-    if (!confirm('¿Deseas quitar esta sección del docente?')) return;
+    const ok = await window.Lay8UI.confirm('¿Deseas quitar esta sección del docente?', {
+        title: 'Quitar sección',
+        confirmText: 'Quitar',
+        danger: true
+    });
+    if (!ok) return;
     const formData = new FormData();
     formData.append('seccion_id', seccionId);
 
-    const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-    const csrfInput = (document.querySelector(`input[name=\"${window.CSRF_TOKEN || 'csrf_test_name'}\"]`) || document.querySelector('#global-csrf-container input'));
-    if (csrfInput) {
-        formData.append(window.CSRF_TOKEN || 'csrf_test_name', csrfInput.value);
-        // sistema de cabeceras csrf antidayanas (inyeccion de token en cada peticion)
-        headers[window.CSRF_HEADER || 'X-CSRF-TOKEN'] = csrfInput.value;
-    }
-
     try {
-        const resp = await fetch((window.BASE_URL || '/') + 'api/admin/desasignar-seccion', { method: 'POST', body: formData, headers: headers });
-        const res = await resp.json();
-        if (res.success) {
-            cargarSeccionesDocente(profIdActualAsignar);
-            buscarSeccionesDisponibles(document.getElementById('input-buscar-seccion').value);
-        } else {
-            alert(res.error || 'No se pudo desasignar la sección.');
-        }
-    } catch(e) {
-        alert('Error al procesar la desasignación.');
+        await adminFetchJson((window.BASE_URL || '/') + 'api/admin/desasignar-seccion', {
+            method: 'POST',
+            body: formData
+        });
+        cargarSeccionesDocente(profIdActualAsignar);
+        buscarSeccionesDisponibles(document.getElementById('input-buscar-seccion').value);
+    } catch (e) {
+        window.Lay8UI.toast('Error al desasignar sección: ' + e.message, 'error');
     }
 }
 

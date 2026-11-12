@@ -1,7 +1,7 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('css/aulas.css?v=' . time()) ?>">
+<link rel="stylesheet" href="<?= asset_url('css/aulas.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -16,16 +16,8 @@
         </div>
         <div class="aulas-header-acciones">
             <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
-                <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
-                    <i class="bx bx-calendar-plus"></i>  Armar / Cargar Horario
-                </button>
-                <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalExtemporanea()" title="Agregar materia extemporánea a tu registro">
+                <button type="button" class="btn-subir-cta" onclick="abrirModalExtemporanea()" title="Agregar materia extemporánea a tu registro">
                     <i class="bx bx-plus-circle"></i> Agregar Materia Extemporánea
-                </button>
-            <?php endif; ?>
-            <?php if (in_array(session('rol'), ['profesor', 'administrador', 'admin'], true)): ?>
-                <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalNuevaActividad()">
-                    <i class="bx bx-task"></i>  Nueva Tarea
                 </button>
             <?php endif; ?>
         </div>
@@ -62,12 +54,6 @@
             <i class="bx bx-check-square"></i> Cronograma de Actividades
             <span class="badge-conteo" id="conteo-actividades"><?= count($actividades) ?></span>
         </button>
-
-        <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
-            <button type="button" class="btn-filtro" id="tabbtn-cargar" onclick="cambiarTabAulas('cargar')">
-                <i class="bx bx-calendar-plus"></i> Armar / Cargar Horario
-            </button>
-        <?php endif; ?>
     </nav>
 
     <!-- PESTAÑA 1: MIS MATERIAS / AULAS VIRTUALES (Grid tipo Classroom)           -->
@@ -210,11 +196,6 @@
                                 <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
                                     <i class="bx bx-plus"></i> Tarea
                                 </button>
-                                <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
-                                    <button type="button" class="btn-quitar-materia-mini" style="background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 6px; padding: 4px 8px; font-size: 0.76rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s ease;" onclick="confirmarDesinscribirMateria(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')" title="Desincorporar materia de tu registro">
-                                        <i class="bx bx-trash"></i> Desincorporar
-                                    </button>
-                                <?php endif; ?>
                             </div>
                         </div>
                     </article>
@@ -223,11 +204,13 @@
         <?php else: ?>
             <div class="panel-vacio-aulas">
                 <div class="icono-vacio"><i class="bx bx-calendar-x"></i></div>
-                <h3>No tienes materias cargadas aún</h3>
-                <p>Para activar tu Classroom y ver las aulas en el mapa, escanea tu <b>Registro de Inscripción UMC (PDF)</b> o arma tu horario seleccionando las materias inscritas.</p>
-                <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
-                    <i class="bx bx-cloud-upload"></i> Cargar Registro de Inscripción o Armar Horario
-                </button>
+                <h3>No tienes materias inscritas aún</h3>
+                <p>Tus asignaturas y horarios se cargan automáticamente desde tu Registro de Inscripción oficial. Si cursas asignaturas adicionales o extemporáneas, puedes agregarlas desde aquí.</p>
+                <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
+                    <button type="button" class="btn-subir-cta" onclick="abrirModalExtemporanea()">
+                        <i class="bx bx-plus-circle"></i> Agregar Materia Extemporánea
+                    </button>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -333,7 +316,9 @@
             <div class="lista-actividades-classroom" id="lista-actividades-contenedor">
                 <?php foreach ($actividades as $act): ?>
                     <?php
-                        $esCompletada = (bool)$act['completada'];
+                        $tieneEntrega = !empty($act['entrega_id']);
+                        $tieneCalificacion = isset($act['calificacion']) && $act['calificacion'] !== '' && $act['calificacion'] !== null;
+                        $esCompletada = ((bool)$act['completada'] || $tieneEntrega || $tieneCalificacion);
                         $tipoLabels = [
                             'tarea'    => ['nombre' => 'Tarea', 'icono' => 'bx-task', 'color' => '#3b82f6'],
                             'parcial'  => ['nombre' => 'Parcial / Examen', 'icono' => 'bx-award', 'color' => '#ef4444'],
@@ -372,7 +357,7 @@
 
                             <!-- Estado de Entrega & Calificación Estudiante (Classroom) -->
                             <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                <?php if (!empty($act['entrega_id'])): ?>
+                                <?php if ($tieneEntrega || $tieneCalificacion): ?>
                                     <span style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="bx bx-check-double"></i> Entregada <?= !empty($act['fecha_entrega_alumno']) ? date('d/m H:i', strtotime($act['fecha_entrega_alumno'])) : '' ?>
                                     </span>
@@ -381,9 +366,12 @@
                                             <i class="bx bx-paperclip"></i> <?= esc($act['entrega_archivo']) ?>
                                         </a>
                                     <?php endif; ?>
-                                    <?php if ($act['calificacion'] !== null): ?>
+                                    <?php if ($tieneCalificacion): ?>
                                         <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                            <i class="bx bxs-award" style="color: #f59e0b;"></i> Calificación: <?= (float)$act['calificacion'] ?> pts
+                                            <i class="bx bxs-award" style="color: #f59e0b;"></i> Calificación: <?= rtrim(rtrim(number_format((float)$act['calificacion'], 2, '.', ''), '0'), '.') ?> pts
+                                        </span>
+                                        <span style="background: #eef2ff; color: #3730a3; font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i class="bx bx-lock-alt"></i> Evaluada
                                         </span>
                                         <?php if (!empty($act['feedback_profesor'])): ?>
                                             <span style="font-size: 0.78rem; color: #475569; font-style: italic;">
@@ -397,9 +385,11 @@
                                     <?php endif; ?>
                                 <?php endif; ?>
 
-                                <button type="button" class="btn-subir-cta" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
-                                    <i class="bx bx-upload"></i> <?= !empty($act['entrega_id']) ? 'Modificar Entrega' : 'Entregar Tarea' ?>
-                                </button>
+                                <?php if (!$tieneCalificacion): ?>
+                                    <button type="button" class="btn-subir-cta" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
+                                        <i class="bx bx-upload"></i> <?= $tieneEntrega ? 'Modificar Entrega' : 'Entregar Tarea' ?>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="fecha-columna">
@@ -412,7 +402,7 @@
                         </div>
                         <div class="acciones-columna">
                             <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array(session('rol'), ['admin', 'administrador', 'profesor'], true)): ?>
-                                <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return confirm('¿Deseas eliminar esta actividad del cronograma?')">
+                                <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return Lay8UI.confirmSubmit(event, '¿Deseas eliminar esta actividad del cronograma?', { title: 'Eliminar actividad', confirmText: 'Eliminar', danger: true })">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
                                         <i class="bx bx-trash"></i>
@@ -433,210 +423,6 @@
                 </button>
             </div>
         <?php endif; ?>
-    </div>
-
-    <!-- PESTAÑA 4: CARGAR / ARMAR HORARIO                                         -->
-    <div id="tab-seccion-cargar" class="tab-contenido-aulas" style="display: none;">
-        
-        <!-- Sub-navegación para alternar vista y simplificar la pestaña (Pestaña limpia y organizada) -->
-        <div class="cargar-horario-subnav">
-            <button type="button" class="btn-subnav-cargar activo" id="subnav-btn-ambos" onclick="cambiarVistaCarga('ambos')">
-                <i class="bx bx-columns"></i> Ver Ambas Opciones
-            </button>
-            <button type="button" class="btn-subnav-cargar" id="subnav-btn-manual" onclick="cambiarVistaCarga('manual')">
-                <i class="bx bx-calendar-edit"></i> Armar Manualmente
-            </button>
-            <button type="button" class="btn-subnav-cargar" id="subnav-btn-pdf" onclick="cambiarVistaCarga('pdf')">
-                <i class="bx bxs-file-pdf"></i> Carga Inteligente (PDF)
-            </button>
-        </div>
-
-        <div class="grid-cargar-horario" id="contenedor-grid-cargar">
-            <!-- Opción A: Escaneo de Comprobante Oficial UMC (PDF) -->
-            <div class="card-formulario-aulas" id="card-carga-pdf">
-                <div class="card-form-header">
-                    <div class="icono-header-card"><i class="bx bxs-file-pdf"></i></div>
-                    <div>
-                        <h3>Opción 1: Carga Inteligente de Documento UMC</h3>
-                        <p>Escaneo automatizado de tu <b>Registro de Inscripción (UPE-002)</b> o <b>Horario Académico (CGD-001)</b>.</p>
-                    </div>
-                </div>
-
-                <form action="<?= base_url('aulas/subir-documento') ?>" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8">
-                    <?= csrf_field() ?>
-                    <div class="caja-subida-dropzone">
-                        <i class="bx bx-cloud-upload icono-dropzone"></i>
-                        <label for="documento_pdf" class="label-archivo-custom">
-                            <span id="texto-nombre-archivo">Selecciona tu archivo PDF oficial</span>
-                            <input type="file" id="documento_pdf" name="documento_pdf" accept="application/pdf" required onchange="mostrarNombreArchivo(this)">
-                        </label>
-                        <span class="ayuda-dropzone">Formatos válidos: Solo PDF original emitido por la UMC (Máx 5MB)</span>
-                    </div>
-
-                    <button type="submit" class="btn-cta-submit">
-                        <i class="bx bx-scan"></i> Escanear y Vincular Materias
-                    </button>
-                </form>
-            </div>
-
-            <!-- Opción B: Armar Horario Manual Asistido por Plantilla -->
-            <div class="card-formulario-aulas" id="card-carga-manual">
-                <div class="card-form-header">
-                    <div class="icono-header-card"><i class="bx bx-calendar-edit"></i></div>
-                    <div>
-                        <h3>Opción 2: Armar Horario Manual (Por Plantilla)</h3>
-                        <p>Programa tus clases en la grilla oficial <b>siempre y cuando la materia esté en tu registro</b>.</p>
-                    </div>
-                </div>
-
-                <?php if (!empty($secciones) && count($secciones) > 0): ?>
-                    <form action="<?= base_url('aulas/guardar-bloque-manual') ?>" method="post" id="formArmarHorarioManual" class="formulario-estilo-lay8">
-                        <?= csrf_field() ?>
-
-                        <!-- Materia (Buscable y con soporte anti-acentos / anti-mayúsculas) -->
-                        <div class="campo-grupo campo-materia-searchable">
-                            <label for="seccion_id"><i class="bx bx-book-open"></i> Materia Inscrita:</label>
-                            
-                            <!-- Input oculto para preservar compatibilidad con AulasController::guardarBloqueManual -->
-                            <input type="hidden" name="seccion_id" id="seccion_id" required value="">
-
-                            <!-- Componente Combobox Buscable Antidayanas -->
-                            <div class="searchable-combobox" id="comboMateriaInscrita">
-                                <div class="combobox-trigger" id="comboMateriaTrigger" onclick="toggleComboMateria()">
-                                    <div class="combobox-selected-content" id="comboMateriaSelected">
-                                        <i class="bx bx-search combo-icon-search"></i>
-                                        <span class="combobox-placeholder">Selecciona o busca tu materia (ej: Cálculo, LOG-103)...</span>
-                                    </div>
-                                    <div class="combobox-actions">
-                                        <button type="button" class="btn-clear-combo" id="btnClearComboMateria" style="display: none;" onclick="limpiarSeleccionComboMateria(event)" title="Quitar selección">
-                                            <i class="bx bx-x"></i>
-                                        </button>
-                                        <i class="bx bx-chevron-down combo-arrow"></i>
-                                    </div>
-                                </div>
-
-                                <div class="combobox-dropdown" id="comboMateriaDropdown" style="display: none;">
-                                    <div class="combobox-search-box">
-                                        <i class="bx bx-search"></i>
-                                        <input type="text" 
-                                               id="inputBuscarMateriaInscrita" 
-                                               class="input-combo-search" 
-                                               placeholder="Escribe para filtrar (ej: calculo, quimica, log-103)..." 
-                                               autocomplete="off" 
-                                               oninput="filtrarComboMaterias(this.value)">
-                                    </div>
-                                    <div class="combobox-options-list" id="listaOpcionesComboMateria">
-                                        <?php foreach ($secciones as $sec): ?>
-                                            <?php 
-                                                $dispCode = esc($sec['codigo_materia']);
-                                                $dispNombre = esc($sec['materia']);
-                                                $dispSecc = esc($sec['codigo_seccion']);
-                                                $fullLabel = "[$dispCode] $dispNombre (Secc. $dispSecc)";
-                                            ?>
-                                            <div class="combo-option-item" 
-                                                 data-id="<?= (int)$sec['id'] ?>" 
-                                                 data-code="<?= $dispCode ?>" 
-                                                 data-nombre="<?= $dispNombre ?>" 
-                                                 data-seccion="<?= $dispSecc ?>" 
-                                                 data-label="<?= esc($fullLabel) ?>"
-                                                 onclick="seleccionarComboMateria(<?= (int)$sec['id'] ?>, '<?= esc($fullLabel, 'js') ?>', '<?= $dispCode ?>', '<?= $dispNombre ?>', '<?= $dispSecc ?>')">
-                                                <span class="combo-opt-code"><?= $dispCode ?></span>
-                                                <span class="combo-opt-name"><?= $dispNombre ?></span>
-                                                <span class="combo-opt-sec">Secc. <?= $dispSecc ?></span>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                    <div class="combobox-empty" id="comboMateriaVacio" style="display: none;">
-                                        <i class="bx bx-info-circle"></i> No se encontraron materias inscritas con ese nombre o código.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Día y Aula en fila doble compacta y ordenada -->
-                        <div class="campo-fila-doble">
-                            <!-- Día de la Semana -->
-                            <div class="campo-grupo">
-                                <label for="dia_semana"><i class="bx bx-calendar"></i> Día de la Semana:</label>
-                                <select name="dia_semana" id="dia_semana" required class="select-lay8">
-                                    <option value="" disabled selected>-- Selecciona el día --</option>
-                                    <?php foreach ($diasSemana as $dia): ?>
-                                        <option value="<?= esc($dia) ?>"><?= esc($dia) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-
-                            <!-- Aula Física del Campus -->
-                            <div class="campo-grupo">
-                                <label for="aula"><i class="bx bx-map-pin"></i> Aula o Laboratorio:</label>
-                                <select name="aula" id="aula" required class="select-lay8">
-                                    <option value="" disabled selected>-- Selecciona el aula --</option>
-                                    <?php foreach ($todasAulas as $a): ?>
-                                        <option value="<?= esc($a['alias_pdf']) ?>"><?= esc($a['alias_pdf']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Bloques Oficiales UMC (Multi-selección continua) -->
-                        <div class="campo-grupo">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label style="margin: 0;"><i class="bx bx-time"></i> Bloques Horarios UMC (Selección Múltiple):</label>
-                                <span class="subtexto-bloques-info">Puedes marcar 2 o más bloques continuos</span>
-                            </div>
-
-                            <!-- Filtros rápidos por Turno -->
-                            <div class="selector-turnos-bloques">
-                                <button type="button" class="btn-turno-filtro activo" data-filtro-turno="todos" onclick="filtrarTurnosBloques('todos')">Todos</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Mañana" onclick="filtrarTurnosBloques('Mañana')"><i class="bx bx-sun"></i> Mañana</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Tarde" onclick="filtrarTurnosBloques('Tarde')"><i class="bx bx-cloud"></i> Tarde</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Noche" onclick="filtrarTurnosBloques('Noche')"><i class="bx bx-moon"></i> Noche</button>
-                            </div>
-
-                            <!-- Cuadrícula interactiva de bloques horarios -->
-                            <div class="grid-bloques-selector" id="gridBloquesSelector">
-                                <?php $bIdx = 0; ?>
-                                <?php foreach ($bloquesOficiales as $turno => $bloques): ?>
-                                    <?php foreach ($bloques as $b): ?>
-                                        <?php $bIdx++; ?>
-                                        <label class="card-bloque-check" data-turno="<?= esc($turno) ?>">
-                                            <input type="checkbox" name="bloques_horas[]" value="<?= $b['inicio'] ?>|<?= $b['fin'] ?>" class="chk-bloque-hora" onchange="actualizarResumenBloques()">
-                                            <span class="bloque-hora-badge">B<?= $bIdx ?></span>
-                                            <span class="bloque-hora-tiempo"><?= esc($b['etiqueta']) ?></span>
-                                            <span class="bloque-hora-turno"><?= esc($turno) ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            </div>
-
-                            <!-- Barra de Resumen dinámico -->
-                            <div class="barra-resumen-bloques" id="resumenBloquesBarra" style="display: none;">
-                                <div class="info-bloques-seleccionados">
-                                    <i class="bx bx-check-circle" style="color: #16a34a; font-size: 1.25rem;"></i>
-                                    <div>
-                                        <strong id="lblTotalBloques">0 bloques</strong> seleccionados
-                                        <span class="rango-horas-calculado" id="lblRangoHoras"></span>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-limpiar-seleccion-bloques" onclick="deseleccionarTodosBloques()">
-                                    <i class="bx bx-x"></i> Desmarcar
-                                </button>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-cta-submit" id="btnSubmitArmarHorario">
-                            <i class="bx bx-plus-circle"></i> Agregar Bloques al Horario
-                        </button>
-                    </form>
-                <?php else: ?>
-                    <div class="alerta-registro-requerido">
-                        <i class="bx bx-lock-alt" style="font-size: 2rem; color: #f59e0b; display: block; margin-bottom: 10px;"></i>
-                        <h4>Materias pendientes de validación</h4>
-                        <p>Para garantizar que tu horario sea legítimo, primero debes escanear tu <b>Registro de Inscripción oficial</b> con el botón de la izquierda. Luego podrás armar y calibrar tus horas en este panel.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
     </div>
 
 </div>
@@ -774,7 +560,7 @@
 </div>
 
 <?= $this->section('scripts') ?>
-<script src="<?= base_url('js/aulas.js?v=' . time()) ?>"></script>
+<script src="<?= asset_url('js/aulas.js') ?>"></script>
 <?= $this->endSection() ?>
 
 

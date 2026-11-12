@@ -72,8 +72,8 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- stylesheets-->
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
-  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=' . time())?>">
+  <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/registro.css') ?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
@@ -151,7 +151,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
         <div class="form-row">
           <div class="form-col">
             <label class="form-label">Cédula de Identidad *</label>
-            <input type="text" name="cedula" class="input-global" placeholder="Ej: 31131073" value="<?= old('cedula') ?>" required pattern="[0-9]{6,10}" title="Ingresa entre 6 y 10 dígitos numéricos">
+            <input type="text" name="cedula" class="input-global" placeholder="Ej: 30101010" value="<?= old('cedula') ?>" required pattern="[0-9]{6,10}" title="Ingresa entre 6 y 10 dígitos numéricos">
           </div>
           <div class="form-col">
             <label class="form-label">Correo Electrónico *</label>
@@ -383,8 +383,8 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=' . time())?>"></script>
-  <script src="<?= base_url('js/registro.js?v=' . time())?>"></script>
+  <script src="<?= asset_url('js/main.js') ?>"></script>
+  <script src="<?= asset_url('js/registro.js') ?>"></script>
 
   <?php if ($irAPaso2): ?>
     <script>

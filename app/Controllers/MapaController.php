@@ -178,34 +178,6 @@ class MapaController extends BaseController {
         return $clases_insertadas;
     }
 
-    // Ruta de prueba manual para forzar la lectura por Python (/htest)
-    public function python_horarios(){
-        $carpeta_scripts = ROOTPATH . 'scripts_python';
-        $pythonExec = file_exists($carpeta_scripts . DIRECTORY_SEPARATOR . "venv\\Scripts\\python.exe") 
-            ? "\"venv\\Scripts\\python.exe\"" 
-            : "python";
-        $comando = 'cd "' . $carpeta_scripts . '" && ' . $pythonExec . ' leer_horario.py 2>&1';
-        
-        $json_crudo = shell_exec($comando);
-
-        $inicio = strpos($json_crudo, '[');
-        $fin = strrpos($json_crudo, ']');
-
-        if ($inicio !== false && $fin !== false) {
-            $json_limpio = substr($json_crudo, $inicio, $fin - $inicio + 1);
-            $json_decodificado = json_decode($json_limpio, true);
-
-            if ($json_decodificado === null) {
-                return "Sigue fallando. Motivo: " . json_last_error_msg();
-            }
-
-            $clases_insertadas = $this->insertar_bloques_horarios($json_decodificado);
-            return "¡Proceso Completado con éxito! Se procesaron e insertaron un total de {$clases_insertadas} bloques de clases en el mapa.";
-        }
-
-        return "Respuesta de Python: " . $json_crudo;
-    }
-
     // Método de respaldo para insertar materias, secciones y clases desde JSON legacy
     private function insertar_bloques_horarios(array $json_decodificado): int {
         $materiaModel = new MateriaModel();

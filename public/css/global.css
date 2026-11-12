@@ -301,7 +301,7 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0;
     box-sizing: border-box;
 
-    animation: slideLeft 0.4s ease-out forwards;
+    animation: slideLeft 0.3s ease-out;
 }
 
 .layout-grid.modo-focus {
@@ -327,11 +327,9 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes slideLeft {
     from {
         opacity: 0;
-        transform: translateX(30px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
     }
 }
 
@@ -1671,6 +1669,21 @@ body.dark-mode .badge-carrera-general { background: #4c1d9533 !important; color:
     transform: scale(1.02);
 }
 
+.badge-aporte-guardado {
+    background-color: #10b981;
+    color: #ffffff;
+    border: 1px solid #059669;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    user-select: none;
+}
+
 /* Estado Vacío */
 .estado-vacio {
     background: #ffffff;
@@ -1784,18 +1797,20 @@ body.dark-mode .badge-carrera-general { background: #4c1d9533 !important; color:
 /* Modal Aula */
 .modal-info-aula {
     position: fixed;
+    inset: 0;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(4px);
-    z-index: 2000;
+    z-index: 99999;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .modal-contenido-aula {
@@ -5567,363 +5582,9 @@ body.dark-mode .checkbox-terminos-label a {
     transition: opacity 0.4s ease;
 }
 
-/* =========================================================================
-   WIDGET FLOTANTE DE AYUDA / GUÍA DE APARTADO (ESQUINA INFERIOR DERECHA)
-   ========================================================================= */
-
-.guia-apartado-widget {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    z-index: 9990;
-    font-family: var(--fuente-cuerpo, 'Hind', sans-serif);
-}
-
-/* Botón disparador (mini cuadro con símbolo de sugerencia / duda) */
-.guia-apartado-btn {
-    width: 46px;
-    height: 46px;
-    background: #ffffff;
-    border: 1.5px solid #2563eb;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    user-select: none;
-    outline: none;
-    color: #1e3a8a;
-}
-
-.guia-apartado-btn:hover,
-.guia-apartado-widget.is-open .guia-apartado-btn {
-    background: #1e3a8a;
-    color: #ffffff;
-    border-color: #1e3a8a;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 10px 25px rgba(30, 58, 138, 0.35);
-}
-
-.guia-icono-principal {
-    font-size: 1.55rem;
-    line-height: 1;
-    transition: transform 0.22s ease;
-}
-
-.guia-apartado-btn:hover .guia-icono-principal {
-    transform: rotate(12deg);
-}
-
-/* Indicador de punto pulsante */
-.guia-dot-pulso {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 11px;
-    height: 11px;
-    background: #3b82f6;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
-    animation: guia-pulso-anim 2s infinite;
-}
-
-@keyframes guia-pulso-anim {
-    0% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    70% { transform: scale(1.1); opacity: 0.9; box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-    100% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-}
-
-/* Tarjeta desplegable con la descripción detallada */
-.guia-apartado-card {
-    position: absolute;
-    bottom: calc(100% + 12px);
-    right: 0;
-    width: 350px;
-    max-width: calc(100vw - 36px);
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0, 0, 0, 0.05);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px) scale(0.96);
-    transform-origin: bottom right;
-    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                visibility 0.22s;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 10000;
-}
-
-/* Al posicionar el cursor O al darle clic */
-.guia-apartado-widget:hover .guia-apartado-card,
-.guia-apartado-widget.is-open .guia-apartado-card {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-}
-
-/* Cabecera de la tarjeta */
-.guia-card-header {
-    padding: 14px 16px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-}
-
-.guia-header-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: #eff6ff;
-    color: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.35rem;
-    flex-shrink: 0;
-    border: 1px solid #bfdbfe;
-}
-
-.guia-header-titles {
-    flex: 1;
-    min-width: 0;
-}
-
-.guia-tag-modulo {
-    display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #2563eb;
-    margin-bottom: 2px;
-}
-
-.guia-card-title {
-    font-family: var(--fuente-titulos, 'Montserrat', sans-serif);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
-    line-height: 1.25;
-}
-
-.guia-btn-cerrar {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    color: #64748b;
-    cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
-}
-
-.guia-btn-cerrar:hover {
-    background: #e2e8f0;
-    color: #0f172a;
-}
-
-/* Cuerpo de la tarjeta */
-.guia-card-body {
-    padding: 16px;
-    max-height: 360px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.guia-card-desc {
-    font-size: 0.84rem;
-    color: #334155;
-    line-height: 1.5;
-    margin: 0;
-}
-
-/* Sección de tips y funciones rápidas */
-.guia-tips-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.guia-tips-titulo {
-    font-size: 0.73rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.guia-tip-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 0.78rem;
-    color: #334155;
-    line-height: 1.38;
-}
-
-.guia-tip-item i {
-    font-size: 0.98rem;
-    color: #2563eb;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-.guia-tip-item b {
-    color: #0f172a;
-}
-
-/* Pie de la tarjeta */
-.guia-card-footer {
-    padding: 9px 16px;
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    font-size: 0.73rem;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.guia-card-footer i {
-    color: #f59e0b;
-    font-size: 0.95rem;
-}
-
-/* Compatibilidad con Modo Oscuro */
-body.dark-mode .guia-apartado-btn {
-    background: #1e293b;
-    border-color: #3b82f6;
-    color: #93c5fd;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-body.dark-mode .guia-apartado-btn:hover,
-body.dark-mode .guia-apartado-widget.is-open .guia-apartado-btn {
-    background: #2563eb;
-    color: #ffffff;
-    border-color: #60a5fa;
-}
-
-body.dark-mode .guia-apartado-card {
-    background: #1e293b;
-    border-color: #334155;
-    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
-}
-
-body.dark-mode .guia-card-header {
-    background: #0f172a;
-    border-bottom-color: #334155;
-}
-
-body.dark-mode .guia-header-icon-box {
-    background: #1e293b;
-    color: #60a5fa;
-    border-color: #2563eb;
-}
-
-body.dark-mode .guia-card-title {
-    color: #f8fafc;
-}
-
-body.dark-mode .guia-tag-modulo {
-    color: #60a5fa;
-}
-
-body.dark-mode .guia-btn-cerrar {
-    color: #94a3b8;
-}
-
-body.dark-mode .guia-btn-cerrar:hover {
-    background: #334155;
-    color: #ffffff;
-}
-
-body.dark-mode .guia-card-desc {
-    color: #cbd5e1;
-}
-
-body.dark-mode .guia-tips-box {
-    background: #0f172a;
-    border-color: #334155;
-}
-
-body.dark-mode .guia-tips-titulo {
-    color: #94a3b8;
-}
-
-body.dark-mode .guia-tip-item {
-    color: #cbd5e1;
-}
-
-body.dark-mode .guia-tip-item b {
-    color: #f8fafc;
-}
-
-body.dark-mode .guia-card-footer {
-    background: #0f172a;
-    border-top-color: #334155;
-    color: #94a3b8;
-}
-
 /* ==========================================================================
-   ESTILOS DE MODO OSCURO PARA CAJAS DE AJUSTES, BOTÓN LEER Y VISOR WORD (REVISIÓN HARYERIT)
+   ESTILOS DE MODO OSCURO PARA CAJAS DE AJUSTES (REVISIÓN HARYERIT)
    ========================================================================== */
-
-/* Botón Leer Aporte en Biblioteca */
-.btn-leer-aporte {
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1.5px solid #bfdbfe;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s ease;
-}
-
-.btn-leer-aporte:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
-}
-
-body.dark-mode .btn-leer-aporte,
-html.dark-mode .btn-leer-aporte {
-    background: #1e293b !important;
-    color: #93c5fd !important;
-    border-color: #3b82f6 !important;
-}
-
-body.dark-mode .btn-leer-aporte:hover,
-html.dark-mode .btn-leer-aporte:hover {
-    background: #273549 !important;
-    color: #bfdbfe !important;
-}
 
 /* Cajas de inputs en Ajustes de Cuenta y Perfil (Cajitas blancas reportadas por Haryerit) */
 body.dark-mode .editar-seguridad-box,
@@ -5973,33 +5634,6 @@ html.dark-mode .card-solicitud-docente-item strong {
 body.dark-mode .card-solicitud-docente-item span,
 html.dark-mode .card-solicitud-docente-item span {
     color: #94a3b8 !important;
-}
-
-/* Visor de Word (.docx) en Modo Oscuro */
-body.dark-mode #visor-doc-docx-container,
-html.dark-mode #visor-doc-docx-container {
-    background: #0f172a !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode #visor-doc-docx-container h1,
-body.dark-mode #visor-doc-docx-container h2,
-body.dark-mode #visor-doc-docx-container h3,
-body.dark-mode #visor-doc-docx-container h4 {
-    color: #93c5fd !important;
-}
-
-body.dark-mode #visor-doc-docx-container p,
-body.dark-mode #visor-doc-docx-container li,
-body.dark-mode #visor-doc-docx-container span {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode #visor-doc-docx-container table,
-body.dark-mode #visor-doc-docx-container td,
-body.dark-mode #visor-doc-docx-container th {
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
 }
 
 /* Overrides para el Panel Admin en Modo Oscuro */

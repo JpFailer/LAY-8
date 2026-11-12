@@ -1,0 +1,196 @@
+/* ============================================================================ */
+/* COMPONENTES BASE UNIFICADOS (TOASTS, CONFIRMACIONES, BOTONES DE BARRA)       */
+/* ============================================================================ */
+
+.btn-topbar-docentes {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-topbar-docentes:hover {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+
+.btn-topbar-docentes i {
+    font-size: 1.15rem;
+    color: #fbbf24;
+}
+
+.badge-docentes-contador {
+    background: #ef4444;
+    color: #ffffff;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    padding: 2px 7px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Sistema unificado de notificaciones Toast */
+.lay8-toast-container {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 120000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(400px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.lay8-toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--lay8-bg-surface);
+    color: var(--lay8-text-primary);
+    border: 1px solid var(--lay8-border-subtle);
+    border-left: 4px solid var(--lay8-primary-accent);
+    box-shadow: var(--lay8-shadow-toast);
+    font-size: 0.88rem;
+    line-height: 1.4;
+    font-weight: 500;
+    animation: lay8ToastIn 0.22s ease-out;
+}
+
+.lay8-toast.exito,
+.lay8-toast.success {
+    border-left-color: var(--lay8-success);
+}
+
+.lay8-toast.error {
+    border-left-color: var(--lay8-danger);
+}
+
+.lay8-toast.warning {
+    border-left-color: var(--lay8-warning);
+}
+
+.lay8-toast-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.lay8-toast.exito .lay8-toast-icon,
+.lay8-toast.success .lay8-toast-icon { color: var(--lay8-success); }
+.lay8-toast.error .lay8-toast-icon { color: var(--lay8-danger); }
+.lay8-toast.warning .lay8-toast-icon { color: var(--lay8-warning); }
+.lay8-toast.info .lay8-toast-icon { color: var(--lay8-primary-accent); }
+
+.lay8-toast-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--lay8-text-muted);
+    font-size: 1.15rem;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+}
+
+@keyframes lay8ToastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal unificado de Confirmación (reemplazo no bloqueante de window.confirm) */
+.lay8-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 125000;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    box-sizing: border-box;
+}
+
+.lay8-confirm-box {
+    width: 100%;
+    max-width: 440px;
+    background: var(--lay8-bg-surface);
+    color: var(--lay8-text-primary);
+    border: 1px solid var(--lay8-border-subtle);
+    border-radius: 16px;
+    box-shadow: var(--lay8-shadow-modal);
+    overflow: hidden;
+}
+
+.lay8-confirm-header {
+    padding: 16px 20px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.lay8-confirm-body {
+    padding: 4px 20px 18px;
+    color: var(--lay8-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.lay8-confirm-actions {
+    padding: 12px 20px;
+    background: var(--lay8-bg-subtle);
+    border-top: 1px solid var(--lay8-border-subtle);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.lay8-btn-sec,
+.lay8-btn-pri {
+    padding: 8px 16px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.lay8-btn-sec {
+    background: var(--lay8-bg-surface);
+    color: var(--lay8-text-secondary);
+    border-color: var(--lay8-border-strong);
+}
+
+.lay8-btn-sec:hover {
+    background: var(--lay8-bg-hover);
+}
+
+.lay8-btn-pri {
+    background: var(--lay8-primary-accent);
+    color: #ffffff;
+}
+
+.lay8-btn-pri.danger {
+    background: var(--lay8-danger);
+}
+
+.lay8-btn-pri:hover {
+    opacity: 0.92;
+}

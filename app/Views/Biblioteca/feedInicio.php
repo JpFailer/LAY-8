@@ -207,12 +207,7 @@
                     <div class="tarjeta-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                         <span class="peso-badge"><?= strtoupper($ext) ?> • <?= $pesoTexto ?></span>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <?php if (in_array($ext, ['pdf', 'doc', 'docx', 'txt'])): ?>
-                                <button type="button" class="btn-leer-aporte" data-id="<?= $aporte['id'] ?>" data-titulo="<?= esc($aporte['titulo']) ?>" data-ext="<?= esc($ext) ?>" data-url="<?= base_url('biblioteca/ver/' . $aporte['id']) ?>" onclick="abrirLectorAporte(this.dataset.id, this.dataset.titulo, this.dataset.url, this.dataset.ext)">
-                                    <i class="bx bx-book-open"></i> Leer
-                                </button>
-                            <?php endif; ?>
-                            <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="marcarAporteDescargado(<?= $aporte['id'] ?>)">
+                            <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="return marcarAporteDescargado(event, <?= $aporte['id'] ?>)">
                                 <i class="bx bx-download"></i> <span class="txt-btn-descarga">Descargar</span>
                             </a>
                         </div>
@@ -220,6 +215,32 @@
                 </article>
             <?php endforeach; ?>
         </div>
+
+        <?php if (!empty($totalPaginas) && $totalPaginas > 1): ?>
+            <?php
+                $pagParams = $baseParams;
+                if ($categoriaActual && $categoriaActual !== 'todas') {
+                    $pagParams['categoria'] = $categoriaActual;
+                }
+                $urlPag = static function (int $p) use ($pagParams): string {
+                    $q = array_merge($pagParams, ['page' => $p]);
+                    return base_url('biblioteca?' . http_build_query($q));
+                };
+            ?>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:22px; padding:12px 16px; border-radius:12px; background:var(--lay8-bg-subtle); border:1px solid var(--lay8-border-subtle);">
+                <span style="font-size:0.85rem; color:var(--lay8-text-muted); font-weight:600;">
+                    Página <?= (int) $paginaActual ?> de <?= (int) $totalPaginas ?> (<?= (int) $totalAportes ?> aportes)
+                </span>
+                <div style="display:flex; gap:8px;">
+                    <?php if ($paginaActual > 1): ?>
+                        <a href="<?= $urlPag($paginaActual - 1) ?>" class="btn-filtro" style="text-decoration:none;"><i class="bx bx-chevron-left"></i> Anterior</a>
+                    <?php endif; ?>
+                    <?php if ($paginaActual < $totalPaginas): ?>
+                        <a href="<?= $urlPag($paginaActual + 1) ?>" class="btn-filtro" style="text-decoration:none;">Siguiente <i class="bx bx-chevron-right"></i></a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php else: ?>
         <div class="estado-vacio">
             <i class="bx bx-folder-open icono-vacio"></i>
@@ -233,7 +254,6 @@
 
 </div>
 
-<script src="<?= base_url('js/mammoth.browser.min.js') ?>"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const inputVivo = document.getElementById('buscador-vivo');
@@ -259,116 +279,36 @@
         actualizarBotonesDescargados();
     });
 
-    function abrirLectorAporte(id, titulo, url, ext) {
-        document.getElementById('titulo-lector-doc').textContent = titulo;
-        document.getElementById('btn-descargar-desde-visor').href = '<?= rtrim(base_url('biblioteca/descargar'), '/') ?>/' + id;
-
-        const iframe = document.getElementById('iframe-visor-doc');
-        const docxContainer = document.getElementById('visor-doc-docx-container');
-
-        if (ext === 'docx') {
-            iframe.style.display = 'none';
-            docxContainer.style.display = 'block';
-            docxContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="bx bx-loader-alt bx-spin" style="font-size: 2.2rem; color: #2563eb;"></i><p style="margin-top: 10px; font-weight: 600;">Cargando documento Word (.docx)...</p></div>';
-
-            fetch(url)
-                .then(r => r.arrayBuffer())
-                .then(buffer => {
-                    if (window.mammoth) {
-                        return mammoth.convertToHtml({ arrayBuffer: buffer });
-                    } else {
-                        throw new Error('Lector Word no disponible');
-                    }
-                })
-                .then(result => {
-                    docxContainer.innerHTML = `
-                        <div class="docx-doc-content" style="max-width: 820px; margin: 0 auto;">
-                            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; color: #1e40af; margin-bottom: 22px; display: flex; align-items: center; gap: 6px;">
-                                <i class="bx bxs-file-doc" style="font-size: 1.2rem;"></i> Documento Word oficial (.docx) convertido para lectura en línea
-                            </div>
-                            ${result.value}
-                        </div>
-                    `;
-                })
-                .catch(err => {
-                    docxContainer.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #64748b;">
-                            <i class="bx bxs-file-doc" style="font-size: 3rem; color: #3b82f6;"></i>
-                            <h4 style="margin: 12px 0 6px 0; color: #0f172a;">Vista previa en línea</h4>
-                            <p style="margin: 0 0 16px 0; font-size: 0.88rem;">Puedes descargar el archivo original para abrirlo directamente en Microsoft Word.</p>
-                            <a href="${document.getElementById('btn-descargar-desde-visor').href}" class="btn-subir-cta" style="display: inline-flex;">
-                                <i class="bx bx-download"></i> Descargar Documento
-                            </a>
-                        </div>
-                    `;
-                });
-        } else {
-            if (docxContainer) docxContainer.style.display = 'none';
-            iframe.style.display = 'block';
-            iframe.src = url;
-        }
-
-        document.getElementById('modal-lector-biblioteca').style.display = 'flex';
-    }
-
-    function cerrarLectorAporte() {
-        document.getElementById('modal-lector-biblioteca').style.display = 'none';
-        document.getElementById('iframe-visor-doc').src = '';
-        const docxContainer = document.getElementById('visor-doc-docx-container');
-        if (docxContainer) {
-            docxContainer.innerHTML = '';
-            docxContainer.style.display = 'none';
-        }
-    }
-
-    function marcarAporteDescargado(id) {
+    function marcarAporteDescargado(event, id) {
         try {
             let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
-            if (!desc.includes(id)) {
-                desc.push(id);
-                localStorage.setItem('lay8_descargados', JSON.stringify(desc));
+            if (desc.includes(id)) {
+                if (event) event.preventDefault();
+                return false;
             }
-            actualizarBotonesDescargados();
+            desc.push(id);
+            localStorage.setItem('lay8_descargados', JSON.stringify(desc));
+            setTimeout(actualizarBotonesDescargados, 80);
         } catch(e) {}
+        return true;
     }
 
     function actualizarBotonesDescargados() {
         try {
             let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
             document.querySelectorAll('.btn-descarga-item').forEach(btn => {
-                const id = parseInt(btn.getAttribute('data-aporte-id'));
+                const id = parseInt(btn.getAttribute('data-aporte-id'), 10);
                 if (desc.includes(id)) {
-                    btn.style.background = '#10b981';
-                    btn.style.color = '#ffffff';
-                    btn.style.borderColor = '#059669';
-                    btn.innerHTML = '<i class="bx bx-check-double"></i> Guardado';
-                    btn.title = 'Ya tienes este archivo descargado en tu dispositivo';
+                    const badge = document.createElement('span');
+                    badge.className = 'badge-aporte-guardado';
+                    badge.setAttribute('data-aporte-id', id);
+                    badge.title = 'Ya tienes este archivo descargado en tu dispositivo';
+                    badge.innerHTML = '<i class="bx bx-check-double"></i> Guardado';
+                    btn.replaceWith(badge);
                 }
             });
         } catch(e) {}
     }
 </script>
-
-<!-- Modal Lector Nativo de la Biblioteca (Revisión Haryerit) -->
-<div id="modal-lector-biblioteca" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;" onclick="if(event.target === this) cerrarLectorAporte()">
-  <div class="modal-editar-perfil-content" style="max-width: 950px; width: 100%; height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
-    <div class="modal-editar-header" style="padding: 14px 20px; background: #1e3a8a; color: white; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; color: white; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        <i class="bx bx-book-reader" style="color: #60a5fa; font-size: 1.3rem;"></i>
-        <span id="titulo-lector-doc" style="max-width: 580px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Visor de Documento</span>
-      </h3>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <a id="btn-descargar-desde-visor" href="#" class="btn-descargar" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border: none; border-radius: 6px; color: white; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-          <i class="bx bx-download"></i> Descargar
-        </a>
-        <button type="button" class="btn-cerrar-carreras" onclick="cerrarLectorAporte()" style="color: white; font-size: 1.6rem; background: none; border: none; cursor: pointer;">&times;</button>
-      </div>
-    </div>
-    <div style="flex: 1; background: #1e293b; position: relative; overflow: hidden; display: flex; flex-direction: column;">
-      <iframe id="iframe-visor-doc" src="" style="width: 100%; height: 100%; border: none;"></iframe>
-      <div id="visor-doc-docx-container" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: 35px 45px; background: #ffffff; color: #1e293b; box-sizing: border-box; line-height: 1.7; font-family: 'Hind', sans-serif;"></div>
-    </div>
-  </div>
-</div>
 
 <?= $this->endSection() ?>

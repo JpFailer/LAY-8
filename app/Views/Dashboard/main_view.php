@@ -93,11 +93,10 @@
   
 
   <!-- Stylesheets -->
-
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
-
-  <link rel="stylesheet" href="<?= base_url('css/feed.css?v=' . time())?>">
-
+  <link rel="stylesheet" href="<?= asset_url('css/tokens.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/core-ui.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/feed.css') ?>">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <?= $this->renderSection('styles') ?>
 </head>
@@ -140,21 +139,21 @@
 
     $userNombreUsuario  = session()->get('nombre_usuario') ?? 'usuario';
 
-    $userRol            = session()->get('rol') ?? 'estudiante';
+    $userRol                = session()->get('rol') ?? 'estudiante';
 
-    $userFoto           = session()->get('foto_perfil');
+    $userEstadoVerificacion = session()->get('estado_verificacion') ?? 'no_aplica';
 
-    $userCorreo         = session()->get('correo');
+    $userFoto               = session()->get('foto_perfil');
 
-    $carreraSesion      = session()->get('carrera');
+    $userCorreo             = session()->get('correo');
 
-    $userCodigoCarrera  = $carreraSesion ?: 'ING-INF';
+    $carreraSesion          = session()->get('carrera');
 
-    $userCarrera        = ($userRol === 'profesor') ? 'Docente UMC' : (in_array($userRol, ['administrador', 'admin']) ? 'Administración UMC' : $userCodigoCarrera);
+    $userCodigoCarrera      = $carreraSesion ?: 'ING-INF';
 
-    $userEstado         = 'Activo';
+    $userEstado             = 'Activo';
 
-    $userTotalAportes = 0;
+    $userTotalAportes       = 0;
 
     if ($sesionId) {
 
@@ -162,9 +161,25 @@
 
             $dbConn = \Config\Database::connect();
 
-            $rowU = $dbConn->table('usuarios')->select('correo, estado_cuenta, carrera')->where('id', $sesionId)->get()->getRowArray();
+            $rowU = $dbConn->table('usuarios')->select('correo, estado_cuenta, carrera, rol, estado_verificacion')->where('id', $sesionId)->get()->getRowArray();
 
             if ($rowU) {
+
+                if (!empty($rowU['rol'])) {
+
+                    $userRol = $rowU['rol'];
+
+                    session()->set('rol', $userRol);
+
+                }
+
+                if (!empty($rowU['estado_verificacion'])) {
+
+                    $userEstadoVerificacion = $rowU['estado_verificacion'];
+
+                    session()->set('estado_verificacion', $userEstadoVerificacion);
+
+                }
 
                 if (empty($userCorreo)) {
 
@@ -177,12 +192,6 @@
                 if (!empty($rowU['carrera'])) {
 
                     $userCodigoCarrera = $rowU['carrera'];
-
-                    if ($userRol !== 'profesor') {
-
-                        $userCarrera = $rowU['carrera'];
-
-                    }
 
                 }
 
@@ -197,6 +206,16 @@
         } catch (\Throwable $e) {}
 
     }
+
+    $esAdminSistema     = in_array($userRol, ['administrador', 'admin'], true);
+
+    $esProfesorAprobado = ($userRol === 'profesor' && $userEstadoVerificacion === 'aprobado');
+
+    $userCarrera        = ($userRol === 'profesor')
+
+        ? ($esProfesorAprobado ? 'Docente UMC' : 'Docente (Pendiente de Verificación)')
+
+        : ($esAdminSistema ? 'Administración UMC' : $userCodigoCarrera);
 
   ?>
 
@@ -217,23 +236,14 @@
       <div class="barra-superior-derecha" style="display: flex; align-items: center; gap: 14px;">
 
         <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
-
-          <!-- Botón de Solicitudes Docentes Pendientes (Exclusivo Administrador) -->
-
+          <!-- Acceso directo a revisión de solicitudes docentes en Panel Admin -->
           <div class="solicitudes-topbar-wrapper" id="solicitudes-topbar-wrapper">
-
-            <button type="button" class="btn-topbar-docentes" id="btn-topbar-solicitudes" onclick="abrirModalSolicitudesDocentesTop()" title="Revisar Solicitudes de Profesores" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: #ffffff; padding: 6px 12px; border-radius: 9999px; cursor: pointer; font-size: 0.84rem; font-weight: 600; transition: all 0.2s ease;">
-
-              <i class="bx bx-user-voice" style="font-size: 1.15rem; color: #fbbf24;"></i>
-
+            <a href="<?= base_url('admin?tab=docentes') ?>" class="btn-topbar-docentes" id="btn-topbar-solicitudes" title="Revisar Solicitudes de Profesores">
+              <i class="bx bx-user-voice"></i>
               <span class="txt-btn-docentes">Docentes</span>
-
-              <span class="badge-docentes-contador" id="badge-docentes-top-count" style="display: none; background: #ef4444; color: white; border-radius: 9999px; font-size: 0.72rem; padding: 2px 7px; font-weight: 700; line-height: 1;">0</span>
-
-            </button>
-
+              <span class="badge-docentes-contador" id="badge-docentes-top-count" style="display: none;">0</span>
+            </a>
           </div>
-
         <?php endif; ?>
 
         <!-- Campana de Notificaciones -->
@@ -294,11 +304,11 @@
 
           <?= esc($userNombreCompleto) ?>
 
-          <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+          <?php if ($esAdminSistema): ?>
 
             <i class="bx bxs-check-circle" style="color: #60a5fa; font-size: 1.05rem; vertical-align: middle; margin-left: 2px;" title="Administrador Verificado"></i>
 
-          <?php elseif ($userRol === 'profesor'): ?>
+          <?php elseif ($esProfesorAprobado): ?>
 
             <i class="bx bxs-check-circle" style="color: #34d399; font-size: 1.05rem; vertical-align: middle; margin-left: 2px;" title="Profesor Verificado"></i>
 
@@ -324,7 +334,7 @@
 
         <div id="dropdown-perfil" class="dropdown-menu">
 
-          <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+          <?php if ($esAdminSistema): ?>
 
             <a href="<?= base_url('admin') ?>" class="dropdown-item" style="color: #1e3a8a; font-weight: 700;">
 
@@ -334,7 +344,7 @@
 
           <?php endif; ?>
 
-          <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+          <?php if ($esProfesorAprobado || $esAdminSistema): ?>
 
             <a href="<?= base_url('docente') ?>" class="dropdown-item" style="color: #059669; font-weight: 700;">
 
@@ -398,7 +408,7 @@
 
         <?php endif; ?>
 
-        <?php if ($userRol === 'profesor' || in_array($userRol, ['administrador', 'admin'], true)): ?>
+        <?php if ($esProfesorAprobado || $esAdminSistema): ?>
 
           <a href="<?= base_url('/docente'); ?>" class="<?= ($segmentoActual === 'docente') ? 'active' : '' ?>" style="color: #10b981; font-weight: 700;">
 
@@ -408,7 +418,7 @@
 
         <?php endif; ?>
 
-        <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+        <?php if ($esAdminSistema): ?>
 
           <a href="<?= base_url('/admin'); ?>" class="<?= ($segmentoActual === 'admin') ? 'active' : '' ?>" style="color: #3b82f6; font-weight: 700;">
 
@@ -494,11 +504,11 @@
 
                 <?= esc($userNombreCompleto) ?>
 
-                <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
+                <?php if ($esAdminSistema): ?>
 
                   <i class="bx bxs-check-circle" style="color: #2563eb; font-size: 1.25rem; vertical-align: middle; margin-left: 4px;" title="Administrador Verificado"></i>
 
-                <?php elseif ($userRol === 'profesor'): ?>
+                <?php elseif ($esProfesorAprobado): ?>
 
                   <i class="bx bxs-check-circle" style="color: #10b981; font-size: 1.25rem; vertical-align: middle; margin-left: 4px;" title="Profesor Verificado"></i>
 
@@ -506,7 +516,7 @@
 
               </h2>
 
-              <span class="perfil-pill-badge"><?= ucfirst(esc($userRol)) ?></span>
+              <span class="perfil-pill-badge"><?= ($userRol === 'profesor' && !$esProfesorAprobado) ? 'Docente (Pendiente)' : ucfirst(esc($userRol)) ?></span>
 
             </div>
 
@@ -851,334 +861,10 @@
     window.CSRF_HEADER = '<?= csrf_header() ?>';
     window.ES_ADMIN = <?= in_array($userRol ?? '', ['administrador', 'admin'], true) ? 'true' : 'false' ?>;
   </script>
-  <script src="<?= base_url('js/main.js?v=11')?>"></script>
-
+  <script src="<?= asset_url('js/core-ui.js') ?>"></script>
+  <script src="<?= asset_url('js/main.js') ?>"></script>
   <!-- notificaciones -->
-  <script src="<?= base_url('js/notificaciones.js?v=' . time()) ?>"></script>
-
-  <?php if (in_array($userRol, ['administrador', 'admin'], true)): ?>
-
-  <!-- Modal Superior: Solicitudes de Profesores Pendientes (LAY-8) -->
-
-  <div id="modal-solicitudes-docentes-top" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;">
-
-    <div class="modal-editar-perfil-content" style="max-width: 680px; width: 100%; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
-
-      <div class="modal-editar-header" style="padding: 16px 22px; background: #1e3a8a; color: white; display: flex; align-items: center; justify-content: space-between;">
-
-        <h3 style="margin: 0; font-size: 1.15rem; color: white; display: flex; align-items: center; gap: 8px;">
-
-          <i class="bx bx-user-voice" style="color: #fbbf24; font-size: 1.4rem;"></i> Solicitudes de Registro Docente
-
-        </h3>
-
-        <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalSolicitudesDocentesTop()" style="color: white; font-size: 1.5rem; background: none; border: none; cursor: pointer;">&times;</button>
-
-      </div>
-
-      
-
-      <div class="modal-docentes-info-banner">
-
-        Revisa los datos de identidad (Nombre y Cédula) y el comprobante oficial para aprobar o negar el rol de profesor en el sistema.
-
-      </div>
-
-      <div id="contenedor-lista-solicitudes-top" style="padding: 18px 22px; overflow-y: auto; max-height: 55vh; box-sizing: border-box;">
-        <div class="loading-solicitudes-container">
-          <i class="bx bx-loader-alt bx-spin" style="font-size: 2rem; color: #2563eb;"></i>
-          <p class="loading-solicitudes-desc">Cargando solicitudes...</p>
-        </div>
-      </div>
-      <div class="modal-editar-footer" style="padding: 12px 22px; display: flex; justify-content: space-between; align-items: center;">
-        <a href="<?= base_url('admin?tab=docentes') ?>" style="display: inline-flex; align-items: center; gap: 6px; color: #2563eb; font-weight: 600; font-size: 0.88rem; text-decoration: none;">
-          <i class="bx bx-chalkboard"></i> Asignar Secciones a Docentes
-        </a>
-        <button type="button" class="btn-cancelar-modal" onclick="cerrarModalSolicitudesDocentesTop()">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal para Motivo de Rechazo Docente -->
-  <div id="modal-motivo-rechazo-docente" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 100000;">
-    <div class="modal-editar-perfil-content" style="max-width: 460px; width: 100%; border-radius: 16px;">
-      <div class="modal-editar-header" style="padding: 14px 20px;">
-        <h3 style="color: #dc2626; font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 6px;">
-          <i class="bx bx-user-x"></i> Denegar Solicitud Docente
-        </h3>
-        <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalRechazoDocente()">&times;</button>
-      </div>
-      <div class="modal-editar-body" style="padding: 16px 20px;">
-        <p id="texto-docente-a-rechazar" class="docente-a-rechazar-txt"></p>
-        <label class="form-label" style="font-size: 0.83rem;">Motivo del rechazo (se enviará por notificación al usuario):</label>
-        <textarea id="input-motivo-rechazo" class="input-global" rows="3" placeholder="Ej: El comprobante presentado no es legible o no corresponde al carnet oficial de la UMC."></textarea>
-      </div>
-
-      <div class="modal-editar-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
-
-        <button type="button" class="btn-cancelar-modal" onclick="cerrarModalRechazoDocente()">Cancelar</button>
-
-        <button type="button" class="btn-accion-admin btn-rechazar" onclick="confirmarRechazoDocenteDesdeModal()" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer;">
-
-          <i class="bx bx-check"></i> Confirmar Rechazo
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <?php endif; ?>
-
-  <!-- WIDGET FLOTANTE: GUÍA Y DESCRIPCIÓN DEL APARTADO (ESQUINA INFERIOR DER) -->
-
-  <?php
-
-    $segmentoActual = service('uri')->getSegment(1) ?? '';
-
-    if (empty($segmentoActual)) {
-
-        $segmentoActual = 'dashboard';
-
-    }
-
-    $catalogoGuias = [
-
-        'dashboard' => [
-
-            'modulo'      => 'Inicio',
-
-            'titulo'      => 'Dashboard Principal',
-
-            'tag'         => 'Comunidad Universitaria',
-
-            'icono'       => 'bx-home-alt',
-
-            'color'       => '#2563eb',
-
-            'descripcion' => 'Espacio central de interacción estudiantil y docente. Consulta noticias académicas oficiales, comunicados del decanato y publicaciones de la comunidad de todas las carreras.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-edit', 'titulo' => 'Tablero de Noticias', 'texto' => 'Recibe avisos oficiales de los profesores y publicaciones de la comunidad universitaria.'],
-
-                ['icono' => 'bx-heart', 'titulo' => 'Reacciones y debate', 'texto' => 'Interactúa dando "Me gusta" y aportando en los comentarios de cada post.'],
-
-                ['icono' => 'bx-bell', 'titulo' => 'Notificaciones', 'texto' => 'Revisa la campana superior para ver alertas de clases, tareas y avisos.']
-
-            ]
-
-        ],
-
-        'mapa' => [
-
-            'modulo'      => 'Mapa UMC',
-
-            'titulo'      => 'Mapa UMC',
-
-            'tag'         => 'Mapa Interactivo',
-
-            'icono'       => 'bx-map-pin',
-
-            'color'       => '#0284c7',
-
-            'descripcion' => 'Plano digital del campus universitario con geolocalización y monitoreo en vivo de aulas, edificios y actividades por carrera.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-check-circle', 'titulo' => 'Aulas Libres (Verde)', 'texto' => 'Espacios disponibles y sin clases para estudiar o descansar.'],
-
-                ['icono' => 'bx-radio-circle-marked', 'titulo' => 'Aulas Ocupadas (Rojo)', 'texto' => 'Muestra el logo de la carrera cursando clase (Informática, Marítima, etc.).'],
-
-                ['icono' => 'bx-time-five', 'titulo' => 'Próxima Clase (Amarillo)', 'texto' => 'Alerta clases que comenzarán en menos de 15 minutos.'],
-
-                ['icono' => 'bx-search-alt', 'titulo' => 'Zoom y vista completa', 'texto' => 'Haz zoom con la rueda o botones; en vista general los pines libres se ocultan solos para no tapar los edificios.']
-
-            ]
-
-        ],
-
-        'biblioteca' => [
-
-            'modulo'      => 'Biblioteca',
-
-            'titulo'      => 'Biblioteca',
-
-            'tag'         => 'Recursos de Estudio',
-
-            'icono'       => 'bx-book-reader',
-
-            'color'       => '#7c3aed',
-
-            'descripcion' => 'Repositorio colaborativo de guías, exámenes pasados, libros y recursos para apoyar tu preparación académica.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-search', 'titulo' => 'Filtros por carrera', 'texto' => 'Encuentra guías y libros por carrera, materia o autor.'],
-
-                ['icono' => 'bx-download', 'titulo' => 'Descarga inmediata', 'texto' => 'Descarga documentos en PDF para estudiar en cualquier momento, o leelos en línea.'],
-
-                ['icono' => 'bx-cloud-upload', 'titulo' => 'Compartir aportes', 'texto' => 'Sube tus propios resúmenes y material para ayudar a la comunidad.']
-
-            ]
-
-        ],
-
-        'aulas' => [
-
-            'modulo'      => 'Aulas',
-
-            'titulo'      => 'Aulas Virtuales',
-
-            'tag'         => 'Gestión de tu vida académica',
-
-            'icono'       => 'bx-door-open',
-
-            'color'       => '#059669',
-
-            'descripcion' => 'Listado oficial de todos los salones de clase, laboratorios y talleres de la universidad con su capacidad, condiciones y asignación de horarios por día.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-calendar', 'titulo' => 'Horario semanal', 'texto' => 'Crea y consulta tu horario de clase, visualiza las aulas asignadas por cada bloque.'],
-
-                ['icono' => 'bx-laptop-alt', 'titulo' => 'Espacios virtuales', 'texto' => 'Tus aulas virtuales asignadas, donde los profesores autorizados pueden agendar avisos o evaluaciones.'],
-
-                ['icono' => 'bx-checklist', 'titulo' => 'Tareas', 'texto' => 'Lleva un control de tu cronograma académico con la creación de tareas.']
-
-            ]
-
-        ],
-
-        'admin' => [
-
-            'modulo'      => 'Panel Admin',
-
-            'titulo'      => 'Panel de Control Administrativo',
-
-            'tag'         => 'Administración UMC',
-
-            'icono'       => 'bx-shield-quarter',
-
-            'color'       => '#dc2626',
-
-            'descripcion' => 'Módulo central de gestión y supervisión institucional exclusivo para coordinadores y administradores autorizados de LAY-8.',
-
-            'tips'        => [
-
-                ['icono' => 'bx-file', 'titulo' => 'Sincronizar horarios', 'texto' => 'Sube y procesa los PDFs de horarios de las 5 carreras para el mapa.'],
-
-                ['icono' => 'bx-user-check', 'titulo' => 'Aprobación docente', 'texto' => 'Revisa carnets oficiales y valida solicitudes de rol de profesor.'],
-
-                ['icono' => 'bx-line-chart', 'titulo' => 'Métricas y auditoría', 'texto' => 'Supervisa métricas globales, seguridad y eventos del campus.']
-
-            ]
-
-        ],
-
-    ];
-
-    $guiaInfo = $catalogoGuias[$segmentoActual] ?? $catalogoGuias['dashboard'];
-
-  ?>
-
-  <div class="guia-apartado-widget" id="guia-apartado-widget">
-
-    <!-- Tarjeta emergente con descripción detallada -->
-
-    <div class="guia-apartado-card" id="guia-apartado-card" role="dialog" aria-labelledby="guia-titulo-modulo">
-
-      <div class="guia-card-header">
-
-        <div class="guia-header-icon-box" style="color: <?= $guiaInfo['color'] ?>;">
-
-          <i class="bx <?= esc($guiaInfo['icono']) ?>"></i>
-
-        </div>
-
-        <div class="guia-header-titles">
-
-          <span class="guia-tag-modulo" style="color: <?= $guiaInfo['color'] ?>;"><?= esc($guiaInfo['tag']) ?></span>
-
-          <h4 class="guia-card-title" id="guia-titulo-modulo"><?= esc($guiaInfo['titulo']) ?></h4>
-
-        </div>
-
-        <button type="button" class="guia-btn-cerrar" onclick="cerrarGuiaApartado(event)" title="Cerrar guía">&times;</button>
-
-      </div>
-
-      <div class="guia-card-body">
-
-        <p class="guia-card-desc"><?= esc($guiaInfo['descripcion']) ?></p>
-
-        <?php if (!empty($guiaInfo['tips'])): ?>
-
-        <div class="guia-tips-box">
-
-          <div class="guia-tips-titulo">
-
-            <i class="bx bx-star" style="color: #f59e0b;"></i> Funciones y Tips Rápidos:
-
-          </div>
-
-          <?php foreach ($guiaInfo['tips'] as $tip): ?>
-
-          <div class="guia-tip-item">
-
-            <i class="bx <?= esc($tip['icono']) ?>" style="color: <?= $guiaInfo['color'] ?>;"></i>
-
-            <div>
-
-              <b><?= esc($tip['titulo']) ?>:</b> <?= esc($tip['texto']) ?>
-
-            </div>
-
-          </div>
-
-          <?php endforeach; ?>
-
-        </div>
-
-        <?php endif; ?>
-
-      </div>
-
-      <div class="guia-card-footer">
-
-        <i class="bx bx-bulb"></i>
-
-        <span>Pasa el cursor o haz clic en el botón para consultar esta guía.</span>
-
-      </div>
-
-    </div>
-
-    <!-- Botón disparador (mini cuadro en la esquina inferior derecha) -->
-
-    <button type="button" 
-
-            class="guia-apartado-btn" 
-
-            id="guia-apartado-btn" 
-
-            onclick="toggleGuiaApartado(event)"
-
-            title="¿Dudas sobre <?= esc($guiaInfo['modulo']) ?>? Haz clic o pasa el cursor para ver la guía"
-
-            aria-label="Guía de <?= esc($guiaInfo['modulo']) ?>">
-
-      <i class="bx bx-help-circle guia-icono-principal"></i>
-
-      <span class="guia-dot-pulso" title="Guía activa"></span>
-
-    </button>
-
-  </div>
-
-  <!-- El widget interactivo de guía se inicializa desde main.js -->
+  <script src="<?= asset_url('js/notificaciones.js') ?>"></script>
 
   <?= $this->renderSection('scripts') ?>
 </body>
