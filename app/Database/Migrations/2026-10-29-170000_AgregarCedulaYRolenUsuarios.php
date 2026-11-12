@@ -30,12 +30,20 @@ class AgregarCedulaYRolenUsuarios extends Migration
                 // Índice ya existe o tabla en SQLite/test
             }
 
-            // 3. Garantizar que las 4 cédulas de los desarrolladores fundadores tengan rol de administrador
-            $cedulasFundadores = ['31131073', '32370840', '30702138', '30369782'];
-            $inList = "'" . implode("','", $cedulasFundadores) . "'";
-            try {
-                $this->db->query("UPDATE `usuarios` SET `rol` = 'administrador', `estado_verificacion` = 'aprobado' WHERE `cedula` IN ($inList)");
-            } catch (\Throwable $e) {}
+            // 3. Garantizar rol administrador para las cédulas configuradas en .env (si existen)
+            $cedulasFundadores = function_exists('obtener_cedulas_admins_iniciales')
+                ? obtener_cedulas_admins_iniciales()
+                : [];
+            if ($cedulasFundadores !== []) {
+                try {
+                    $this->db->table('usuarios')
+                        ->whereIn('cedula', $cedulasFundadores)
+                        ->update([
+                            'rol'                 => 'administrador',
+                            'estado_verificacion' => 'aprobado',
+                        ]);
+                } catch (\Throwable $e) {}
+            }
         }
     }
 

@@ -7,15 +7,57 @@ use App\Models\EstadoClaseModel;
 use App\Models\NotificacionModel;
 use App\Models\InscripcionModel;
 use App\Models\UsuarioModel;
+use App\Services\ActividadService;
+use App\Services\DocentePanelService;
 
 class ProfesorController extends BaseController
 {
+    /**
+     * Comprueba en BD que el usuario en sesión sea administrador o profesor oficialmente aprobado
+     */
+    private function usuarioEsDocenteAutorizado(): bool
+    {
+        $usuarioId = (int) session()->get('usuario_id');
+        if ($usuarioId <= 0) {
+            return false;
+        }
+
+        $u = \Config\Database::connect()
+            ->table('usuarios')
+            ->select('rol, estado_verificacion')
+            ->where('id', $usuarioId)
+            ->get()
+            ->getRowArray();
+
+        if ($u) {
+            $rol    = $u['rol'];
+            $estado = $u['estado_verificacion'];
+            session()->set(['rol' => $rol, 'estado_verificacion' => $estado]);
+        } else {
+            $rol    = session()->get('rol');
+            $estado = session()->get('estado_verificacion');
+        }
+
+        if (in_array($rol, ['administrador', 'admin'], true)) {
+            return true;
+        }
+
+        return ($rol === 'profesor' && $estado === 'aprobado');
+    }
+
     /**
      * Obtiene la lista de clases y secciones asignadas al profesor autenticado
      * Retorna JSON con la materia, sección, horarios y el estado activo de hoy.
      */
     public function misClases()
     {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'error'   => 'Acceso denegado: Se requieren permisos de profesor verificado y aprobado.'
+            ]);
+        }
+
         $profesorId = (int) session()->get('usuario_id');
         
         $seccionModel = new SeccionModel();
@@ -48,6 +90,13 @@ class ProfesorController extends BaseController
      */
     public function actualizarEstadoClase()
     {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'error'   => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.'
+            ]);
+        }
+
         $profesorId = (int) session()->get('usuario_id');
 
         // 1. Validación de inputs estricta del lado del servidor
@@ -79,7 +128,7 @@ class ProfesorController extends BaseController
             ->join('materias', 'materias.id = secciones.materia_id')
             ->where('secciones.id', $seccionId);
 
-        if (session('rol') !== 'administrador') {
+        if (!in_array(session('rol'), ['administrador', 'admin'], true)) {
             $builderSec->where('secciones.profesor_id', $profesorId);
         }
 
@@ -156,6 +205,13 @@ class ProfesorController extends BaseController
      */
     public function enviarAvisoTarea()
     {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'error'   => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.'
+            ]);
+        }
+
         $profesorId = (int) session()->get('usuario_id');
 
         $reglas = [
@@ -228,151 +284,47 @@ class ProfesorController extends BaseController
     }
 
     /**
-     * Módulo Administrativo: Listar solicitudes pendientes de profesores
-     */
-    public function solicitudesPendientes()
-    {
-        $usuarioModel = new UsuarioModel();
-        $solicitudes = $usuarioModel
-            ->select('id, primer_nombre, apellidos, nombre_usuario, correo, telefono, rol, estado_verificacion, ruta_carnet, fecha_registro')
-            ->where('estado_verificacion', 'pendiente')
-            ->findAll();
-
-        return $this->response->setJSON([
-            'success' => true,
-            'total'   => count($solicitudes),
-            'solicitudes' => $solicitudes
-        ]);
-    }
-
-    /**
-     * Módulo Administrativo: Aprobar profesor
-     */
-    public function aprobarProfesor(int $id)
-    {
-        $usuarioModel = new UsuarioModel();
-        $usuario = $usuarioModel->find($id);
-
-        if (!$usuario) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Usuario no encontrado']);
-        }
-
-        $usuarioModel->update($id, [
-            'rol'                 => 'profesor',
-            'estado_verificacion' => 'aprobado'
-        ]);
-
-        return $this->response->setJSON([
-            'success' => true,
-            'mensaje' => "El usuario {$usuario['nombre_usuario']} ha sido verificado como profesor exitosamente."
-        ]);
-    }
-
-    /**
-     * Módulo Administrativo: Rechazar profesor
-     */
-    public function rechazarProfesor(int $id)
-    {
-        $usuarioModel = new UsuarioModel();
-        $usuario = $usuarioModel->find($id);
-
-        if (!$usuario) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Usuario no encontrado']);
-        }
-
-        $usuarioModel->update($id, [
-            'rol'                 => 'estudiante',
-            'estado_verificacion' => 'rechazado'
-        ]);
-
-        return $this->response->setJSON([
-            'success' => true,
-            'mensaje' => "La solicitud de profesor para {$usuario['nombre_usuario']} ha sido rechazada."
-        ]);
-    }
-
-    /**
      * Vista Principal del Panel Docente / Aula Classroom
      */
     public function index()
     {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return redirect()->to(base_url('dashboard'))->with('error', 'Acceso exclusivo para profesores verificados y aprobados por un administrador.');
+        }
+
         $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
+        $rol        = (string) session()->get('rol');
+        $service    = new DocentePanelService();
 
-        if (!$profesorId || !in_array($rol, ['profesor', 'administrador'], true)) {
-            return redirect()->to(base_url('dashboard'))->with('error', 'Acceso exclusivo para profesores acreditados de la UMC.');
-        }
-
-        $db = \Config\Database::connect();
-        $seccionModel = new SeccionModel();
-        $estadoModel  = new EstadoClaseModel();
-        $actividadModel = new \App\Models\ActividadClaseModel();
-        $entregaModel = new \App\Models\EntregaActividadModel();
-
-        // 1. Obtener secciones asignadas al profesor (o todas si es admin para supervisión)
-        $builderSec = $seccionModel
-            ->select('secciones.*, materias.nombre as materia, materias.codigo_materia')
-            ->join('materias', 'materias.id = secciones.materia_id');
-
-        if ($rol === 'profesor') {
-            $builderSec->where('secciones.profesor_id', $profesorId);
-        }
-
-        $secciones = $builderSec->findAll();
-        $seccionesIds = !empty($secciones) ? array_column($secciones, 'id') : [];
-
-        // 2. Enriquecer cada sección con el conteo de alumnos y estado en vivo de hoy
-        $totalAlumnos = 0;
-        foreach ($secciones as &$sec) {
-            $sId = (int)$sec['id'];
-            $sec['estado_hoy'] = $estadoModel->obtenerEstadoHoy($sId);
-            $countAlumnos = $db->table('inscripciones')->where('seccion_id', $sId)->countAllResults();
-            $sec['total_estudiantes'] = $countAlumnos;
-            $totalAlumnos += $countAlumnos;
-
-            // Horarios oficiales de esta sección
-            $sec['horarios'] = $db->table('clases_programadas')
-                ->where('seccion_id', $sId)
-                ->where('estudiante_id', null)
-                ->get()
-                ->getResultArray();
-        }
-        unset($sec);
-
-        // 3. Actividades / Tareas creadas por este profesor o para sus secciones
-        $actividades = [];
-        $totalEntregasSinCalificar = 0;
-        if (!empty($seccionesIds)) {
-            $actividades = $actividadModel
-                ->select('actividades_clase.*, materias.nombre as materia, materias.codigo_materia, secciones.codigo_seccion')
-                ->join('secciones', 'secciones.id = actividades_clase.seccion_id')
-                ->join('materias', 'materias.id = secciones.materia_id')
-                ->whereIn('actividades_clase.seccion_id', $seccionesIds)
-                ->orderBy('actividades_clase.fecha_entrega', 'DESC')
-                ->findAll();
-
-            foreach ($actividades as &$act) {
-                $aId = (int)$act['id'];
-                $act['total_entregas'] = $entregaModel->where('actividad_id', $aId)->countAllResults();
-                $sinCalificar = $entregaModel->where('actividad_id', $aId)->where('calificacion', null)->countAllResults();
-                $act['sin_calificar'] = $sinCalificar;
-                $totalEntregasSinCalificar += $sinCalificar;
-            }
-            unset($act);
-        }
-
-        $datos = [
-            'secciones'                 => $secciones,
-            'actividades'               => $actividades,
-            'totalSecciones'            => count($secciones),
-            'totalAlumnos'              => $totalAlumnos,
-            'totalActividades'          => count($actividades),
-            'totalEntregasSinCalificar' => $totalEntregasSinCalificar,
-            'profesorNombre'            => session()->get('primer_nombre') . ' ' . session()->get('apellidos'),
-            'rolUsuario'                => $rol
+        $filtros = [
+            'carrera'    => $this->request->getGet('carrera'),
+            'q'          => $this->request->getGet('q'),
+            'page'       => $this->request->getGet('page'),
+            'por_pagina' => $this->request->getGet('por_pagina'),
         ];
 
-        return view('Profesor/dashboard_view', $datos);
+        if ($this->request->getGet('ajax_secciones') === '1') {
+            $res = $service->obtenerSeccionesPaginadas($profesorId, $rol, $filtros);
+            $cardsHtml = view('Profesor/_tarjetas_secciones', [
+                'secciones'      => $res['secciones'],
+                'esModoServidor' => in_array($rol, ['administrador', 'admin'], true),
+            ]);
+
+            return $this->response->setJSON([
+                'success'        => true,
+                'cardsHtml'      => $cardsHtml,
+                'totalFiltradas' => $res['totalFiltradas'],
+                'paginaActual'   => $res['paginaActual'],
+                'totalPaginas'   => $res['totalPaginas'],
+                'porPagina'      => $res['porPagina'],
+            ]);
+        }
+
+        $panelData = $service->obtenerDatosPanel($profesorId, $rol, $filtros);
+        $panelData['profesorNombre'] = trim((session()->get('primer_nombre') ?? '') . ' ' . (session()->get('apellidos') ?? ''));
+        $panelData['rolUsuario']     = $rol;
+
+        return view('Profesor/dashboard_view', $panelData);
     }
 
     /**
@@ -380,12 +332,12 @@ class ProfesorController extends BaseController
      */
     public function crearTareaDocente()
     {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.']);
+        }
+
         $profesorId = (int) session()->get('usuario_id');
         $rol = session()->get('rol');
-
-        if (!$profesorId || !in_array($rol, ['profesor', 'administrador'], true)) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado.']);
-        }
 
         $reglas = [
             'seccion_id'    => 'required|is_natural_no_zero',
@@ -403,70 +355,28 @@ class ProfesorController extends BaseController
             ]);
         }
 
-        $seccionId = (int) $this->request->getPost('seccion_id');
-        $titulo = strip_tags(trim((string)$this->request->getPost('titulo')));
-        $tipo = $this->request->getPost('tipo');
-        $fechaEntrega = str_replace('T', ' ', (string)$this->request->getPost('fecha_entrega'));
-        $ponderacion = $this->request->getPost('ponderacion') ? (float)$this->request->getPost('ponderacion') : 0;
-        $descripcion = strip_tags(trim((string)$this->request->getPost('descripcion')));
+        $res = (new ActividadService())->crearActividadEnSeccion(
+            $profesorId,
+            (string) $rol,
+            [
+                'seccion_id'    => $this->request->getPost('seccion_id'),
+                'titulo'        => $this->request->getPost('titulo'),
+                'tipo'          => $this->request->getPost('tipo'),
+                'fecha_entrega' => $this->request->getPost('fecha_entrega'),
+                'ponderacion'   => $this->request->getPost('ponderacion'),
+                'descripcion'   => $this->request->getPost('descripcion'),
+            ],
+            true
+        );
 
-        // Validación de pertenencia de sección
-        $seccionModel = new SeccionModel();
-        $builderSec = $seccionModel
-            ->select('secciones.*, materias.nombre as materia')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('secciones.id', $seccionId);
-
-        if ($rol !== 'administrador') {
-            $builderSec->where('secciones.profesor_id', $profesorId);
-        }
-
-        $seccionInfo = $builderSec->first();
-        if (!$seccionInfo) {
-            return $this->response->setStatusCode(403)->setJSON([
-                'success' => false,
-                'error'   => 'Acceso denegado: No tienes permisos para crear evaluaciones en esta sección.'
-            ]);
-        }
-
-        $actividadModel = new \App\Models\ActividadClaseModel();
-        $actividadId = $actividadModel->insert([
-            'seccion_id'    => $seccionId,
-            'creado_por'    => $profesorId,
-            'es_personal'   => 0, // Tarea oficial para toda la sección
-            'titulo'        => $titulo,
-            'tipo'          => $tipo,
-            'fecha_entrega' => $fechaEntrega,
-            'ponderacion'   => $ponderacion,
-            'descripcion'   => $descripcion,
-            'created_at'    => date('Y-m-d H:i:s'),
-        ]);
-
-        // Disparar notificaciones a todos los alumnos de la sección
-        $inscripcionModel = new InscripcionModel();
-        $alumnos = $inscripcionModel->obtenerEstudiantesDeSeccion($seccionId);
-        $notifModel = new NotificacionModel();
-
-        $materiaNombre = $seccionInfo['materia'] ?? 'tu asignatura';
-
-        foreach ($alumnos as $al) {
-            $notifModel->insert([
-                'estudiante_id'  => (int)$al['estudiante_id'],
-                'profesor_id'    => $profesorId,
-                'seccion_id'     => $seccionId,
-                'tipo'           => 'tarea_pendiente',
-                'titulo'         => "Nueva {$tipo}: {$titulo} ({$materiaNombre})",
-                'mensaje'        => $descripcion ?: "El profesor ha agendado una nueva actividad para entregar antes del {$fechaEntrega}.",
-                'modalidad'      => 'presencial',
-                'leido'          => 0,
-                'created_at'     => date('Y-m-d H:i:s'),
-            ]);
+        if (!$res['ok']) {
+            return $this->response->setStatusCode($res['status'])->setJSON(['success' => false, 'error' => $res['error']]);
         }
 
         return $this->response->setJSON([
             'success'      => true,
-            'mensaje'      => "¡Actividad '{$titulo}' creada con éxito y notificada a los estudiantes!",
-            'actividad_id' => $actividadId
+            'mensaje'      => "¡Actividad '{$res['titulo']}' creada con éxito y notificada a los estudiantes!",
+            'actividad_id' => $res['actividad_id'],
         ]);
     }
 
@@ -475,36 +385,26 @@ class ProfesorController extends BaseController
      */
     public function obtenerEntregasAjax(int $actividadId)
     {
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
-
-        if (!$profesorId || !in_array($rol, ['profesor', 'administrador'], true)) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado.']);
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.']);
         }
 
-        $actividad = (new \App\Models\ActividadClaseModel())->find($actividadId);
-        if (!$actividad) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
+        $verif = (new ActividadService())->obtenerActividadParaDocente(
+            $actividadId,
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol')
+        );
+        if (!$verif['ok']) {
+            return $this->response->setStatusCode($verif['status'])->setJSON(['success' => false, 'error' => $verif['error']]);
         }
 
-        if ($rol !== 'administrador') {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para visualizar entregas de esta actividad.']);
-            }
-        }
-
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entregas = $entregaModel->obtenerEntregasDeActividad($actividadId);
+        $entregas = (new \App\Models\EntregaActividadModel())->obtenerEntregasDeActividad($actividadId);
 
         return $this->response->setJSON([
             'success'   => true,
-            'actividad' => $actividad,
+            'actividad' => $verif['actividad'],
             'total'     => count($entregas),
-            'entregas'  => $entregas
+            'entregas'  => $entregas,
         ]);
     }
 
@@ -513,73 +413,27 @@ class ProfesorController extends BaseController
      */
     public function calificarEntrega()
     {
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
-
-        if (!$profesorId || !in_array($rol, ['profesor', 'administrador'], true)) {
-            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado.']);
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.']);
         }
 
-        $entregaId = (int) $this->request->getPost('entrega_id');
-        $nota = $this->request->getPost('calificacion');
-        $feedback = strip_tags(trim((string)$this->request->getPost('feedback')));
+        $res = (new ActividadService())->calificarEntregaEstudiante(
+            (int) $this->request->getPost('entrega_id'),
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol'),
+            $this->request->getPost('calificacion'),
+            strip_tags(trim((string) $this->request->getPost('feedback')))
+        );
 
-        if (!is_numeric($nota) || $nota < 0 || $nota > 100) {
-            return $this->response->setStatusCode(400)->setJSON([
-                'success' => false,
-                'error'   => 'La calificación debe ser un valor numérico válido (ej: de 0 a 20 o de 0 a 100).'
-            ]);
+        if (!$res['ok']) {
+            return $this->response->setStatusCode($res['status'])->setJSON(['success' => false, 'error' => $res['error']]);
         }
-
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entrega = $entregaModel->find($entregaId);
-        if (!$entrega) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Entrega no encontrada.']);
-        }
-
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        if (!$actividad) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad asociada no encontrada.']);
-        }
-
-        if ($rol !== 'administrador') {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para calificar entregas de esta sección.']);
-            }
-        }
-
-        $entregaModel->update($entregaId, [
-            'calificacion'      => (float)$nota,
-            'feedback_profesor' => $feedback,
-            'calificado_por'    => $profesorId,
-            'calificado_en'     => date('Y-m-d H:i:s'),
-        ]);
-
-        // Notificar al alumno de su calificación
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        $tituloAct = $actividad['titulo'] ?? 'Evaluación';
-
-        (new NotificacionModel())->insert([
-            'estudiante_id'  => (int)$entrega['estudiante_id'],
-            'profesor_id'    => $profesorId,
-            'seccion_id'     => (int)($actividad['seccion_id'] ?? 0),
-            'tipo'           => 'alerta_estado',
-            'titulo'         => "Calificación publicada: {$tituloAct}",
-            'mensaje'        => "Tu entrega ha sido calificada con {$nota} pts. " . ($feedback ? 'Comentario del docente: ' . $feedback : ''),
-            'modalidad'      => 'presencial',
-            'leido'          => 0,
-            'created_at'     => date('Y-m-d H:i:s'),
-        ]);
 
         return $this->response->setJSON([
             'success'      => true,
-            'mensaje'      => '¡Calificación y retroalimentación guardadas con éxito!',
-            'calificacion' => (float)$nota,
-            'feedback'     => $feedback
+            'mensaje'      => $res['mensaje'],
+            'calificacion' => $res['calificacion'],
+            'feedback'     => $res['feedback'],
         ]);
     }
 
@@ -588,32 +442,22 @@ class ProfesorController extends BaseController
      */
     public function descargarEntrega(int $entregaId)
     {
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
-
-        if (!$profesorId || !in_array($rol, ['profesor', 'administrador'], true)) {
-            return redirect()->to(base_url('dashboard'));
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return redirect()->to(base_url('dashboard'))->with('error', 'Acceso exclusivo para profesores aprobados por un administrador.');
         }
 
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entrega = $entregaModel->find($entregaId);
+        $entrega = (new \App\Models\EntregaActividadModel())->find($entregaId);
         if (!$entrega || empty($entrega['archivo_ruta'])) {
             return redirect()->back()->with('error', 'No hay archivo adjunto en esta entrega.');
         }
 
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        if (!$actividad) {
-            return redirect()->back()->with('error', 'Actividad no encontrada.');
-        }
-
-        if ($rol !== 'administrador') {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return redirect()->back()->with('error', 'No tienes permisos para descargar entregas de esta sección.');
-            }
+        $verif = (new ActividadService())->obtenerActividadParaDocente(
+            (int) $entrega['actividad_id'],
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol')
+        );
+        if (!$verif['ok']) {
+            return redirect()->back()->with('error', $verif['error']);
         }
 
         $nombreLimpio = basename($entrega['archivo_ruta']);

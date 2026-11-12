@@ -18,11 +18,24 @@ class FeedController extends BaseController
     {
         $usuarioId = (int) session()->get('usuario_id');
         $rol       = session()->get('rol') ?? 'estudiante';
+        $estado    = session()->get('estado_verificacion') ?? 'no_aplica';
 
-        if (!in_array($rol, ['administrador', 'admin', 'profesor'], true)) {
+        if ($usuarioId > 0) {
+            $uRow = (new UsuarioModel())->select('rol, estado_verificacion')->find($usuarioId);
+            if ($uRow) {
+                $rol    = $uRow['rol'] ?? $rol;
+                $estado = $uRow['estado_verificacion'] ?? $estado;
+                session()->set(['rol' => $rol, 'estado_verificacion' => $estado]);
+            }
+        }
+
+        $esAdmin = in_array($rol, ['administrador', 'admin'], true);
+        $esProfesorAprobado = ($rol === 'profesor' && $estado === 'aprobado');
+
+        if (!$esAdmin && !$esProfesorAprobado) {
             return $this->response->setStatusCode(403)->setJSON([
                 'success' => false,
-                'mensaje' => 'Solo docentes y personal administrativo tienen permisos para emitir comunicados oficiales.'
+                'mensaje' => 'Solo docentes verificados por un administrador y personal administrativo tienen permisos para emitir comunicados oficiales.'
             ]);
         }
 

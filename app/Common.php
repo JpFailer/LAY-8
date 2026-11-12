@@ -13,3 +13,43 @@
  *
  * @see: https://codeigniter.com/user_guide/extending/common.html
  */
+
+if (!function_exists('asset_url')) {
+    /**
+     * Devuelve la URL de un asset público con versión basada en filemtime
+     * para habilitar caché del navegador e invalidar automáticamente al editar.
+     */
+    function asset_url(string $relativePath): string
+    {
+        $cleanPath = ltrim($relativePath, '/');
+        $fullPath  = FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $cleanPath);
+        $version   = is_file($fullPath) ? (string) filemtime($fullPath) : '1';
+
+        return base_url($cleanPath) . '?v=' . $version;
+    }
+}
+
+if (!function_exists('obtener_cedulas_admins_iniciales')) {
+    /**
+     * Obtiene la lista de cédulas habilitadas para rol administrativo inicial desde .env.
+     *
+     * @return list<string>
+     */
+    function obtener_cedulas_admins_iniciales(?string $rawCsv = null): array
+    {
+        $valor = $rawCsv ?? (string) env('ADMIN_CEDULAS_INICIALES', '');
+        if (trim($valor) === '') {
+            return [];
+        }
+
+        $limpias = array_map(
+            static fn(string $item): string => (string) preg_replace('/\D/', '', trim($item)),
+            explode(',', $valor)
+        );
+
+        return array_values(array_unique(array_filter(
+            $limpias,
+            static fn(string $c): bool => $c !== ''
+        )));
+    }
+}

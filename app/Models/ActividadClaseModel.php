@@ -36,6 +36,34 @@ class ActividadClaseModel extends Model
     public function obtenerParaEstudiante(int $estudianteId): array
     {
         $db = \Config\Database::connect();
+        $rol = session('rol') ?? 'estudiante';
+
+        $builder = $this->select('actividades_clase.*, materias.nombre as materia_nombre, materias.codigo_materia, secciones.codigo_seccion, IFNULL(actividades_estudiante_estado.completada, 0) as completada, actividades_estudiante_estado.fecha_completada, entregas_actividades.id as entrega_id, entregas_actividades.archivo_nombre as entrega_archivo, entregas_actividades.calificacion, entregas_actividades.feedback_profesor, entregas_actividades.created_at as fecha_entrega_alumno')
+            ->join('secciones', 'secciones.id = actividades_clase.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('actividades_estudiante_estado', 'actividades_estudiante_estado.actividad_id = actividades_clase.id AND actividades_estudiante_estado.estudiante_id = ' . (int)$estudianteId, 'left')
+            ->join('entregas_actividades', 'entregas_actividades.actividad_id = actividades_clase.id AND entregas_actividades.estudiante_id = ' . (int)$estudianteId, 'left')
+            ->orderBy('actividades_clase.fecha_entrega', 'ASC');
+
+        // Los administradores ven las evaluaciones oficiales y sus propias entregas/calificaciones si las prueban
+        if (in_array($rol, ['administrador', 'admin'], true)) {
+            $builder->groupStart()
+                ->where('actividades_clase.es_personal', 0)
+                ->orGroupStart()
+                    ->where('actividades_clase.es_personal', 1)
+                    ->where('actividades_clase.creado_por', $estudianteId)
+                ->groupEnd()
+            ->groupEnd();
+
+            return $builder->findAll();
+        }
+
+        // El docente ve las tareas oficiales de sus secciones
+        if ($rol === 'profesor') {
+            return $builder->where('secciones.profesor_id', $estudianteId)
+                ->where('actividades_clase.es_personal', 0)
+                ->findAll();
+        }
 
         // 1. Obtener los IDs de las secciones donde está inscrito el alumno
         $seccionesInscritas = $db->table('inscripciones')
@@ -46,16 +74,12 @@ class ActividadClaseModel extends Model
 
         $seccionesIds = !empty($seccionesInscritas) ? array_column($seccionesInscritas, 'seccion_id') : [];
 
-        $builder = $this->select('actividades_clase.*, materias.nombre as materia_nombre, materias.codigo_materia, secciones.codigo_seccion, IFNULL(actividades_estudiante_estado.completada, 0) as completada, actividades_estudiante_estado.fecha_completada, entregas_actividades.id as entrega_id, entregas_actividades.archivo_nombre as entrega_archivo, entregas_actividades.calificacion, entregas_actividades.feedback_profesor, entregas_actividades.created_at as fecha_entrega_alumno')
-            ->join('secciones', 'secciones.id = actividades_clase.seccion_id')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->join('actividades_estudiante_estado', 'actividades_estudiante_estado.actividad_id = actividades_clase.id AND actividades_estudiante_estado.estudiante_id = ' . (int)$estudianteId, 'left')
-            ->join('entregas_actividades', 'entregas_actividades.actividad_id = actividades_clase.id AND entregas_actividades.estudiante_id = ' . (int)$estudianteId, 'left')
-            ->orderBy('actividades_clase.fecha_entrega', 'ASC');
-
         if (!empty($seccionesIds)) {
             $builder->groupStart()
-                ->whereIn('actividades_clase.seccion_id', $seccionesIds)
+                ->groupStart()
+                    ->whereIn('actividades_clase.seccion_id', $seccionesIds)
+                    ->where('actividades_clase.es_personal', 0)
+                ->groupEnd()
                 ->orGroupStart()
                     ->where('actividades_clase.es_personal', 1)
                     ->where('actividades_clase.creado_por', $estudianteId)

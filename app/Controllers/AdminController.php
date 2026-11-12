@@ -9,11 +9,18 @@ use App\Models\NotificacionModel;
 use App\Models\AulasModel;
 use App\Models\InscripcionModel;
 use App\Models\SeccionModel;
+use App\Services\AdminGestionService;
+use App\Services\BibliotecaService;
+use App\Services\HorarioSyncService;
+use CodeIgniter\HTTP\RequestInterface;
+use CodeIgniter\HTTP\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 class AdminController extends BaseController
 {
     protected UsuarioModel $usuarioModel;
     protected AuditoriaAdminModel $auditoriaModel;
+    protected AdminGestionService $adminService;
     protected int $adminId;
 
     /**
@@ -21,105 +28,16 @@ class AdminController extends BaseController
      */
     public function index()
     {
-        $db = \Config\Database::connect();
-
-        // 1. Métricas clave
-        $totalEstudiantes = $db->table('usuarios')->where('rol', 'estudiante')->countAllResults();
-        $totalProfesores  = $db->table('usuarios')->where('rol', 'profesor')->countAllResults();
-        $totalAdmins      = $db->table('usuarios')->whereIn('rol', ['administrador', 'admin'])->countAllResults();
-        $totalBaneados    = $db->fieldExists('estado_cuenta', 'usuarios') 
-            ? $db->table('usuarios')->where('estado_cuenta', 'baneado')->countAllResults() 
-            : 0;
-
-        // 2. Solicitudes de profesores pendientes
-        $solicitudes = $this->usuarioModel
-            ->where('estado_verificacion', 'pendiente')
-            ->orderBy('id', 'ASC')
-            ->findAll();
-
-        // 3. Usuarios registrados (últimos 100)
-        $usuarios = $this->usuarioModel
-            ->select('id, cedula, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
-            ->orderBy('id', 'DESC')
-            ->findAll(100);
-
-        // 4. Aportes de biblioteca
-        $aporteModel = new AporteBibliotecaModel();
-        $aportes = [];
-        try {
-            $aportes = $aporteModel->obtenerTodosConUsuario();
-        } catch (\Throwable $e) {}
-
-        // 5. Historial de auditoría
-        $auditoriaLogs = $this->auditoriaModel->ultimosRegistros(40);
-
-        // 6. Información del horario del mapa por carreras y general
-        $carrerasDefinidas = [
-            'ING-INF' => ['nombre' => 'Ingeniería en Informática', 'escuela' => 'Escuela de Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
-            'ING-MAR' => ['nombre' => 'Ingeniería Marítima', 'escuela' => 'Escuela de Náutica', 'icono' => 'bx-anchor', 'color' => '#0284c7'],
-            'ING-AMB' => ['nombre' => 'Ingeniería Ambiental', 'escuela' => 'Escuela de Ciencias Aplicadas', 'icono' => 'bx-leaf', 'color' => '#10b981'],
-            'ADM'     => ['nombre' => 'Licenciatura en Administración', 'escuela' => 'Escuela de Ciencias Sociales', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
-            'TUR'     => ['nombre' => 'Licenciatura en Turismo', 'escuela' => 'Escuela de Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
-        ];
-
-        $carpetaScripts = ROOTPATH . 'scripts_python';
-        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
-        $claseModel = new \App\Models\ClaseProgramadaModel();
-
-        $carrerasHorarios = [];
-        foreach ($carrerasDefinidas as $cod => $info) {
-            $rutaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . "horario_{$cod}.pdf";
-            if (!file_exists($rutaPdf) && $cod === 'ING-INF') {
-                $rutaPdf = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
-            }
-
-            $existe = file_exists($rutaPdf);
-            $totalClasesCarrera = $claseModel->where('carrera', $cod)->countAllResults();
-
-            $carrerasHorarios[$cod] = array_merge($info, [
-                'codigo'              => $cod,
-                'existe_archivo'      => $existe,
-                'tamano_kb'           => $existe ? round(filesize($rutaPdf) / 1024, 2) : 0,
-                'ultima_modificacion' => $existe ? date('d/m/Y H:i', filemtime($rutaPdf)) : 'No cargado',
-                'total_clases'        => $totalClasesCarrera,
-                'nombre_archivo'      => $existe ? basename($rutaPdf) : "horario_{$cod}.pdf"
-            ]);
-        }
-
-        $rutaPdfHorario = ROOTPATH . 'scripts_python' . DIRECTORY_SEPARATOR . 'horario.pdf';
-        $horarioInfo = [
-            'existe_archivo'      => file_exists($rutaPdfHorario),
-            'tamano_kb'           => file_exists($rutaPdfHorario) ? round(filesize($rutaPdfHorario) / 1024, 2) : 0,
-            'ultima_modificacion' => file_exists($rutaPdfHorario) ? date('d/m/Y H:i', filemtime($rutaPdfHorario)) : 'No cargado',
-            'total_clases'        => $claseModel->countAllResults(),
-            'total_aulas'         => (new AulasModel())->countAllResults()
-        ];
-
-        $datos = [
-            'metricas' => [
-                'estudiantes'            => $totalEstudiantes,
-                'profesores'             => $totalProfesores,
-                'admins'                 => $totalAdmins,
-                'baneados'               => $totalBaneados,
-                'total_usuarios'         => $totalEstudiantes + $totalProfesores + $totalAdmins,
-                'solicitudes_pendientes' => count($solicitudes),
-                'total_aportes'          => count($aportes),
-            ],
-            'solicitudes'      => $solicitudes,
-            'usuarios'         => $usuarios,
-            'aportes'          => $aportes,
-            'auditoria'        => $auditoriaLogs,
-            'horarioInfo'      => $horarioInfo,
-            'carrerasHorarios' => $carrerasHorarios
-        ];
-
+        $datos = $this->adminService->obtenerDatosDashboard($this->usuarioModel, $this->auditoriaModel);
         return view('admin/dashboard_view', $datos);
     }
 
-    public function __construct()
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
+        parent::initController($request, $response, $logger);
         $this->usuarioModel   = new UsuarioModel();
         $this->auditoriaModel = new AuditoriaAdminModel();
+        $this->adminService   = new AdminGestionService();
         $this->adminId        = (int) (session('usuario_id') ?? 0);
     }
 
@@ -132,82 +50,9 @@ class AdminController extends BaseController
      */
     public function metricas()
     {
-        $db = \Config\Database::connect();
-
-        // 1. Usuarios por rol
-        $estudiantes = $db->table('usuarios')->where('rol', 'estudiante')->countAllResults();
-        $profesores  = $db->table('usuarios')->where('rol', 'profesor')->countAllResults();
-        $admins      = $db->table('usuarios')->whereIn('rol', ['administrador', 'admin'])->countAllResults();
-        
-        $baneados = 0;
-        if ($db->fieldExists('estado_cuenta', 'usuarios')) {
-            $baneados = $db->table('usuarios')->where('estado_cuenta', 'baneado')->countAllResults();
-        }
-
-        // 2. Solicitudes docentes pendientes
-        $solicitudesPendientes = $db->table('usuarios')
-                                    ->where('estado_verificacion', 'pendiente')
-                                    ->countAllResults();
-
-        // 3. Biblioteca: Aportes y espacio en disco
-        $aporteModel = new AporteBibliotecaModel();
-        $totalAportes = 0;
-        $espacioTotalBytes = 0;
-        $aportesPorCategoria = [];
-
-        try {
-            $totalAportes = $aporteModel->countAllResults();
-            $espacioTotalBytes = $aporteModel->espacioTotalBytes();
-            $categoriasQuery = $aporteModel->select('categoria, count(id) as total')
-                                           ->groupBy('categoria')
-                                           ->findAll();
-            foreach ($categoriasQuery as $c) {
-                $aportesPorCategoria[$c['categoria']] = (int) $c['total'];
-            }
-        } catch (\Throwable $e) {
-            // Silenciar si la tabla aún no se ha migrado
-        }
-
-        // 4. Aulas y clases programadas
-        $aulasModel = new AulasModel();
-        $totalAulas = 0;
-        $aulasDisponibles = 0;
-        $aulasMantenimiento = 0;
-
-        try {
-            $totalAulas = $aulasModel->countAllResults();
-            if ($db->fieldExists('estado', 'aulas')) {
-                $aulasDisponibles = $aulasModel->where('estado', 'disponible')->countAllResults();
-                $aulasMantenimiento = $aulasModel->whereIn('estado', ['mantenimiento', 'inhabilitada'])->countAllResults();
-            } else {
-                $aulasDisponibles = $totalAulas;
-            }
-        } catch (\Throwable $e) {}
-
         return $this->response->setJSON([
-            'success' => true,
-            'metricas' => [
-                'usuarios' => [
-                    'total'         => $estudiantes + $profesores + $admins,
-                    'estudiantes'   => $estudiantes,
-                    'profesores'    => $profesores,
-                    'administradores' => $admins,
-                    'baneados'      => $baneados,
-                ],
-                'profesores' => [
-                    'solicitudes_pendientes' => $solicitudesPendientes,
-                ],
-                'biblioteca' => [
-                    'total_aportes'       => $totalAportes,
-                    'espacio_ocupado_mb'  => round($espacioTotalBytes / 1048576, 2),
-                    'por_categoria'       => $aportesPorCategoria,
-                ],
-                'aulas' => [
-                    'total'               => $totalAulas,
-                    'disponibles'         => $aulasDisponibles,
-                    'en_mantenimiento'    => $aulasMantenimiento,
-                ]
-            ]
+            'success'  => true,
+            'metricas' => $this->adminService->obtenerMetricasGlobales(),
         ]);
     }
 
@@ -459,7 +304,7 @@ class AdminController extends BaseController
      */
     public function banearUsuario(int $id)
     {
-        // 🛡️ Regla de seguridad: Un administrador no puede auto-banearse
+        // sistema de prevencion de auto-baneo antidayanas (un admin no puede sabotearse a si mismo)
         if ($id === $this->adminId) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
@@ -550,7 +395,7 @@ class AdminController extends BaseController
      */
     public function eliminarUsuario(int $id)
     {
-        // 🛡️ Regla de seguridad: El administrador no puede auto-eliminarse
+        // sistema de prevencion de auto-eliminacion antidayanas (evita dejar el sistema sin administradores)
         if ($id === $this->adminId) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
@@ -573,78 +418,8 @@ class AdminController extends BaseController
             ]);
         }
 
-        $db = \Config\Database::connect();
         $borrarAportes = $this->request->getPost('borrar_aportes') === 'true';
-
-        $db->transStart();
-
-        // 1. Limpiar notificaciones asociadas
-        try {
-            $db->table('notificaciones')
-               ->where('estudiante_id', $id)
-               ->orWhere('profesor_id', $id)
-               ->delete();
-        } catch (\Throwable $e) {}
-
-        // 2. Limpiar inscripciones y bloques de horario individuales
-        try {
-            $db->table('inscripciones')
-               ->where('estudiante_id', $id)
-               ->delete();
-            $db->table('clases_programadas')
-               ->where('estudiante_id', $id)
-               ->delete();
-        } catch (\Throwable $e) {}
-
-        // 3. Limpiar interacciones en feed y aulas
-        try {
-            $db->table('noticias_likes')->where('usuario_id', $id)->delete();
-            $db->table('noticias_comentarios')->where('usuario_id', $id)->delete();
-            $db->table('actividades_estudiante_estado')->where('estudiante_id', $id)->delete();
-            $db->table('estados_clase_profesor')->where('profesor_id', $id)->delete();
-
-            // Limpiar actividades creadas por el usuario
-            $actividades = $db->table('actividades_clase')->select('id')->where('creado_por', $id)->get()->getResultArray();
-            if (!empty($actividades)) {
-                $actIds = array_column($actividades, 'id');
-                $db->table('actividades_estudiante_estado')->whereIn('actividad_id', $actIds)->delete();
-                $db->table('actividades_clase')->whereIn('id', $actIds)->delete();
-            }
-
-            // Limpiar noticias publicadas en el muro por el usuario
-            $noticias = $db->table('noticias_muro')->select('id')->where('autor_id', $id)->get()->getResultArray();
-            if (!empty($noticias)) {
-                $nIds = array_column($noticias, 'id');
-                $db->table('noticias_likes')->whereIn('noticia_id', $nIds)->delete();
-                $db->table('noticias_comentarios')->whereIn('noticia_id', $nIds)->delete();
-                $db->table('noticias_muro')->whereIn('id', $nIds)->delete();
-            }
-        } catch (\Throwable $e) {}
-
-        // 4. Limpiar o anonimizar aportes de biblioteca
-        $aporteModel = new AporteBibliotecaModel();
-        try {
-            if ($borrarAportes) {
-                // Borrar archivos físicos y registros
-                $aportes = $aporteModel->where('usuario_id', $id)->findAll();
-                foreach ($aportes as $ap) {
-                    $ruta = WRITEPATH . $ap['ruta_archivo'];
-                    if (file_exists($ruta)) {
-                        @unlink($ruta);
-                    }
-                    $aporteModel->delete($ap['id']);
-                }
-            } else {
-                // Preservar aportes educativos desacoplándolos del usuario
-                $db->table('aportes_biblioteca')
-                   ->where('usuario_id', $id)
-                   ->update(['usuario_id' => null]);
-            }
-        } catch (\Throwable $e) {}
-
-        // 5. Eliminar el usuario físicamente
-        $this->usuarioModel->delete($id);
-        $db->transComplete();
+        $this->adminService->eliminarUsuarioConLimpieza($this->usuarioModel, $id, $borrarAportes);
 
         $this->auditoriaModel->registrar(
             $this->adminId,
@@ -721,31 +496,48 @@ class AdminController extends BaseController
     // =========================================================================
 
     /**
-     * Lista todos los aportes registrados y escanea archivos en disco
+     * Lista aportes paginados con búsqueda SQL y opcionalmente escanea huérfanos en disco.
      */
     public function listarAportesBiblioteca()
     {
-        $categoria = $this->request->getGet('categoria');
+        $categoria    = $this->request->getGet('categoria');
+        $buscar       = trim((string) ($this->request->getGet('buscar') ?? ''));
+        $pagina       = max(1, (int) ($this->request->getGet('pagina') ?? 1));
+        $limite       = min(100, max(5, (int) ($this->request->getGet('limite') ?? 20)));
+        $sinHuerfanos = $this->request->getGet('sin_huerfanos') === '1';
+
         $aporteModel = new AporteBibliotecaModel();
-        
-        $aportes = [];
+        $pag = [
+            'aportes'      => [],
+            'total'        => 0,
+            'paginaActual' => $pagina,
+            'totalPaginas' => 1,
+            'porPagina'    => $limite,
+        ];
+
         try {
-            $aportes = $aporteModel->obtenerTodosConUsuario($categoria);
+            $pag = (new BibliotecaService($aporteModel))->obtenerAportesPaginados(
+                $categoria !== '' ? $categoria : null,
+                $buscar !== '' ? $buscar : null,
+                null,
+                $pagina,
+                $limite
+            );
         } catch (\Throwable $e) {}
 
-        // Verificar existencia física en disco de cada registro
+        $aportes = $pag['aportes'];
         foreach ($aportes as &$ap) {
-            $rutaFisica = WRITEPATH . $ap['ruta_archivo'];
-            $ap['archivo_existe_disco'] = file_exists($rutaFisica);
-            $ap['tamano_kb']            = round($ap['tamano_bytes'] / 1024, 2);
+            $rutaFisica = WRITEPATH . ($ap['ruta_archivo'] ?? '');
+            $ap['archivo_existe_disco'] = !empty($ap['ruta_archivo']) && file_exists($rutaFisica);
+            $ap['tamano_kb']            = round(((int) ($ap['tamano_bytes'] ?? 0)) / 1024, 2);
         }
         unset($ap);
 
-        // Escanear posibles archivos huérfanos en disco (ficheros que estén en WRITEPATH pero no en la BD)
+        // Escanear huérfanos solo cuando no es búsqueda AJAX rápida paginada
         $archivosHuerfanos = [];
         $baseBiblioteca = WRITEPATH . 'uploads/biblioteca/';
-        if (is_dir($baseBiblioteca)) {
-            $rutasRegistradas = array_column($aportes, 'ruta_archivo');
+        if (!$sinHuerfanos && $buscar === '' && $pagina === 1 && is_dir($baseBiblioteca)) {
+            $rutasRegistradas = array_column($aporteModel->select('ruta_archivo')->findAll(), 'ruta_archivo');
             $carpetas = ['guias', 'ejercicios', 'resumenes', 'otros'];
 
             foreach ($carpetas as $cat) {
@@ -756,11 +548,11 @@ class AdminController extends BaseController
                         $rutaRel = 'uploads/biblioteca/' . $cat . '/' . $arch;
                         if (!in_array($rutaRel, $rutasRegistradas, true)) {
                             $archivosHuerfanos[] = [
-                                'categoria'     => $cat,
-                                'nombre_guardado' => $arch,
-                                'ruta_relativa' => $rutaRel,
-                                'tamano_kb'     => round(filesize($dirCat . '/' . $arch) / 1024, 2),
-                                'fecha_modificado' => date('Y-m-d H:i:s', filemtime($dirCat . '/' . $arch))
+                                'categoria'        => $cat,
+                                'nombre_guardado'  => $arch,
+                                'ruta_relativa'    => $rutaRel,
+                                'tamano_kb'        => round(filesize($dirCat . '/' . $arch) / 1024, 2),
+                                'fecha_modificado' => date('Y-m-d H:i:s', filemtime($dirCat . '/' . $arch)),
                             ];
                         }
                     }
@@ -770,7 +562,11 @@ class AdminController extends BaseController
 
         return $this->response->setJSON([
             'success'            => true,
-            'total_aportes'      => count($aportes),
+            'pagina'             => $pag['paginaActual'],
+            'limite'             => $pag['porPagina'],
+            'total'              => $pag['total'],
+            'paginas'            => $pag['totalPaginas'],
+            'total_aportes'      => $pag['total'],
             'aportes'            => $aportes,
             'archivos_huerfanos' => $archivosHuerfanos,
         ]);
@@ -893,7 +689,7 @@ class AdminController extends BaseController
     // =========================================================================
 
     /**
-     * Historial inmutable de auditoría para trazabilidad de seguridad
+     // sistema de auditoria inmutable antidayanas para trazabilidad de eventos
      */
     public function historialAuditoria()
     {
@@ -1030,79 +826,28 @@ class AdminController extends BaseController
     }
 
     /**
-     * Permite al Administrador subir un nuevo archivo PDF oficial de horarios
-     * (por carrera individual o general) y re-sincronizar automáticamente la base de datos de aulas y clases para el mapa.
+     * Permite al Administrador subir el archivo .json de horarios procesados (óptimo sin Python en servidor)
+     * o .pdf oficial en entorno local, re-sincronizando en lote la base de datos del mapa.
      */
     public function actualizarHorarioPdf()
     {
-        @set_time_limit(300);
-        @ini_set('max_execution_time', '300');
+        $archivo = $this->request->getFile('horario_archivo') ?: $this->request->getFile('horario_pdf');
+        $carrera = (string) ($this->request->getPost('carrera') ?: 'ING-INF');
+        $esJsonRequest = $this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json';
 
-        $archivo = $this->request->getFile('horario_pdf');
-        $carrera = $this->request->getPost('carrera') ?: 'ING-INF';
-        $carrerasValidas = ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR'];
-
-        if (!in_array($carrera, $carrerasValidas, true)) {
-            $carrera = 'ING-INF';
-        }
-
-        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
-            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
-                return $this->response->setJSON(['success' => false, 'error' => 'Por favor selecciona un archivo PDF de horario oficial válido.']);
+        if (!$archivo) {
+            if ($esJsonRequest) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Por favor selecciona un archivo .json (o .pdf en local) de horario válido.']);
             }
-            return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo PDF de horario oficial válido.');
+            return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo de horario válido.');
         }
 
-        if ($archivo->getClientMimeType() !== 'application/pdf') {
-            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
-                return $this->response->setJSON(['success' => false, 'error' => 'El formato del archivo debe ser exclusivamente PDF.']);
+        $res = (new HorarioSyncService())->sincronizarDesdeArchivo($archivo, $carrera);
+        if (!$res['ok']) {
+            if ($esJsonRequest) {
+                return $this->response->setJSON(['success' => false, 'error' => $res['error']]);
             }
-            return redirect()->to(base_url('admin'))->with('error', 'El formato del archivo debe ser exclusivamente PDF.');
-        }
-
-        $carpetaScripts = ROOTPATH . 'scripts_python';
-        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
-        if (!is_dir($carpetaHorarios)) {
-            mkdir($carpetaHorarios, 0777, true);
-        }
-
-        // Guardar archivo específico para la carrera
-        $nombreDestino = "horario_{$carrera}.pdf";
-        $archivo->move($carpetaHorarios, $nombreDestino, true);
-        $rutaCompletaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . $nombreDestino;
-
-        // Si es ING-INF, mantener también copia en horario.pdf
-        if ($carrera === 'ING-INF') {
-            @copy($rutaCompletaPdf, $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf');
-        }
-
-        // Limpiar caché JSON de esa carrera para forzar lectura actualizada
-        $rutaCacheJson = $carpetaScripts . DIRECTORY_SEPARATOR . "horarios_procesados_{$carrera}.json";
-        if (file_exists($rutaCacheJson)) {
-            @unlink($rutaCacheJson);
-        }
-        if ($carrera === 'ING-INF') {
-            $rutaCacheGen = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
-            if (file_exists($rutaCacheGen)) {
-                @unlink($rutaCacheGen);
-            }
-        }
-
-        // Ejecutar script Python especializado CGD-001
-        $pythonExec = file_exists($carpetaScripts . DIRECTORY_SEPARATOR . 'venv' . DIRECTORY_SEPARATOR . 'Scripts' . DIRECTORY_SEPARATOR . 'python.exe') 
-            ? '"venv\Scripts\python.exe"' 
-            : 'python';
-        
-        $comando = 'cd "' . $carpetaScripts . '" && ' . $pythonExec . ' procesar_horario_cgd001.py "' . $rutaCompletaPdf . '" ' . $carrera . ' 2>&1';
-        $salidaPython = shell_exec($comando);
-
-        // Re-sincronizar bloques de clases en la base de datos
-        $clasesCargadas = 0;
-        try {
-            $mapaController = new \App\Controllers\MapaController();
-            $clasesCargadas = $mapaController->importar_horarios_automaticamente(true, $carrera);
-        } catch (\Throwable $e) {
-            log_message('error', 'Error al sincronizar clases de ' . $carrera . ': ' . $e->getMessage());
+            return redirect()->to(base_url('admin'))->with('error', $res['error']);
         }
 
         $this->auditoriaModel->registrar(
@@ -1110,21 +855,165 @@ class AdminController extends BaseController
             'actualizar_horario_carrera',
             'horario',
             null,
-            ['carrera' => $carrera, 'clases_cargadas' => $clasesCargadas, 'archivo' => $archivo->getClientName()]
+            ['carrera' => $res['carrera'], 'modo' => $res['modo'] ?? 'json', 'clases_cargadas' => $res['clases_cargadas'], 'archivo' => $archivo->getClientName()]
         );
 
-        $mensaje = "¡Horario de {$carrera} actualizado con éxito! Se sincronizaron {$clasesCargadas} bloques de clases con horas exactas en el mapa.";
-
-        if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
+        if ($esJsonRequest) {
             return $this->response->setJSON([
                 'success'         => true,
-                'mensaje'         => $mensaje,
-                'carrera'         => $carrera,
-                'clases_cargadas' => $clasesCargadas,
-                'fecha'           => date('d/m/Y H:i')
+                'mensaje'         => $res['mensaje'],
+                'carrera'         => $res['carrera'],
+                'modo'            => $res['modo'] ?? 'json',
+                'clases_cargadas' => $res['clases_cargadas'],
+                'fecha'           => date('d/m/Y H:i'),
             ]);
         }
 
-        return redirect()->to(base_url('admin'))->with('mensaje', $mensaje);
+        return redirect()->to(base_url('admin'))->with('mensaje', $res['mensaje']);
     }
+
+    /**
+     // traerse las secciones que tiene el profe
+     */
+    public function obtenerSeccionesDocente(int $profesorId)
+    {
+        $db = \Config\Database::connect();
+        $profesor = $this->usuarioModel->find($profesorId);
+        if (!$profesor) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
+        }
+
+        $secciones = $db->table('secciones')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.carrera, materias.nombre as materia, materias.codigo_materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.profesor_id', $profesorId)
+            ->orderBy('materias.nombre', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'profesor'  => $profesor,
+            'secciones' => $secciones
+        ]);
+    }
+
+    /**
+     // buscar materias pa asignarselas
+     */
+    public function buscarSeccionesParaAsignar()
+    {
+        $q = trim((string)$this->request->getGet('q'));
+        $db = \Config\Database::connect();
+
+        $builder = $db->table('secciones')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.profesor_id, secciones.carrera, materias.nombre as materia, materias.codigo_materia, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
+
+        if (!empty($q)) {
+            $builder->groupStart()
+                ->like('materias.nombre', $q)
+                ->orLike('materias.codigo_materia', $q)
+                ->orLike('secciones.codigo_seccion', $q)
+                ->orLike('secciones.carrera', $q)
+                ->groupEnd();
+        }
+
+        $secciones = $builder->orderBy('materias.nombre', 'ASC')->limit(20)->get()->getResultArray();
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'secciones' => $secciones
+        ]);
+    }
+
+    /**
+     // amarrar seccion a un profe
+     */
+    public function asignarSeccionDocente()
+    {
+        $profesorId = (int) $this->request->getPost('profesor_id');
+        $seccionId  = (int) $this->request->getPost('seccion_id');
+
+        if ($profesorId <= 0 || $seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificadores inválidos.']);
+        }
+
+        $profesor = $this->usuarioModel->find($profesorId);
+        if (!$profesor) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
+        }
+
+        if ($profesor['rol'] === 'profesor' && ($profesor['estado_verificacion'] ?? '') !== 'aprobado') {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Solo se pueden asignar secciones a docentes previamente aprobados.']);
+        }
+
+        $db = \Config\Database::connect();
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
+        }
+
+        $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => $profesorId]);
+
+        $this->auditoriaModel->registrar(
+            $this->adminId,
+            'asignar_seccion_docente',
+            'secciones',
+            $seccionId,
+            ['profesor_id' => $profesorId, 'profesor' => $profesor['nombre_usuario'], 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']]
+        );
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Sección {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}) asignada exitosamente a {$profesor['primer_nombre']} {$profesor['apellidos']}."
+        ]);
+    }
+
+    /**
+     // desvincular seccion del profe
+     */
+    public function desasignarSeccionDocente()
+    {
+        $seccionId = (int) $this->request->getPost('seccion_id');
+        if ($seccionId <= 0) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Identificador de sección inválido.']);
+        }
+
+        $db = \Config\Database::connect();
+        $seccion = $db->table('secciones')
+            ->select('secciones.*, materias.nombre as materia')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->where('secciones.id', $seccionId)
+            ->get()
+            ->getRowArray();
+
+        if (!$seccion) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección no encontrada.']);
+        }
+
+        $profAnterior = $seccion['profesor_id'];
+        $db->table('secciones')->where('id', $seccionId)->update(['profesor_id' => null]);
+
+        $this->auditoriaModel->registrar(
+            $this->adminId,
+            'desasignar_seccion_docente',
+            'secciones',
+            $seccionId,
+            ['profesor_anterior' => $profAnterior, 'materia' => $seccion['materia'], 'seccion' => $seccion['codigo_seccion']]
+        );
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Sección {$seccion['materia']} desvinculada del docente."
+        ]);
+    }
+
 }

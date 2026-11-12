@@ -24,8 +24,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600&family=Jersey+25&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- stylesheets-->
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="<?= base_url('css/global.css?v=' . time())?>">
-  <link rel="stylesheet" href="<?= base_url('css/registro.css?v=' . time())?>">
+  <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+  <link rel="stylesheet" href="<?= asset_url('css/registro.css') ?>">
 </head>
 
 <body data-tema-default="light">
@@ -97,13 +97,19 @@
     </form>
 
     <div class="form-footer">
-      <span style="color: #64748b;">¿No tienes cuenta?</span> 
+      <span>¿No tienes cuenta?</span> 
       <a href="<?= base_url('registro')?>" class="link-global">Regístrate</a>
     </div>
   </div>
 
   <!-- Modal Recuperación de Contraseña Interactivo (Adaptable y con Scroll) -->
-  <div id="modal-recuperacion-login" class="modal-terminos-overlay" style="display: none; padding: 15px;" onclick="if(event.target === this) cerrarModalRecuperacionLogin()">
+  <div id="modal-recuperacion-login"
+       class="modal-terminos-overlay"
+       style="display: none; padding: 15px;"
+       data-url-verificar="<?= base_url('login/verificar-recuperacion') ?>"
+       data-url-restablecer="<?= base_url('login/restablecer-contrasena') ?>"
+       data-csrf-name="<?= csrf_token() ?>"
+       onclick="if(event.target === this) cerrarModalRecuperacionLogin()">
     <div class="modal-terminos-content" style="max-width: 530px; max-height: calc(100vh - 30px); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-terminos-header" style="padding: 14px 20px;">
         <h3 style="font-size: 1.2rem;"><i class="bx bx-key"></i> Recuperar Contraseña</h3>
@@ -127,42 +133,50 @@
           <button type="button" id="btn-login-recup-1" onclick="ejecutarVerificarCuentaLogin()" class="btn-primary" style="width: 100%;">Verificar Cuenta</button>
         </div>
 
-        <!-- PASO 2: Confirmación de Correo y Restablecimiento Directo -->
-        <div id="recup-login-paso-2" style="display: none;">
-          <div style="text-align: center; margin-bottom: 16px;">
-            <div style="width: 48px; height: 48px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 8px auto;">
-              <i class="bx bx-envelope"></i>
+        <!-- PASO 2: Confirmación de Envío de Enlace Seguro -->
+        <div id="recup-login-paso-2" style="display: none; text-align: center;">
+          <div style="width: 54px; height: 54px; background: #ecfdf5; color: #059669; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 10px auto;">
+            <i class="bx bx-mail-send"></i>
+          </div>
+          <h4 style="margin: 0 0 6px 0; font-size: 1.25rem;">¡Enlace de Recuperación Enviado!</h4>
+          <p style="font-size: 0.88rem; color: #64748b; margin: 0 0 16px 0; line-height: 1.5;">
+            Hemos enviado un enlace seguro al correo registrado de la cuenta <strong id="recup-login-user-info" style="color: #0f172a;"></strong>:
+          </p>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; text-align: left;">
+            <div style="display: flex; align-items: center; gap: 10px; color: #0f172a; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px;">
+              <i class="bx bx-envelope" style="color: #2563eb; font-size: 1.3rem;"></i>
+              <span id="recup-login-correo-destino"></span>
             </div>
-            <h4 style="margin: 0 0 4px 0; font-size: 1.15rem;" id="recup-login-user-info">Cuenta Verificada</h4>
-            <p style="font-size: 0.84rem; color: #64748b; margin: 0;" id="recup-login-msg-envio">
-              Hemos enviado las instrucciones a tu correo electrónico registrado.
+            <p style="font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.4; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+              <i class="bx bx-shield-quarter" style="color: #059669;"></i> Por seguridad institucional, solo quien tenga acceso a este correo puede cambiar la clave. El enlace caduca en <strong>2 horas</strong>.
             </p>
           </div>
 
-          <div id="recup-login-alerta-2" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 12px;"></div>
-
-          <input type="hidden" id="recup_login_uid">
-          <input type="hidden" id="recup_login_token">
-
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px;" class="card-recup-box-inputs">
-            <span style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 10px;">
-              <i class="bx bx-edit"></i> O define tu nueva contraseña aquí directamente:
-            </span>
-
-            <div style="margin-bottom: 10px;">
-              <label class="form-label">Nueva Contraseña *</label>
-              <input type="password" id="recup_login_clave" class="input-global" placeholder="Mínimo 8 caracteres">
-            </div>
-
-            <div>
-              <label class="form-label">Confirmar Contraseña *</label>
-              <input type="password" id="recup_login_rep" class="input-global" placeholder="Repite tu nueva contraseña">
+          <!-- Botón de testing sólo si estamos en localhost/desarrollo -->
+          <div id="recup-login-dev-card" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; padding: 12px; margin-bottom: 16px; text-align: left; font-size: 0.82rem; color: #92400e;">
+            <div style="display: flex; align-items: flex-start; gap: 8px;">
+              <i class="bx bx-info-circle" style="font-size: 1.2rem; color: #d97706; flex-shrink: 0; margin-top: 1px;"></i>
+              <div>
+                <strong>Modo de pruebas local:</strong> Como tu servidor local no cuenta con servidor SMTP de correo configurado, puedes acceder a la página de restablecimiento directamente:
+                <div style="margin-top: 8px;">
+                  <a id="recup-login-dev-link" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; background: #2563eb; color: #ffffff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.8rem;">
+                    <i class="bx bx-link-external"></i> Abrir Enlace de Recuperación
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
 
-          <button type="button" id="btn-login-recup-2" onclick="ejecutarGuardarClaveLogin()" class="btn-primary" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-            <i class="bx bx-save"></i> Guardar Nueva Contraseña
+          <button type="button" onclick="cerrarModalRecuperacionLogin()" class="btn-primary" style="width: 100%;">
+            Entendido
           </button>
+
+          <div style="margin-top: 14px;">
+            <a href="javascript:void(0)" onclick="volverAPaso1RecupLogin()" style="font-size: 0.83rem; color: #2563eb; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <i class="bx bx-arrow-back"></i> Verificar otra cuenta
+            </a>
+          </div>
         </div>
 
         <!-- PASO 3 -->
@@ -180,146 +194,7 @@
     </div>
   </div>
 
-  <script src="<?= base_url('js/main.js?v=' . time())?>"></script>
-  <script>
-    function abrirModalRecuperacionLogin() {
-      const m = document.getElementById('modal-recuperacion-login');
-      if (m) {
-        m.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        document.getElementById('recup-login-paso-1').style.display = 'block';
-        document.getElementById('recup-login-paso-2').style.display = 'none';
-        document.getElementById('recup-login-paso-3').style.display = 'none';
-        const a1 = document.getElementById('recup-login-alerta-1');
-        if (a1) a1.style.display = 'none';
-      }
-    }
-
-    function cerrarModalRecuperacionLogin() {
-      const m = document.getElementById('modal-recuperacion-login');
-      if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
-    }
-
-    function ejecutarVerificarCuentaLogin() {
-      const iden = document.getElementById('recup_login_identificador').value.trim();
-      const errBox = document.getElementById('recup-login-alerta-1');
-      const btn = document.getElementById('btn-login-recup-1');
-
-      if (!iden) {
-        errBox.textContent = 'Por favor ingresa tu usuario o correo.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      errBox.style.display = 'none';
-      btn.textContent = 'Verificando...';
-      btn.disabled = true;
-
-      const formData = new FormData();
-      formData.append('identificador', iden);
-
-      fetch('<?= base_url('login/verificar-recuperacion') ?>', {
-        method: 'POST',
-        body: formData
-      })
-      .then(r => r.json())
-      .then(data => {
-        btn.textContent = 'Verificar Cuenta';
-        btn.disabled = false;
-        if (data.exito) {
-          document.getElementById('recup_login_uid').value = data.usuario_id;
-          if (data.token) document.getElementById('recup_login_token').value = data.token;
-          document.getElementById('recup-login-user-info').innerHTML = '<i class="bx bxs-user-check"></i> ' + data.nombre;
-          if (document.getElementById('recup-login-msg-envio')) {
-            document.getElementById('recup-login-msg-envio').innerHTML = 'Enviamos un enlace seguro a <strong>' + data.correo_ofuscado + '</strong> para restablecer tu acceso.';
-          }
-          document.getElementById('recup-login-paso-1').style.display = 'none';
-          document.getElementById('recup-login-paso-2').style.display = 'block';
-        } else {
-          errBox.textContent = data.mensaje || 'Cuenta no encontrada.';
-          errBox.style.display = 'block';
-        }
-      })
-      .catch(err => {
-        btn.textContent = 'Verificar Cuenta';
-        btn.disabled = false;
-        errBox.textContent = 'Error al verificar la cuenta.';
-        errBox.style.display = 'block';
-      });
-    }
-
-    function actualizarFeedbackPdfLogin(input) {
-      const feedback = document.getElementById('recup-login-pdf-feedback');
-      const nombreSpan = document.getElementById('recup-login-pdf-nombre');
-      const tamanoSpan = document.getElementById('recup-login-pdf-tamano');
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        if (nombreSpan) nombreSpan.textContent = file.name;
-        if (tamanoSpan) {
-          const kb = (file.size / 1024).toFixed(1);
-          tamanoSpan.textContent = (kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB');
-        }
-        if (feedback) feedback.style.display = 'flex';
-      }
-    }
-
-    function ejecutarGuardarClaveLogin() {
-      const uid = document.getElementById('recup_login_uid').value;
-      const token = document.getElementById('recup_login_token') ? document.getElementById('recup_login_token').value : '';
-      const clave = document.getElementById('recup_login_clave').value;
-      const rep = document.getElementById('recup_login_rep').value;
-      const errBox = document.getElementById('recup-login-alerta-2');
-      const btn = document.getElementById('btn-login-recup-2');
-
-      if (!clave || clave.length < 8) {
-        errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      if (clave !== rep) {
-        errBox.textContent = 'Las contraseñas no coinciden.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      errBox.style.display = 'none';
-      btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
-      btn.disabled = true;
-
-      const formData = new FormData();
-      formData.append('usuario_id', uid);
-      if (token) formData.append('token', token);
-      formData.append('nueva_contrasena', clave);
-      formData.append('repetir_contrasena', rep);
-
-      fetch('<?= base_url('login/restablecer-contrasena') ?>', {
-        method: 'POST',
-        body: formData
-      })
-      .then(r => r.json())
-      .then(data => {
-        btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-        btn.disabled = false;
-        if (data.exito) {
-          document.getElementById('recup-login-paso-2').style.display = 'none';
-          document.getElementById('recup-login-paso-3').style.display = 'block';
-        } else {
-          errBox.textContent = data.mensaje || 'Error al actualizar contraseña.';
-          errBox.style.display = 'block';
-        }
-      })
-      .catch(err => {
-        btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-        btn.disabled = false;
-        errBox.textContent = 'Error en el servidor al actualizar contraseña.';
-        errBox.style.display = 'block';
-      });
-    }
-
-    window.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') cerrarModalRecuperacionLogin();
-    });
-  </script>
+  <script src="<?= asset_url('js/main.js') ?>"></script>
+  <script src="<?= asset_url('js/auth.js') ?>"></script>
 </body>
 </html>

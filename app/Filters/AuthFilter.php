@@ -11,10 +11,10 @@ class AuthFilter implements FilterInterface
     {
         $session = session();
 
-        // 1. Verificación estricta de sesión en el servidor
+        // sistema de guardia de sesion antidayanas (expulsa peticiones no autenticadas)
         if (!$session->get('isLoggedIn') || !$session->get('usuario_id')) {
             // Si es una petición API/Fetch, retornamos JSON 401 en vez de redirigir
-            if ($request->isAJAX() || str_starts_with($request->getUri()->getPath(), 'api/')) {
+            if ($request->isAJAX() || str_contains($request->getUri()->getPath(), 'api/')) {
                 return response()->setStatusCode(401)->setJSON([
                     'success' => false,
                     'error'   => 'No autorizado. Debes iniciar sesión.'
@@ -40,7 +40,7 @@ class AuthFilter implements FilterInterface
         if (isset($usuario['estado_cuenta']) && $usuario['estado_cuenta'] === 'baneado') {
             $session->destroy();
             $motivo = !empty($usuario['motivo_baneo']) ? ": {$usuario['motivo_baneo']}" : '.';
-            if ($request->isAJAX() || str_starts_with($request->getUri()->getPath(), 'api/')) {
+            if ($request->isAJAX() || str_contains($request->getUri()->getPath(), 'api/')) {
                 return response()->setStatusCode(403)->setJSON([
                     'success' => false,
                     'error'   => "Tu cuenta ha sido suspendida/baneada{$motivo}"

@@ -9,8 +9,29 @@ class Home extends BaseController
 {
     public function index()
     {
-        $usuarioId = (int) session()->get('usuario_id');
-        $userRol   = session()->get('rol') ?? 'estudiante';
+        $usuarioId          = (int) session()->get('usuario_id');
+        $userRol            = session()->get('rol') ?? 'estudiante';
+        $estadoVerificacion = session()->get('estado_verificacion') ?? 'no_aplica';
+
+        $db = \Config\Database::connect();
+        if ($usuarioId > 0) {
+            $uRow = $db->table('usuarios')
+                ->select('rol, estado_verificacion')
+                ->where('id', $usuarioId)
+                ->get()
+                ->getRowArray();
+            if ($uRow) {
+                $userRol            = $uRow['rol'] ?? $userRol;
+                $estadoVerificacion = $uRow['estado_verificacion'] ?? $estadoVerificacion;
+                session()->set([
+                    'rol'                 => $userRol,
+                    'estado_verificacion' => $estadoVerificacion,
+                ]);
+            }
+        }
+
+        $esAdminSistema     = in_array($userRol, ['administrador', 'admin'], true);
+        $esProfesorAprobado = ($userRol === 'profesor' && $estadoVerificacion === 'aprobado');
 
         // 1. Detección de día de la semana y fecha en español
         date_default_timezone_set('America/Caracas');
@@ -33,12 +54,11 @@ class Home extends BaseController
         $diaSemana = $diasMap[$diaNumero] ?? 'Lunes';
         $fechaTexto = $diaSemana . ', ' . date('j') . ' de ' . ($mesesMap[(int)date('n')] ?? date('F')) . ' de ' . date('Y');
 
-        $db = \Config\Database::connect();
         $horaActual = date('H:i:s');
 
         // 2. Consulta de Clases del Día (Jornada Diaria)
         $clasesHoy = [];
-        if ($userRol === 'profesor') {
+        if ($esProfesorAprobado) {
             $sqlClases = "SELECT cp.*, m.nombre as materia_nombre, m.codigo_materia, s.codigo_seccion
                           FROM clases_programadas cp
                           JOIN secciones s ON s.id = cp.seccion_id
@@ -47,7 +67,7 @@ class Home extends BaseController
                             AND s.profesor_id = ?
                           ORDER BY cp.hora_inicio ASC";
             $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId])->getResultArray();
-        } else {
+        } elseif ($userRol !== 'profesor') {
             $sqlClases = "SELECT cp.*, m.nombre as materia_nombre, m.codigo_materia, s.codigo_seccion
                           FROM clases_programadas cp
                           JOIN secciones s ON s.id = cp.seccion_id
@@ -117,13 +137,16 @@ class Home extends BaseController
         unset($noticia);
 
         $datos = [
-            'diaSemana'        => $diaSemana,
-            'fechaTexto'       => $fechaTexto,
-            'clasesHoy'        => $clasesHoy,
-            'aportesRecientes' => $aportesRecientes,
-            'noticias'         => $noticias,
-            'userRol'          => $userRol,
-            'usuarioId'        => $usuarioId
+            'diaSemana'          => $diaSemana,
+            'fechaTexto'         => $fechaTexto,
+            'clasesHoy'          => $clasesHoy,
+            'aportesRecientes'   => $aportesRecientes,
+            'noticias'           => $noticias,
+            'userRol'            => $userRol,
+            'estadoVerificacion' => $estadoVerificacion,
+            'esProfesorAprobado' => $esProfesorAprobado,
+            'esAdminSistema'     => $esAdminSistema,
+            'usuarioId'          => $usuarioId
         ];
 
         return view('Dashboard/feed', $datos);

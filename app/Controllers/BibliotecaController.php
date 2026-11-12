@@ -3,42 +3,60 @@
 namespace App\Controllers;
 
 use App\Models\AporteBibliotecaModel;
+use App\Services\BibliotecaService;
 
 class BibliotecaController extends BaseController
 {
     /**
-     * Muestra la lista de aportes y materiales de la biblioteca estudiantil
+     * Muestra la lista paginada de aportes y materiales de la biblioteca estudiantil
      */
     public function index()
     {
-        $aporteModel = new AporteBibliotecaModel();
+        $bibliotecaService = new BibliotecaService();
 
-        // Filtros opcionales por GET
         $categoriaSeleccionada = $this->request->getGet('categoria');
-        $busqueda = $this->request->getGet('q');
+        $carreraSeleccionada   = $this->request->getGet('carrera');
+        $busqueda              = $this->request->getGet('q');
+        $pagina                = max(1, (int) $this->request->getGet('page'));
 
         if ($categoriaSeleccionada === 'todas' || empty($categoriaSeleccionada)) {
             $categoriaSeleccionada = null;
         }
 
-        // Obtener aportes con los datos del usuario que lo subió
-        $aportes = $aporteModel->obtenerTodosConUsuario($categoriaSeleccionada, $busqueda);
+        if ($carreraSeleccionada === 'todas' || empty($carreraSeleccionada)) {
+            $carreraSeleccionada = null;
+        }
 
-        // Conteos para los botones/tabs de categorías
-        $conteos = [
-            'todos'      => (new AporteBibliotecaModel())->countAllResults(),
-            'guias'      => (new AporteBibliotecaModel())->where('categoria', 'guias')->countAllResults(),
-            'ejercicios' => (new AporteBibliotecaModel())->where('categoria', 'ejercicios')->countAllResults(),
-            'resumenes'  => (new AporteBibliotecaModel())->where('categoria', 'resumenes')->countAllResults(),
-            'otros'      => (new AporteBibliotecaModel())->where('categoria', 'otros')->countAllResults(),
+        $resultado = $bibliotecaService->obtenerAportesPaginados(
+            $categoriaSeleccionada,
+            $busqueda,
+            $carreraSeleccionada,
+            $pagina,
+            18
+        );
+        $contadores = $bibliotecaService->obtenerContadores($carreraSeleccionada);
+
+        $carrerasDefinidas = [
+            'todas'   => ['nombre' => 'Todas las Carreras', 'icono' => 'bx-grid-alt', 'color' => '#2563eb'],
+            'ING-INF' => ['nombre' => 'Informática', 'escuela' => 'Ingeniería en Informática', 'icono' => 'bx-code-alt', 'color' => '#2563eb'],
+            'ING-MAR' => ['nombre' => 'Marítima', 'escuela' => 'Ingeniería Marítima', 'icono' => 'bx-anchor', 'color' => '#0284c7'],
+            'ING-AMB' => ['nombre' => 'Ambiental', 'escuela' => 'Ingeniería Ambiental', 'icono' => 'bx-leaf', 'color' => '#10b981'],
+            'ADM'     => ['nombre' => 'Administración', 'escuela' => 'Licenciatura en Administración', 'icono' => 'bx-briefcase-alt-2', 'color' => '#f59e0b'],
+            'TUR'     => ['nombre' => 'Turismo', 'escuela' => 'Licenciatura en Turismo', 'icono' => 'bx-compass', 'color' => '#ec4899'],
+            'GENERAL' => ['nombre' => 'Materias Generales', 'escuela' => 'Materias Básicas y Generales', 'icono' => 'bx-book-open', 'color' => '#8b5cf6'],
         ];
 
         $datos = [
-            'aportes'              => $aportes,
-            'categoriaActual'      => $categoriaSeleccionada ?? 'todas',
-            'busquedaActual'       => $busqueda ?? '',
-            'conteos'              => $conteos,
-            'totalAportes'         => count($aportes)
+            'aportes'           => $resultado['aportes'],
+            'paginaActual'      => $resultado['paginaActual'],
+            'totalPaginas'      => $resultado['totalPaginas'],
+            'totalAportes'      => $resultado['total'],
+            'categoriaActual'   => $categoriaSeleccionada ?? 'todas',
+            'carreraActual'     => $carreraSeleccionada ?? 'todas',
+            'carrerasDefinidas' => $carrerasDefinidas,
+            'conteosCarreras'   => $contadores['conteosCarreras'],
+            'busquedaActual'    => $busqueda ?? '',
+            'conteos'           => $contadores['conteos'],
         ];
 
         return view('Biblioteca/feedInicio', $datos);
@@ -49,7 +67,21 @@ class BibliotecaController extends BaseController
      */
     public function formularioSubir()
     {
-        return view('Biblioteca/subirAporte');
+        $carrerasDefinidas = [
+            'GENERAL' => 'Materias Generales (Todas las Carreras)',
+            'ING-INF' => 'Ingeniería en Informática',
+            'ING-MAR' => 'Ingeniería Marítima',
+            'ING-AMB' => 'Ingeniería Ambiental',
+            'ADM'     => 'Licenciatura en Administración',
+            'TUR'     => 'Licenciatura en Turismo',
+        ];
+
+        $carreraUsuario = session('carrera') ?: 'GENERAL';
+
+        return view('Biblioteca/subirAporte', [
+            'carrerasDefinidas' => $carrerasDefinidas,
+            'carreraUsuario'    => $carreraUsuario,
+        ]);
     }
 
     /**
@@ -60,7 +92,8 @@ class BibliotecaController extends BaseController
         $reglas = [
             'aporte' => [
                 'label' => 'Archivo de Aporte',
-                'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt,pptx]',
+                // si el estudiante intenta hacer trampa subiendo un ejecutable .exe o .bat se friega
+            'rules' => 'uploaded[aporte]|max_size[aporte,5120]|ext_in[aporte,pdf,doc,docx,ppt,pptx]',
                 'errors' => [
                     'uploaded' => 'Debes seleccionar una guía, resumen o ejercicio para subir.',
                     'max_size' => 'El archivo supera el límite permitido de 5MB.',
@@ -86,9 +119,10 @@ class BibliotecaController extends BaseController
             $nombreOriginal = $archivo->getClientName();
             $extension      = $archivo->getClientExtension();
             $tamanoBytes    = $archivo->getSize();
+            // sistema de renombrado aleatorio antidayanas (evita sobreescritura y ejecucion de scripts php)
             $nuevoNombre    = $archivo->getRandomName();
 
-            // 1. Capturamos y sanitizamos la categoría del formulario
+            // sistema de lista blanca de categorias antidayanas (evita path traversal o inyeccion de rutas)
             $categoria = (string) $this->request->getPost('categoria');
             $carpetasPermitidas = ['guias', 'ejercicios', 'resumenes'];
             if (!in_array($categoria, $carpetasPermitidas, true)) {
@@ -104,6 +138,13 @@ class BibliotecaController extends BaseController
             // 3. Movemos el archivo a la subcarpeta seleccionada
             $archivo->move($rutaDestino, $nuevoNombre);
 
+            // sanitizacion y asignacion de carrera antidayanas (evita carreras inexistentes)
+            $carreraInput = (string) $this->request->getPost('carrera');
+            $carrerasValidas = ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR', 'GENERAL'];
+            if (!in_array($carreraInput, $carrerasValidas, true)) {
+                $carreraInput = session('carrera') ?: 'GENERAL';
+            }
+
             // 4. Persistencia en Base de Datos para gestión, trazabilidad y control de administración
             $tituloInput = strip_tags(trim((string) $this->request->getPost('titulo')));
             $tituloFinal = !empty($tituloInput) ? $tituloInput : pathinfo($nombreOriginal, PATHINFO_FILENAME);
@@ -115,6 +156,7 @@ class BibliotecaController extends BaseController
                     'usuario_id'      => session('usuario_id') ? (int) session('usuario_id') : null,
                     'titulo'          => $tituloFinal,
                     'categoria'       => $categoria,
+                    'carrera'         => $carreraInput,
                     'nombre_original' => $nombreOriginal,
                     'nombre_guardado' => $nuevoNombre,
                     'ruta_archivo'    => 'uploads/biblioteca/' . $categoria . '/' . $nuevoNombre,
@@ -152,6 +194,7 @@ class BibliotecaController extends BaseController
     /**
      * Descarga segura de archivos desde el almacenamiento protegido WRITEPATH
      */
+    // sistema de descarga segura fuera de la raiz web antidayanas (almacenamiento en WRITEPATH protegido)
     public function descargar(int $id)
     {
         $aporteModel = new AporteBibliotecaModel();
@@ -167,42 +210,9 @@ class BibliotecaController extends BaseController
             return redirect()->to(base_url('biblioteca'))->with('error', 'El archivo físico no se encuentra disponible en el servidor.');
         }
 
-        // Descarga segura de CodeIgniter 4 manteniendo el nombre original del archivo
+        // por si algun estudiante comico inventa meter comillas o saltos de linea en el archivo
+        $nombreLimpio = preg_replace('/[\r\n\t"]+/', '_', basename($aporte['nombre_original'] ?? 'documento.pdf'));
         return $this->response->download($rutaAbsoluta, null)
-                              ->setFileName($aporte['nombre_original']);
-    }
-
-    /**
-     * Visualizador nativo en línea (stream inline sin forzar descarga externa)
-     */
-    public function ver(int $id)
-    {
-        $aporteModel = new AporteBibliotecaModel();
-        $aporte = $aporteModel->find($id);
-
-        if (!$aporte) {
-            return $this->response->setStatusCode(404)->setBody('Archivo no encontrado');
-        }
-
-        $rutaAbsoluta = WRITEPATH . $aporte['ruta_archivo'];
-
-        if (!file_exists($rutaAbsoluta)) {
-            return $this->response->setStatusCode(404)->setBody('El archivo físico no se encuentra en el servidor');
-        }
-
-        // Detección de tipo MIME segura y compatible con XAMPP (sin depender de fileinfo)
-        $mime = null;
-        if (function_exists('mime_content_type')) {
-            $mime = @mime_content_type($rutaAbsoluta);
-        }
-        if (empty($mime)) {
-            $ext = strtolower(pathinfo($aporte['nombre_original'] ?? $aporte['ruta_archivo'], PATHINFO_EXTENSION));
-            $mime = \Config\Mimes::guessTypeFromExtension($ext) ?: 'application/pdf';
-        }
-
-        return $this->response
-            ->setHeader('Content-Type', $mime)
-            ->setHeader('Content-Disposition', 'inline; filename="' . addslashes($aporte['nombre_original']) . '"')
-            ->setBody(file_get_contents($rutaAbsoluta));
+                              ->setFileName($nombreLimpio);
     }
 }

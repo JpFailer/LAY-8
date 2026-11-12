@@ -1,0 +1,566 @@
+﻿/* cositas visuales del panel docente */
+
+.docente-dashboard-contenedor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.docente-search-container {
+    position: relative;
+    min-width: 260px;
+    flex: 1;
+    max-width: 360px;
+}
+
+.docente-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 1.15rem;
+    pointer-events: none;
+}
+
+.docente-search-container .docente-search-input {
+    padding-left: 38px;
+    padding-right: 34px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    border-radius: 20px;
+    font-size: 0.86rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-clear-search-docente {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #e2e8f0;
+    color: #475569;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+}
+
+.btn-clear-search-docente:hover {
+    background: #cbd5e1;
+    color: #0f172a;
+}
+
+body.dark-mode .btn-clear-search-docente {
+    background: #334155;
+    color: #cbd5e1;
+}
+
+body.dark-mode .btn-clear-search-docente:hover {
+    background: #475569;
+    color: #ffffff;
+}
+
+.panel-vacio-docente {
+    background: #ffffff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 35px 20px;
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+body.dark-mode .panel-vacio-docente {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.badge-conteo-docente {
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 0.78rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+body.dark-mode .badge-conteo-docente {
+    background: #1e293b;
+    color: #60a5fa;
+}
+
+.tarjeta-entrega-alumno {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .tarjeta-entrega-alumno {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.calificacion-box-inline {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+body.dark-mode .calificacion-box-inline {
+    border-top-color: #334155;
+}
+
+.chip-estado-sugerido {
+    padding: 4px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #334155;
+    transition: all 0.15s ease;
+}
+
+.chip-estado-sugerido:hover {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+body.dark-mode .chip-estado-sugerido {
+    background: #1e293b;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+body.dark-mode .chip-estado-sugerido:hover {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+
+/* ============================================================================ */
+/* FILTROS DE CARRERA Y PAGINACIÃ“N DE SECCIONES (PANEL DOCENTE)                 */
+/* ============================================================================ */
+.docente-filtros-carrera-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.docente-filtros-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    margin-right: 4px;
+}
+
+.btn-carrera-docente {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-carrera-docente:hover {
+    border-color: #1e3a8a;
+    color: #1e3a8a;
+    background: #eff6ff;
+}
+
+.btn-carrera-docente.activo {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #ffffff;
+}
+
+.docente-paginacion-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 18px;
+}
+
+.docente-paginacion-bar.bottom {
+    margin-top: 22px;
+    margin-bottom: 0;
+}
+
+.docente-pag-info {
+    font-size: 0.84rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.docente-paginacion-controles {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.docente-select-tamano {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-pag-docente {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.btn-pag-docente:hover:not(:disabled) {
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    color: #ffffff;
+}
+
+.btn-pag-docente:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.docente-pag-indicador {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    padding: 0 6px;
+}
+
+body.dark-mode .docente-filtros-label,
+body.dark-mode .docente-pag-info {
+    color: #94a3b8;
+}
+
+body.dark-mode .btn-carrera-docente,
+body.dark-mode .docente-select-tamano,
+body.dark-mode .btn-pag-docente {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .btn-carrera-docente:hover,
+body.dark-mode .btn-pag-docente:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+body.dark-mode .btn-carrera-docente.activo {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+body.dark-mode .docente-paginacion-bar {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode .docente-pag-indicador {
+    color: #e2e8f0;
+}
+
+/* =========================================================================
+   TARJETAS, EVALUACIONES Y MODALES DOCENTES (EXTRACCION INLINE STYLES)
+   ========================================================================= */
+.docente-card-flex {
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.docente-badge-conteo-azul {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.docente-prof-muted {
+    color: #64748b;
+}
+
+.docente-estado-mt {
+    margin-top: 10px;
+}
+
+.docente-estado-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.docente-estado-mod {
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.docente-estado-txt {
+    font-size: 0.88rem;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.docente-enlace-wrap {
+    margin-top: 6px;
+}
+
+.docente-enlace-sala {
+    color: #2563eb;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.docente-card-acciones {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.docente-btn-accion {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+}
+
+.docente-sin-res-ico {
+    font-size: 2.5rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.docente-sin-res-tit {
+    margin: 0 0 6px 0;
+}
+
+.docente-sin-res-txt {
+    color: #64748b;
+    margin: 0 0 16px 0;
+    font-size: 0.88rem;
+}
+
+.docente-label-tamano {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.docente-tabla-mt {
+    margin-top: 10px;
+}
+
+.docente-tabla-sub {
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.docente-tabla-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.docente-badge-tipo-cap {
+    text-transform: capitalize;
+}
+
+.docente-td-fecha {
+    font-size: 0.84rem;
+}
+
+.docente-badge-entregas {
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.docente-badge-entregas-pend {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.docente-badge-entregas-ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.docente-btn-calificar {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.docente-btn-empty-cta {
+    display: inline-flex;
+    margin-top: 10px;
+}
+
+.docente-modal-ancho-sm {
+    max-width: 520px;
+}
+
+.docente-modal-ancho-md {
+    max-width: 560px;
+}
+
+.docente-modal-form-pad {
+    padding: 20px;
+}
+
+.docente-modal-banner {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+}
+
+.docente-modal-banner-tit {
+    display: block;
+    color: #1e40af;
+    font-size: 0.95rem;
+}
+
+.docente-modal-banner-sub {
+    font-size: 0.78rem;
+    color: #3b82f6;
+}
+
+.docente-modalidad-row {
+    display: flex;
+    gap: 10px;
+}
+
+.docente-modalidad-opt {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.docente-chips-rapidos {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+
+.docente-modal-entregas-caja {
+    max-width: 820px;
+    width: 100%;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.docente-modal-entregas-head {
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.docente-modal-entregas-head h3,
+.docente-modal-entregas-head .btn-cerrar-modal-aula {
+    margin: 0;
+    color: #ffffff;
+}
+
+.docente-modal-entregas-body {
+    padding: 16px 22px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.docente-entregas-status {
+    text-align: center;
+    padding: 30px;
+    color: #64748b;
+}
+
+.docente-entregas-status i {
+    font-size: 2rem;
+}
+
+.docente-entregas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+body.dark-mode .docente-modalidad-opt {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .docente-badge-conteo-azul {
+    background: rgba(37, 99, 235, 0.2);
+    color: #93c5fd;
+}
+
+body.dark-mode .docente-enlace-sala {
+    color: #93c5fd;
+}

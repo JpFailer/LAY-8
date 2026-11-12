@@ -16,6 +16,7 @@ class AporteBibliotecaModel extends Model
         'usuario_id',
         'titulo',
         'categoria',
+        'carrera',
         'nombre_original',
         'nombre_guardado',
         'ruta_archivo',
@@ -25,19 +26,27 @@ class AporteBibliotecaModel extends Model
     ];
 
     /**
-     * Obtiene los aportes con información del usuario que los subió
-     *
-     * @param string|null $categoria
-     * @return array
+     * Construye el query builder de aportes con joins y filtros aplicados.
      */
-    public function obtenerTodosConUsuario(?string $categoria = null, ?string $busqueda = null)
+    public function construirBuilderFiltrado(?string $categoria = null, ?string $busqueda = null, ?string $carrera = null)
     {
-        $builder = $this->select('aportes_biblioteca.*, usuarios.nombre_usuario, usuarios.nombre_usuario as autor_usuario, usuarios.primer_nombre, usuarios.apellidos, usuarios.correo')
+        $builder = $this->select('aportes_biblioteca.*, usuarios.nombre_usuario, usuarios.nombre_usuario as autor_usuario, usuarios.primer_nombre, usuarios.apellidos, usuarios.correo, usuarios.carrera as autor_carrera')
                         ->join('usuarios', 'usuarios.id = aportes_biblioteca.usuario_id', 'left')
                         ->orderBy('aportes_biblioteca.fecha_subida', 'DESC');
 
         if ($categoria && in_array($categoria, ['guias', 'ejercicios', 'resumenes', 'otros'], true)) {
             $builder->where('aportes_biblioteca.categoria', $categoria);
+        }
+
+        if ($carrera && $carrera !== 'todas') {
+            $builder->groupStart()
+                    ->where('aportes_biblioteca.carrera', $carrera)
+                    ->orWhere('aportes_biblioteca.carrera', 'GENERAL')
+                    ->orGroupStart()
+                        ->where('aportes_biblioteca.carrera', null)
+                        ->where('usuarios.carrera', $carrera)
+                    ->groupEnd()
+                    ->groupEnd();
         }
 
         if ($busqueda !== null && trim($busqueda) !== '') {
@@ -51,7 +60,20 @@ class AporteBibliotecaModel extends Model
                     ->groupEnd();
         }
 
-        return $builder->findAll();
+        return $builder;
+    }
+
+    /**
+     * Obtiene los aportes con información del usuario que los subió y filtros por carrera y categoría
+     *
+     * @param string|null $categoria
+     * @param string|null $busqueda
+     * @param string|null $carrera
+     * @return array
+     */
+    public function obtenerTodosConUsuario(?string $categoria = null, ?string $busqueda = null, ?string $carrera = null)
+    {
+        return $this->construirBuilderFiltrado($categoria, $busqueda, $carrera)->findAll();
     }
 
     /**

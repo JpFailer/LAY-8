@@ -102,8 +102,8 @@ class Registro extends BaseController
 
         $cedulaIngresada = preg_replace('/\D/', '', (string)$this->request->getPost('cedula'));
 
-        // Cédulas oficiales exclusivas del equipo creador/administrador (LAY-8)
-        $cedulasAdmins = ['31131073', '32370840', '30702138', '30369782'];
+        // Cédulas de administración inicial configuradas fuera del código fuente (.env)
+        $cedulasAdmins = obtener_cedulas_admins_iniciales();
         $esAdmin = in_array($cedulaIngresada, $cedulasAdmins, true);
 
         $datos = [

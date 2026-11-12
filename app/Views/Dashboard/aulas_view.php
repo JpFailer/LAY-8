@@ -1,9 +1,13 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= asset_url('css/aulas.css') ?>">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="biblioteca-dashboard-contenedor aulas-contenedor">
 
-    <!-- Encabezado del Módulo de Aulas -->
+    <!-- header aulas -->
     <div class="biblio-header-flex">
         <div>
             <h2 style="display: flex; align-items: center; gap: 8px; margin: 0;">
@@ -11,12 +15,11 @@
             </h2>
         </div>
         <div class="aulas-header-acciones">
-            <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
-                <i class="bx bx-calendar-plus"></i>  Armar / Cargar Horario
-            </button>
-            <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="abrirModalNuevaActividad()">
-                <i class="bx bx-task"></i>  Nueva Tarea
-            </button>
+            <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
+                <button type="button" class="btn-subir-cta" onclick="abrirModalExtemporanea()" title="Agregar materia extemporánea a tu registro">
+                    <i class="bx bx-plus-circle"></i> Agregar Materia Extemporánea
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -51,18 +54,43 @@
             <i class="bx bx-check-square"></i> Cronograma de Actividades
             <span class="badge-conteo" id="conteo-actividades"><?= count($actividades) ?></span>
         </button>
-
-        <button type="button" class="btn-filtro" id="tabbtn-cargar" onclick="cambiarTabAulas('cargar')">
-            <i class="bx bx-calendar-plus"></i> Armar / Cargar Horario
-        </button>
     </nav>
 
-    <!-- ========================================================================= -->
     <!-- PESTAÑA 1: MIS MATERIAS / AULAS VIRTUALES (Grid tipo Classroom)           -->
-    <!-- ========================================================================= -->
     <div id="tab-seccion-materias" class="tab-contenido-aulas">
         <?php if (!empty($secciones) && count($secciones) > 0): ?>
-            <div class="grid-aportes grid-aulas-classroom">
+            <!-- Barra de Búsqueda y Filtros de Materias (Antidayanas & Case/Accent-Insensitive) -->
+            <div class="aulas-search-toolbar">
+                <div class="aulas-search-input-wrapper">
+                    <i class="bx bx-search icono-search-aulas"></i>
+                    <input type="text" 
+                           id="buscador-materias-aulas" 
+                           class="input-search-aulas" 
+                           placeholder="Buscar materia por nombre (ej: Cálculo, Física), código (LOG-103), sección, aula o profesor..." 
+                           autocomplete="off"
+                           oninput="filtrarGridMaterias(this.value)">
+                    <button type="button" id="btn-limpiar-search-materias" class="btn-clear-search-aulas" style="display: none;" onclick="limpiarBuscadorMaterias()" title="Limpiar búsqueda">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="aulas-search-meta">
+                    <span id="conteo-materias-badge" class="badge-aulas-conteo">
+                        <i class="bx bx-book-open"></i> Mostrando <b id="conteo-materias-num"><?= count($secciones) ?></b> de <?= count($secciones) ?> materias
+                    </span>
+                </div>
+            </div>
+
+            <!-- Estado vacío cuando la búsqueda no arroja resultados -->
+            <div id="sin-resultados-busqueda-materias" class="panel-vacio-aulas panel-vacio-busqueda" style="display: none;">
+                <div class="icono-vacio"><i class="bx bx-search-alt"></i></div>
+                <h3>No se encontraron materias</h3>
+                <p id="texto-sin-resultados">No hay materias que coincidan con la búsqueda. Puedes probar buscando sin acentos o por el código oficial.</p>
+                <button type="button" class="btn-subir-cta" onclick="limpiarBuscadorMaterias()">
+                    <i class="bx bx-refresh"></i> Ver todas las materias
+                </button>
+            </div>
+
+            <div class="grid-aportes grid-aulas-classroom" id="grid-materias-aulas">
                 <?php foreach ($secciones as $sec): ?>
                     <?php
                         $estadoHoy = $sec['estado_hoy'];
@@ -85,6 +113,11 @@
                             <div class="aula-header-info">
                                 <span class="badge-codigo-materia"><?= esc($sec['codigo_materia']) ?></span>
                                 <span class="badge-seccion-materia">Secc. <?= esc($sec['codigo_seccion']) ?></span>
+                                <?php if (!empty($sec['carrera'])): ?>
+                                    <span class="badge-carrera-biblioteca badge-carrera-<?= strtolower(esc($sec['carrera'])) ?>" style="font-size: 0.68rem; padding: 2px 6px;">
+                                        <?= esc($sec['carrera']) ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if (!empty($sec['semestre_trayecto'])): ?>
                                     <span class="badge-semestre">Semestre <?= esc($sec['semestre_trayecto']) ?></span>
                                 <?php endif; ?>
@@ -159,9 +192,11 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
-                                <i class="bx bx-plus"></i> Tarea
-                            </button>
+                            <div class="aulas-footer-acciones">
+                                <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
+                                    <i class="bx bx-plus"></i> Tarea
+                                </button>
+                            </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -169,22 +204,22 @@
         <?php else: ?>
             <div class="panel-vacio-aulas">
                 <div class="icono-vacio"><i class="bx bx-calendar-x"></i></div>
-                <h3>No tienes materias cargadas aún</h3>
-                <p>Para activar tu Classroom y ver las aulas en el mapa, escanea tu <b>Registro de Inscripción UMC (PDF)</b> o arma tu horario seleccionando las materias inscritas.</p>
-                <button type="button" class="btn-subir-cta" onclick="cambiarTabAulas('cargar')">
-                    <i class="bx bx-cloud-upload"></i> Cargar Registro de Inscripción o Armar Horario
-                </button>
+                <h3>No tienes materias inscritas aún</h3>
+                <p>Tus asignaturas y horarios se cargan automáticamente desde tu Registro de Inscripción oficial. Si cursas asignaturas adicionales o extemporáneas, puedes agregarlas desde aquí.</p>
+                <?php if (!in_array(session('rol'), ['profesor'], true)): ?>
+                    <button type="button" class="btn-subir-cta" onclick="abrirModalExtemporanea()">
+                        <i class="bx bx-plus-circle"></i> Agregar Materia Extemporánea
+                    </button>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>
 
-    <!-- ========================================================================= -->
     <!-- PESTAÑA 2: MI HORARIO SEMANAL (Grilla oficial UMC)                         -->
-    <!-- ========================================================================= -->
     <div id="tab-seccion-horario" class="tab-contenido-aulas" style="display: none;">
         <div class="horario-toolbar">
             <div class="toolbar-info">
-                <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                <h3 class="aulas-toolbar-titulo">
                     <i class="bx bx-calendar-event"></i> Horario Académico Personal
                 </h3>
             </div>
@@ -193,10 +228,10 @@
                     <i class="bx bx-printer"></i> Imprimir Horario
                 </button>
                 <button type="button" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario()" title="Restaurar horario oficial asignado por la universidad">
-                    <i class="bx bx-refresh" style="color: #2563eb;"></i> Restaurar Horario Oficial
+                    <i class="bx bx-refresh aulas-ico-refresh"></i> Restaurar Horario Oficial
                 </button>
                 <button type="button" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario()" title="Borrar todos los bloques de mi horario para empezar de nuevo">
-                    <i class="bx bx-trash" style="color: #ef4444;"></i> Limpiar Mi Horario
+                    <i class="bx bx-trash aulas-ico-trash"></i> Limpiar Mi Horario
                 </button>
             </div>
         </div>
@@ -205,7 +240,7 @@
             <table class="tabla-horario-umc">
                 <thead>
                     <tr>
-                        <th style="width: 130px;">Bloque / Turno</th>
+                        <th class="aulas-col-bloque">Bloque / Turno</th>
                         <?php foreach ($diasSemana as $dia): ?>
                             <th><?= esc($dia) ?></th>
                         <?php endforeach; ?>
@@ -262,13 +297,11 @@
         </div>
     </div>
 
-    <!-- ========================================================================= -->
     <!-- PESTAÑA 3: CRONOGRAMA DE ACTIVIDADES (Classroom Tareas y Pendientes)       -->
-    <!-- ========================================================================= -->
     <div id="tab-seccion-actividades" class="tab-contenido-aulas" style="display: none;">
         <div class="actividades-toolbar">
             <div class="toolbar-info">
-                <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                <h3 class="aulas-toolbar-titulo">
                     <i class="bx bx-list-check"></i> Cronograma de Actividades y Tareas
                 </h3>
             </div>
@@ -283,7 +316,9 @@
             <div class="lista-actividades-classroom" id="lista-actividades-contenedor">
                 <?php foreach ($actividades as $act): ?>
                     <?php
-                        $esCompletada = (bool)$act['completada'];
+                        $tieneEntrega = !empty($act['entrega_id']);
+                        $tieneCalificacion = isset($act['calificacion']) && $act['calificacion'] !== '' && $act['calificacion'] !== null;
+                        $esCompletada = ((bool)$act['completada'] || $tieneEntrega || $tieneCalificacion);
                         $tipoLabels = [
                             'tarea'    => ['nombre' => 'Tarea', 'icono' => 'bx-task', 'color' => '#3b82f6'],
                             'parcial'  => ['nombre' => 'Parcial / Examen', 'icono' => 'bx-award', 'color' => '#ef4444'],
@@ -321,35 +356,40 @@
                             <?php endif; ?>
 
                             <!-- Estado de Entrega & Calificación Estudiante (Classroom) -->
-                            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                <?php if (!empty($act['entrega_id'])): ?>
-                                    <span style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                            <div class="aulas-actividad-estado-row">
+                                <?php if ($tieneEntrega || $tieneCalificacion): ?>
+                                    <span class="aulas-badge-entregada">
                                         <i class="bx bx-check-double"></i> Entregada <?= !empty($act['fecha_entrega_alumno']) ? date('d/m H:i', strtotime($act['fecha_entrega_alumno'])) : '' ?>
                                     </span>
                                     <?php if (!empty($act['entrega_archivo'])): ?>
-                                        <a href="<?= base_url('aulas/descargar-mi-entrega/' . $act['id']) ?>" style="font-size: 0.78rem; color: #2563eb; text-decoration: underline; display: inline-flex; align-items: center; gap: 3px;">
+                                        <a href="<?= base_url('aulas/descargar-mi-entrega/' . $act['id']) ?>" class="aulas-link-entrega">
                                             <i class="bx bx-paperclip"></i> <?= esc($act['entrega_archivo']) ?>
                                         </a>
                                     <?php endif; ?>
-                                    <?php if ($act['calificacion'] !== null): ?>
-                                        <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                            <i class="bx bxs-award" style="color: #f59e0b;"></i> Calificación: <?= (float)$act['calificacion'] ?> pts
+                                    <?php if ($tieneCalificacion): ?>
+                                        <span class="aulas-badge-calificacion">
+                                            <i class="bx bxs-award aulas-ico-award"></i> Calificación: <?= rtrim(rtrim(number_format((float)$act['calificacion'], 2, '.', ''), '0'), '.') ?> pts
+                                        </span>
+                                        <span class="aulas-badge-evaluada">
+                                            <i class="bx bx-lock-alt"></i> Evaluada
                                         </span>
                                         <?php if (!empty($act['feedback_profesor'])): ?>
-                                            <span style="font-size: 0.78rem; color: #475569; font-style: italic;">
+                                            <span class="aulas-feedback-docente">
                                                 Docente: "<?= esc($act['feedback_profesor']) ?>"
                                             </span>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span style="background: #fef3c7; color: #92400e; font-size: 0.78rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
+                                        <span class="aulas-badge-pendiente">
                                             Pendiente por calificar
                                         </span>
                                     <?php endif; ?>
                                 <?php endif; ?>
 
-                                <button type="button" class="btn-subir-cta" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
-                                    <i class="bx bx-upload"></i> <?= !empty($act['entrega_id']) ? 'Modificar Entrega' : 'Entregar Tarea' ?>
-                                </button>
+                                <?php if (!$tieneCalificacion): ?>
+                                    <button type="button" class="btn-subir-cta aulas-btn-entregar" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
+                                        <i class="bx bx-upload"></i> <?= $tieneEntrega ? 'Modificar Entrega' : 'Entregar Tarea' ?>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="fecha-columna">
@@ -362,7 +402,7 @@
                         </div>
                         <div class="acciones-columna">
                             <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array(session('rol'), ['admin', 'administrador', 'profesor'], true)): ?>
-                                <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return confirm('¿Deseas eliminar esta actividad del cronograma?')">
+                                <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return Lay8UI.confirmSubmit(event, '¿Deseas eliminar esta actividad del cronograma?', { title: 'Eliminar actividad', confirmText: 'Eliminar', danger: true })">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
                                         <i class="bx bx-trash"></i>
@@ -385,148 +425,6 @@
         <?php endif; ?>
     </div>
 
-    <!-- ========================================================================= -->
-    <!-- PESTAÑA 4: CARGAR / ARMAR HORARIO                                         -->
-    <!-- ========================================================================= -->
-    <div id="tab-seccion-cargar" class="tab-contenido-aulas" style="display: none;">
-        <div class="grid-cargar-horario">
-            <!-- Opción A: Escaneo de Comprobante Oficial UMC (PDF) -->
-            <div class="card-formulario-aulas">
-                <div class="card-form-header">
-                    <div class="icono-header-card"><i class="bx bxs-file-pdf"></i></div>
-                    <div>
-                        <h3>Opción 1: Carga Inteligente de Documento UMC</h3>
-                        <p>Escaneo automatizado de tu <b>Registro de Inscripción (UPE-002)</b> o <b>Horario Académico (CGD-001)</b>.</p>
-                    </div>
-                </div>
-
-                <form action="<?= base_url('aulas/subir-documento') ?>" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8">
-                    <?= csrf_field() ?>
-                    <div class="caja-subida-dropzone">
-                        <i class="bx bx-cloud-upload icono-dropzone"></i>
-                        <label for="documento_pdf" class="label-archivo-custom">
-                            <span id="texto-nombre-archivo">Selecciona tu archivo PDF oficial</span>
-                            <input type="file" id="documento_pdf" name="documento_pdf" accept="application/pdf" required onchange="mostrarNombreArchivo(this)">
-                        </label>
-                        <span class="ayuda-dropzone">Formatos válidos: Solo PDF original emitido por la UMC (Máx 5MB)</span>
-                    </div>
-
-                    <button type="submit" class="btn-cta-submit">
-                        <i class="bx bx-scan"></i> Escanear y Vincular Materias
-                    </button>
-                </form>
-            </div>
-
-            <!-- Opción B: Armar Horario Manual Asistido por Plantilla -->
-            <div class="card-formulario-aulas">
-                <div class="card-form-header">
-                    <div class="icono-header-card"><i class="bx bx-calendar-edit"></i></div>
-                    <div>
-                        <h3>Opción 2: Armar Horario Manual (Por Plantilla)</h3>
-                        <p>Programa tus clases en la grilla oficial <b>siempre y cuando la materia esté en tu registro</b>.</p>
-                    </div>
-                </div>
-
-                <?php if (!empty($secciones) && count($secciones) > 0): ?>
-                    <form action="<?= base_url('aulas/guardar-bloque-manual') ?>" method="post" id="formArmarHorarioManual" class="formulario-estilo-lay8">
-                        <?= csrf_field() ?>
-
-                        <!-- Materia (Filtrada a las inscritas por el estudiante) -->
-                        <div class="campo-grupo">
-                            <label for="seccion_id"><i class="bx bx-book-open"></i> Materia Inscrita:</label>
-                            <select name="seccion_id" id="seccion_id" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona una de tus materias --</option>
-                                <?php foreach ($secciones as $sec): ?>
-                                    <option value="<?= (int)$sec['id'] ?>">
-                                        [<?= esc($sec['codigo_materia']) ?>] <?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <!-- Día de la Semana -->
-                        <div class="campo-grupo">
-                            <label for="dia_semana"><i class="bx bx-calendar"></i> Día de la Semana:</label>
-                            <select name="dia_semana" id="dia_semana" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona el día --</option>
-                                <?php foreach ($diasSemana as $dia): ?>
-                                    <option value="<?= esc($dia) ?>"><?= esc($dia) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <!-- Bloques Oficiales UMC (Multi-selección continua) -->
-                        <div class="campo-grupo">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <label style="margin: 0;"><i class="bx bx-time"></i> Bloques Horarios UMC (Selección Múltiple):</label>
-                                <span class="subtexto-bloques-info">Puedes marcar 2 o más bloques continuos</span>
-                            </div>
-
-                            <!-- Filtros rápidos por Turno -->
-                            <div class="selector-turnos-bloques">
-                                <button type="button" class="btn-turno-filtro activo" data-filtro-turno="todos" onclick="filtrarTurnosBloques('todos')">Todos</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Mañana" onclick="filtrarTurnosBloques('Mañana')">☀️ Mañana</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Tarde" onclick="filtrarTurnosBloques('Tarde')">⛅ Tarde</button>
-                                <button type="button" class="btn-turno-filtro" data-filtro-turno="Noche" onclick="filtrarTurnosBloques('Noche')">🌙 Noche</button>
-                            </div>
-
-                            <!-- Cuadrícula interactiva de bloques horarios -->
-                            <div class="grid-bloques-selector" id="gridBloquesSelector">
-                                <?php $bIdx = 0; ?>
-                                <?php foreach ($bloquesOficiales as $turno => $bloques): ?>
-                                    <?php foreach ($bloques as $b): ?>
-                                        <?php $bIdx++; ?>
-                                        <label class="card-bloque-check" data-turno="<?= esc($turno) ?>">
-                                            <input type="checkbox" name="bloques_horas[]" value="<?= $b['inicio'] ?>|<?= $b['fin'] ?>" class="chk-bloque-hora" onchange="actualizarResumenBloques()">
-                                            <span class="bloque-hora-badge">B<?= $bIdx ?></span>
-                                            <span class="bloque-hora-tiempo"><?= esc($b['etiqueta']) ?></span>
-                                            <span class="bloque-hora-turno"><?= esc($turno) ?></span>
-                                        </label>
-                                    <?php endforeach; ?>
-                                <?php endforeach; ?>
-                            </div>
-
-                            <!-- Barra de Resumen dinámico -->
-                            <div class="barra-resumen-bloques" id="resumenBloquesBarra" style="display: none;">
-                                <div class="info-bloques-seleccionados">
-                                    <i class="bx bx-check-circle" style="color: #16a34a; font-size: 1.25rem;"></i>
-                                    <div>
-                                        <strong id="lblTotalBloques">0 bloques</strong> seleccionados
-                                        <span class="rango-horas-calculado" id="lblRangoHoras"></span>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-limpiar-seleccion-bloques" onclick="deseleccionarTodosBloques()">
-                                    <i class="bx bx-x"></i> Desmarcar
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Aula Física del Campus -->
-                        <div class="campo-grupo">
-                            <label for="aula"><i class="bx bx-map-pin"></i> Aula o Laboratorio:</label>
-                            <select name="aula" id="aula" required class="select-lay8">
-                                <option value="" disabled selected>-- Selecciona el aula --</option>
-                                <?php foreach ($todasAulas as $a): ?>
-                                    <option value="<?= esc($a['alias_pdf']) ?>"><?= esc($a['alias_pdf']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn-cta-submit" id="btnSubmitArmarHorario">
-                            <i class="bx bx-plus-circle"></i> Agregar Bloques al Horario
-                        </button>
-                    </form>
-                <?php else: ?>
-                    <div class="alerta-registro-requerido">
-                        <i class="bx bx-lock-alt" style="font-size: 2rem; color: #f59e0b; display: block; margin-bottom: 10px;"></i>
-                        <h4>Materias pendientes de validación</h4>
-                        <p>Para garantizar que tu horario sea legítimo, primero debes escanear tu <b>Registro de Inscripción oficial</b> con el botón de la izquierda. Luego podrás armar y calibrar tus horas en este panel.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <!-- Modal para Crear Nueva Actividad o Tarea -->
@@ -536,7 +434,7 @@
             <h3><i class="bx bx-task"></i> Nueva Actividad / Evaluación</h3>
             <span onclick="cerrarModalNuevaActividad()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8 aulas-modal-form-pad">
             <?= csrf_field() ?>
             <div class="campo-grupo">
                 <label for="act_seccion_id"><i class="bx bx-book-open"></i> Materia:</label>
@@ -590,21 +488,21 @@
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
 <div id="modalEntregarTarea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEntregarTarea()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 500px;">
+    <div class="modal-contenido-aula modal-actividad-ancho aulas-modal-sm">
         <div class="modal-aula-header">
             <h3><i class="bx bx-upload"></i> Entregar Asignación</h3>
             <span onclick="cerrarModalEntregarTarea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formEntregarTareaAlumno" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formEntregarTareaAlumno" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8 aulas-modal-form-pad">
             <?= csrf_field() ?>
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-                <strong id="entregar_modal_titulo" style="display: block; color: #1e40af; font-size: 0.96rem;"></strong>
-                <span id="entregar_modal_materia" style="font-size: 0.8rem; color: #3b82f6;"></span>
+            <div class="aulas-entrega-resumen-box">
+                <strong id="entregar_modal_titulo" class="aulas-entrega-resumen-titulo"></strong>
+                <span id="entregar_modal_materia" class="aulas-entrega-resumen-materia"></span>
             </div>
 
             <div class="campo-grupo">
                 <label for="input_archivo_tarea"><i class="bx bx-file"></i> Archivo de la Tarea (PDF, Word, ZIP, JPG):</label>
-                <input type="file" name="archivo_tarea" id="input_archivo_tarea" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg" class="input-lay8" style="padding: 8px;">
+                <input type="file" name="archivo_tarea" id="input_archivo_tarea" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg" class="input-lay8 aulas-input-file-pad">
             </div>
 
             <div class="campo-grupo">
@@ -619,386 +517,51 @@
     </div>
 </div>
 
-<script>
-    const BASE_URL = '<?= base_url() ?>';
+<!-- Modal: Inscripción de Materia Extemporánea (Formal, sin emojis) -->
+<div id="modalInscripcionExtemporanea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalExtemporanea()">
+    <div class="modal-contenido-aula modal-actividad-ancho aulas-modal-lg">
+        <div class="modal-aula-header">
+            <h3><i class="bx bx-plus-circle"></i> Inscripción de Asignatura Extemporánea</h3>
+            <span onclick="cerrarModalExtemporanea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
+        </div>
+        <p class="aulas-modal-subdesc">
+            Permite agregar asignaturas autorizadas por la coordinación docente o inscripciones extemporáneas fuera del registro oficial UPE-002.
+        </p>
 
-    // 1. Cambio de Pestañas y Persistencia en URL (para que no te saque de la página)
-    let bloquesModificados = false;
+        <!-- Filtros y buscador del modal -->
+        <div class="aulas-ext-filtros-row">
+            <div class="aulas-ext-buscador-col">
+                <input type="text" id="buscador-modal-extemporanea" class="input-lay8" placeholder="Buscar por asignatura o código (ej: Programación, CAL604)..." oninput="buscarMateriasExtemporaneas(this.value)">
+            </div>
+            <select id="filtro-carrera-extemporanea" class="input-lay8 aulas-ext-carrera-select" onchange="buscarMateriasExtemporaneas(document.getElementById('buscador-modal-extemporanea').value)">
+                <option value="">Todas las carreras</option>
+                <option value="ING-INF" <?= ($usuarioCarrera === 'ING-INF') ? 'selected' : '' ?>>Informática</option>
+                <option value="ING-MAR" <?= ($usuarioCarrera === 'ING-MAR') ? 'selected' : '' ?>>Marítima</option>
+                <option value="ING-AMB" <?= ($usuarioCarrera === 'ING-AMB') ? 'selected' : '' ?>>Ambiental</option>
+                <option value="ADM" <?= ($usuarioCarrera === 'ADM') ? 'selected' : '' ?>>Administración</option>
+                <option value="TUR" <?= ($usuarioCarrera === 'TUR') ? 'selected' : '' ?>>Turismo</option>
+            </select>
+        </div>
 
-    function cambiarTabAulas(tabId) {
-        if (tabId === 'horario' && bloquesModificados) {
-            window.location.href = BASE_URL + 'aulas?tab=horario';
-            return;
-        }
+        <!-- Contenedor de resultados -->
+        <div id="lista-resultados-extemporanea" class="aulas-ext-lista-box">
+            <div class="aulas-ext-empty-hint">
+                <i class="bx bx-search-alt"></i>
+                Ingresa el nombre o código de la asignatura para buscar secciones disponibles.
+            </div>
+        </div>
 
-        document.querySelectorAll('.tab-contenido-aulas').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.filtros-categorias .btn-filtro').forEach(b => b.classList.remove('activo'));
+        <div class="aulas-modal-footer-end">
+            <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="cerrarModalExtemporanea()">
+                Cerrar
+            </button>
+        </div>
+    </div>
+</div>
 
-        const seccionTarget = document.getElementById('tab-seccion-' + tabId);
-        const btnTarget     = document.getElementById('tabbtn-' + tabId);
-
-        if (seccionTarget) seccionTarget.style.display = 'block';
-        if (btnTarget) btnTarget.classList.add('activo');
-
-        // Persistir la pestaña en los parámetros de la URL sin recargar la página
-        try {
-            const url = new URL(window.location);
-            url.searchParams.set('tab', tabId);
-            window.history.replaceState({}, '', url);
-        } catch (e) {}
-    }
-
-    // Inicializar pestaña activa según la URL al cargar
-    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabSolicitada = urlParams.get('tab');
-        if (tabSolicitada && document.getElementById('tab-seccion-' + tabSolicitada)) {
-            cambiarTabAulas(tabSolicitada);
-        }
-    });
-
-    // Filtro rápido de turnos en el selector de bloques
-    function filtrarTurnosBloques(turno) {
-        document.querySelectorAll('.selector-turnos-bloques .btn-turno-filtro').forEach(b => {
-            b.classList.toggle('activo', b.getAttribute('data-filtro-turno') === turno);
-        });
-
-        document.querySelectorAll('#gridBloquesSelector .card-bloque-check').forEach(card => {
-            if (turno === 'todos' || card.getAttribute('data-turno') === turno) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    }
-
-    // Resumen dinámico de bloques seleccionados
-    function actualizarResumenBloques() {
-        const checked = Array.from(document.querySelectorAll('.chk-bloque-hora:checked'));
-        const barra = document.getElementById('resumenBloquesBarra');
-        const lblTotal = document.getElementById('lblTotalBloques');
-        const lblRango = document.getElementById('lblRangoHoras');
-
-        // Actualizar clase visual en cards
-        document.querySelectorAll('.card-bloque-check').forEach(c => {
-            const chk = c.querySelector('input[type="checkbox"]');
-            c.classList.toggle('seleccionado', chk && chk.checked);
-        });
-
-        if (checked.length === 0) {
-            if (barra) barra.style.display = 'none';
-            return;
-        }
-
-        if (barra) barra.style.display = 'flex';
-        if (lblTotal) lblTotal.textContent = checked.length + (checked.length === 1 ? ' bloque' : ' bloques');
-
-        // Ordenar horas seleccionadas
-        const horas = checked.map(c => {
-            const parts = c.value.split('|');
-            return { inicio: parts[0], fin: parts[1] };
-        }).sort((a, b) => a.inicio.localeCompare(b.inicio));
-
-        const minInicio = horas[0].inicio.substring(0, 5);
-        const maxFin    = horas[horas.length - 1].fin.substring(0, 5);
-
-        // Estimar minutos académicos (45m por bloque)
-        const totalMins = checked.length * 45;
-        const horasTotales = Math.floor(totalMins / 60);
-        const minsRestantes = totalMins % 60;
-        let duracionTxt = '';
-        if (horasTotales > 0) duracionTxt += horasTotales + 'h ';
-        if (minsRestantes > 0) duracionTxt += minsRestantes + 'm';
-
-        if (lblRango) {
-            lblRango.textContent = `(${minInicio} a ${maxFin} • ${duracionTxt.trim()})`;
-        }
-    }
-
-    function deseleccionarTodosBloques() {
-        document.querySelectorAll('.chk-bloque-hora').forEach(c => c.checked = false);
-        actualizarResumenBloques();
-    }
-
-    // Enviar bloques manualmente por AJAX para que el proceso sea continuo
-    const formArmar = document.getElementById('formArmarHorarioManual');
-    if (formArmar) {
-        formArmar.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const checked = this.querySelectorAll('.chk-bloque-hora:checked');
-            if (checked.length === 0) {
-                mostrarToastAulas('Por favor selecciona al menos un bloque de hora oficial.', 'error');
-                return;
-            }
-
-            const btnSubmit = document.getElementById('btnSubmitArmarHorario');
-            const origHtml = btnSubmit.innerHTML;
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando horario...';
-
-            try {
-                const formData = new FormData(this);
-                const resp = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                const res = await resp.json();
-                if (res.success) {
-                    mostrarToastAulas(res.mensaje || '¡Bloques agregados con éxito!', 'exito');
-                    deseleccionarTodosBloques();
-                    bloquesModificados = true;
-                    const badge = document.querySelector('#tabbtn-horario .badge-conteo');
-                    if (badge && res.insertados) {
-                        badge.textContent = parseInt(badge.textContent || '0') + res.insertados;
-                    }
-                } else {
-                    mostrarToastAulas(res.error || 'Ocurrió un error al guardar.', 'error');
-                }
-            } catch (err) {
-                mostrarToastAulas('Error de red al guardar los bloques.', 'error');
-            } finally {
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = origHtml;
-            }
-        });
-    }
-
-    // Eliminar bloque de horario individual (AJAX)
-    async function eliminarBloqueHorario(id, btnElem) {
-        if (!confirm('¿Deseas eliminar este bloque de clase de tu horario?')) return;
-
-        const card = btnElem ? btnElem.closest('.bloque-clase-card') : document.getElementById('bloque-card-' + id);
-        if (card) card.style.opacity = '0.35';
-
-        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-        if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
-
-        try {
-            const resp = await fetch(BASE_URL + 'aulas/eliminar-bloque/' + id, {
-                method: 'POST',
-                headers: headers
-            });
-            const data = await resp.json();
-            if (data.success) {
-                if (card) {
-                    card.style.transition = 'all 0.25s ease';
-                    card.style.transform = 'scale(0.8)';
-                    card.style.opacity = '0';
-                    setTimeout(() => card.remove(), 250);
-                }
-                const badge = document.querySelector('#tabbtn-horario .badge-conteo');
-                if (badge) {
-                    const act = parseInt(badge.textContent || '0');
-                    if (act > 0) badge.textContent = act - 1;
-                }
-                mostrarToastAulas('Bloque eliminado correctamente.', 'exito');
-            } else {
-                if (card) card.style.opacity = '1';
-                mostrarToastAulas(data.error || 'No se pudo eliminar el bloque.', 'error');
-            }
-        } catch (e) {
-            if (card) card.style.opacity = '1';
-            mostrarToastAulas('Error de conexión al eliminar el bloque.', 'error');
-        }
-    }
-
-    // Limpiar por completo el horario del estudiante (AJAX)
-    async function confirmarLimpiarHorario() {
-        if (!confirm('¿Estás seguro de que deseas limpiar tu horario?\n\nSe eliminarán los bloques asignados para que puedas armar tus materias y horas desde cero sin clases conflictivas.')) {
-            return;
-        }
-
-        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-        if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
-
-        try {
-            const resp = await fetch(BASE_URL + 'aulas/limpiar-horario', {
-                method: 'POST',
-                headers: headers
-            });
-            const data = await resp.json();
-            if (data.success) {
-                mostrarToastAulas(data.mensaje || '¡Horario limpiado exitosamente!', 'exito');
-                setTimeout(() => {
-                    window.location.href = BASE_URL + 'aulas?tab=horario';
-                }, 800);
-            } else {
-                mostrarToastAulas(data.error || 'No se pudo limpiar el horario.', 'error');
-            }
-        } catch (e) {
-            window.location.href = BASE_URL + 'aulas?tab=horario';
-        }
-    }
-
-    // Notificaciones flotantes tipo Toast
-    function mostrarToastAulas(mensaje, tipo = 'exito') {
-        const toast = document.createElement('div');
-        toast.className = `toast-notif-aulas ${tipo}`;
-        toast.innerHTML = `<i class="bx ${tipo === 'exito' ? 'bx-check-circle' : 'bx-error-circle'}" style="font-size: 1.3rem;"></i> <span>${mensaje}</span>`;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.style.transition = 'all 0.3s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
-    }
-
-    // 2. Filtro de Actividades (Todas / Pendientes / Completadas)
-    function filtrarActividades(filtro) {
-        document.querySelectorAll('.filtros-actividades-chips .chip-actividad').forEach(c => c.classList.remove('activo'));
-        event.target.classList.add('activo');
-
-        document.querySelectorAll('.item-actividad-card').forEach(item => {
-            const estado = item.getAttribute('data-estado');
-            if (filtro === 'todas') {
-                item.style.display = 'flex';
-            } else if (filtro === 'pendientes' && estado === 'pendiente') {
-                item.style.display = 'flex';
-            } else if (filtro === 'completadas' && estado === 'completada') {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
-
-    // 3. Toggle de Estado de Actividad (AJAX)
-    function toggleActividadCheckbox(actividadId, checkboxElem) {
-        const headers = {
-            'X-Requested-With': 'XMLHttpRequest'
-        };
-        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-        if (csrfInput) {
-            headers['<?= csrf_header() ?>'] = csrfInput.value;
-        }
-
-        fetch(BASE_URL + 'aulas/toggle-actividad/' + actividadId, {
-            method: 'POST',
-            headers: headers
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                const card = checkboxElem.closest('.item-actividad-card');
-                if (checkboxElem.checked) {
-                    card.classList.add('actividad-completada');
-                    card.setAttribute('data-estado', 'completada');
-                } else {
-                    card.classList.remove('actividad-completada');
-                    card.setAttribute('data-estado', 'pendiente');
-                }
-            } else {
-                checkboxElem.checked = !checkboxElem.checked;
-                alert('No se pudo actualizar el estado de la tarea.');
-            }
-        })
-        .catch(err => {
-            checkboxElem.checked = !checkboxElem.checked;
-            console.error('Error al actualizar tarea:', err);
-        });
-    }
-
-    // 4. Modales de Tarea
-    function abrirModalNuevaActividad(seccionId = null, nombreMateria = null) {
-        const modal = document.getElementById('modalNuevaActividad');
-        if (seccionId) {
-            const selectSec = document.getElementById('act_seccion_id');
-            if (selectSec) selectSec.value = seccionId;
-        }
-        modal.style.display = 'flex';
-    }
-
-    function cerrarModalNuevaActividad() {
-        document.getElementById('modalNuevaActividad').style.display = 'none';
-    }
-
-    // 5. Nombre de archivo dinámico
-    function mostrarNombreArchivo(input) {
-        const label = document.getElementById('texto-nombre-archivo');
-        if (input.files && input.files[0]) {
-            label.innerText = 'Archivo seleccionado: ' + input.files[0].name;
-            label.style.fontWeight = 'bold';
-            label.style.color = '#1e3a8a';
-        }
-    }
-
-    // Restaurar Horario Oficial
-    async function confirmarRestaurarHorario() {
-        if (!confirm('¿Deseas restaurar todos los bloques oficiales asignados por la universidad?')) return;
-        try {
-            const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-            const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-            if (csrfInput) headers['<?= csrf_header() ?>'] = csrfInput.value;
-
-            const resp = await fetch(BASE_URL + 'aulas/restaurar-horario', {
-                method: 'POST',
-                headers: headers
-            });
-            const res = await resp.json();
-            if (res.success) {
-                mostrarToastAulas(res.mensaje, 'exito');
-                setTimeout(() => { window.location.href = BASE_URL + 'aulas?tab=horario'; }, 800);
-            } else {
-                mostrarToastAulas(res.error || 'No se pudo restaurar.', 'error');
-            }
-        } catch(e) {
-            window.location.href = BASE_URL + 'aulas?tab=horario';
-        }
-    }
-
-    // Modal Entregar Tarea Alumno
-    let actividadEntregaSeleccionada = null;
-    function abrirModalEntregarTarea(actividadId, titulo, materia) {
-        actividadEntregaSeleccionada = actividadId;
-        document.getElementById('entregar_modal_titulo').textContent = titulo;
-        document.getElementById('entregar_modal_materia').textContent = materia;
-        const form = document.getElementById('formEntregarTareaAlumno');
-        form.action = BASE_URL + 'aulas/entregar-tarea/' + actividadId;
-        document.getElementById('modalEntregarTarea').style.display = 'flex';
-    }
-
-    function cerrarModalEntregarTarea() {
-        document.getElementById('modalEntregarTarea').style.display = 'none';
-    }
-
-    const formEntrega = document.getElementById('formEntregarTareaAlumno');
-    if (formEntrega) {
-        formEntrega.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('btnSubmitEntrega');
-            const origText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Subiendo entrega...';
-
-            try {
-                const formData = new FormData(this);
-                const resp = await fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                const res = await resp.json();
-                if (res.success) {
-                    mostrarToastAulas(res.mensaje || '¡Tarea entregada con éxito!', 'exito');
-                    cerrarModalEntregarTarea();
-                    setTimeout(() => { window.location.reload(); }, 900);
-                } else {
-                    mostrarToastAulas(res.error || 'Error al subir la entrega.', 'error');
-                }
-            } catch(err) {
-                mostrarToastAulas('Error de conexión al enviar la tarea.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = origText;
-            }
-        });
-    }
-
-</script>
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/aulas.js') ?>"></script>
+<?= $this->endSection() ?>
 
 
 

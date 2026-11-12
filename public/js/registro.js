@@ -208,4 +208,16 @@ window.addEventListener('keydown', function(e) {
 // Inicializar al cargar el DOM
 document.addEventListener('DOMContentLoaded', function() {
     inicializarFeedbackArchivos();
+    if (document.body?.dataset?.irPaso2 === '1') {
+        const p1 = document.getElementById('paso1');
+        const p2 = document.getElementById('paso2');
+        const ind1 = document.getElementById('indicator-1');
+        const ind2 = document.getElementById('indicator-2');
+        if (p1 && p2 && ind1 && ind2) {
+            p1.style.display = 'none';
+            p2.style.display = 'block';
+            ind1.classList.remove('activo');
+            ind2.classList.add('activo');
+        }
+    }
 });

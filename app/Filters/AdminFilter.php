@@ -11,9 +11,9 @@ class AdminFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $session = session();
-        $isApi = ($request->isAJAX() || str_starts_with($request->getUri()->getPath(), 'api/'));
+        $isApi = ($request->isAJAX() || str_contains($request->getUri()->getPath(), 'api/'));
 
-        // 1. Debe estar logueado
+        // sistema de verificacion de privilegios de administrador antidayanas
         if (!$session->get('isLoggedIn') || !$session->get('usuario_id')) {
             if ($isApi) {
                 return response()->setStatusCode(401)->setJSON([

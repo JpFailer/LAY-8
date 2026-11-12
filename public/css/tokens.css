@@ -1,0 +1,40 @@
+/* ============================================================================ */
+/* DESIGN TOKENS: VARIABLES DE TEMA (CLARO / OSCURO) LAY-8                      */
+/* ============================================================================ */
+:root {
+    --lay8-bg-page: #f0f4f8;
+    --lay8-bg-surface: #ffffff;
+    --lay8-bg-subtle: #f8fafc;
+    --lay8-bg-hover: #f1f5f9;
+    --lay8-text-primary: #0f172a;
+    --lay8-text-secondary: #334155;
+    --lay8-text-muted: #64748b;
+    --lay8-border-subtle: #e2e8f0;
+    --lay8-border-strong: #cbd5e1;
+    --lay8-primary: #1e3a8a;
+    --lay8-primary-accent: #2563eb;
+    --lay8-primary-hover: #1d4ed8;
+    --lay8-success: #059669;
+    --lay8-danger: #dc2626;
+    --lay8-warning: #d97706;
+    --lay8-shadow-modal: 0 20px 45px -12px rgba(15, 23, 42, 0.28);
+    --lay8-shadow-toast: 0 12px 28px -6px rgba(15, 23, 42, 0.22);
+}
+
+html.dark-mode,
+body.dark-mode {
+    --lay8-bg-page: #0b1120;
+    --lay8-bg-surface: #1e293b;
+    --lay8-bg-subtle: #0f172a;
+    --lay8-bg-hover: #334155;
+    --lay8-text-primary: #f8fafc;
+    --lay8-text-secondary: #e2e8f0;
+    --lay8-text-muted: #94a3b8;
+    --lay8-border-subtle: #334155;
+    --lay8-border-strong: #475569;
+    --lay8-primary: #2563eb;
+    --lay8-primary-accent: #3b82f6;
+    --lay8-primary-hover: #1d4ed8;
+    --lay8-shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.65);
+    --lay8-shadow-toast: 0 14px 30px -6px rgba(0, 0, 0, 0.55);
+}

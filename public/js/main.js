@@ -438,7 +438,14 @@ function inicializarModoOscuro() {
     const switches = document.querySelectorAll('.toggle-dark-mode-input');
     switches.forEach(sw => {
         sw.addEventListener('change', function() {
-            aplicarTema(this.checked ? 'dark' : 'light');
+            const nuevoTema = this.checked ? 'dark' : 'light';
+            // Persistir preferencia antidayanas en LocalStorage y Cookie servidor
+            localStorage.setItem('lay8_theme', nuevoTema);
+            document.cookie = "lay8_theme=" + nuevoTema + "; path=/; max-age=31536000; SameSite=Lax";
+
+            // Recarga atómica para aplicar el tema sin desfases visuales ni renderizado asíncrono
+            // Como sugirió Abraham, al recargar la página el servidor y el head inyectan el tema en 0ms
+            window.location.reload();
         });
     });
 }

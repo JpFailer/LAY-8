@@ -26,19 +26,14 @@ $routes->get('/logout', 'Login::salir');
 $routes->get('upload', 'AuthController::index'); 
 $routes->post('upload', 'AuthController::procesarConstancia'); 
 
-// Biblioteca estudiantil
+// Biblioteca estudiantil (consulta pública; subida autenticada)
 $routes->get('biblioteca', 'BibliotecaController::index');
-$routes->get('biblioteca/subir', 'BibliotecaController::formularioSubir');
-$routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
 $routes->get('biblioteca/descargar/(:num)', 'BibliotecaController::descargar/$1');
-$routes->get('biblioteca/ver/(:num)', 'BibliotecaController::ver/$1');
 
 // Mapa interactivo y Aulas
 $routes->get('mapa', 'MapaController::mostrar_mapa');
 $routes->get('mapa/info_aula/(:segment)', 'MapaController::info_aula/$1');
 $routes->get('mapa/estado_en_vivo', 'MapaController::estado_aulas_en_vivo');
-$routes->get('aula', 'AulasController::importar_json');
-$routes->get('htest', 'MapaController::python_horarios');
 
 // --- Rutas Protegidas (Solo usuarios logueados) ---
 $routes->group('', ['filter' => 'auth'], static function ($routes) {
@@ -46,6 +41,10 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     // Panel interno / Dashboard
     $routes->get('/dashboard', 'Home::index'); 
     
+    // Biblioteca (subida autenticada)
+    $routes->get('biblioteca/subir', 'BibliotecaController::formularioSubir');
+    $routes->post('biblioteca/subirAporte', 'BibliotecaController::subirAporte');
+
     // Feed y Tablón de Noticias Comunitario UMC
     $routes->post('/api/feed/publicar', 'FeedController::publicar');
     $routes->post('/api/feed/toggle-like/(:num)', 'FeedController::toggleLike/$1');
@@ -57,8 +56,6 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     
     // Aulas (Vista principal del menú lateral)
     $routes->get('/aulas', 'AulasController::index');
-    $routes->post('/aulas/subir-documento', 'AulasController::subirDocumentoHorario');
-    $routes->post('/aulas/guardar-bloque-manual', 'AulasController::guardarBloqueManual');
     $routes->post('/aulas/eliminar-bloque/(:num)', 'AulasController::eliminarBloqueManual/$1');
     $routes->post('/aulas/limpiar-horario', 'AulasController::limpiarHorarioPersonal');
     $routes->post('/aulas/restaurar-horario', 'AulasController::restaurarHorarioOficial');
@@ -67,6 +64,8 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->post('/aulas/eliminar-actividad/(:num)', 'AulasController::eliminarActividad/$1');
     $routes->post('/aulas/entregar-tarea/(:num)', 'AulasController::entregarTarea/$1');
     $routes->get('/aulas/descargar-mi-entrega/(:num)', 'AulasController::descargarMiEntrega/$1');
+    $routes->get('/api/aulas/buscar-extemporaneas', 'AulasController::buscarExtemporaneas');
+    $routes->post('/api/aulas/inscribir-extemporanea', 'AulasController::inscribirExtemporanea');
     
     //Perfil y usuario
     $routes->get('perfil', 'PerfilController::index');
@@ -79,17 +78,15 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
     $routes->get('/api/notificaciones/conteo', 'NotificacionController::conteoNoLeidas');
     $routes->post('/api/notificaciones/marcar-leida/(:num)', 'NotificacionController::marcarLeida/$1');
     
-    // Vista y Módulo de Profesor / Classroom
-    $routes->get('/docente', 'ProfesorController::index');
-    $routes->post('/docente/actualizar-estado', 'ProfesorController::actualizarEstadoClase');
-    $routes->post('/docente/crear-tarea', 'ProfesorController::crearTareaDocente');
-    $routes->get('/docente/entregas/(:num)', 'ProfesorController::obtenerEntregasAjax/$1');
-    $routes->post('/docente/calificar', 'ProfesorController::calificarEntrega');
-    $routes->get('/docente/descargar-entrega/(:num)', 'ProfesorController::descargarEntrega/$1');
-
-    // Rutas exclusivas para Profesores Aprobados (Filtro Profesor)
+    // Rutas exclusivas para Profesores Aprobados y Administradores (Filtro Profesor)
     $routes->group('', ['filter' => 'profesor'], static function ($routes) {
-        $routes->get('/crear-sala', 'Sala::crear');
+        // Vista y Módulo de Profesor / Classroom
+        $routes->get('/docente', 'ProfesorController::index');
+        $routes->post('/docente/actualizar-estado', 'ProfesorController::actualizarEstadoClase');
+        $routes->post('/docente/crear-tarea', 'ProfesorController::crearTareaDocente');
+        $routes->get('/docente/entregas/(:num)', 'ProfesorController::obtenerEntregasAjax/$1');
+        $routes->post('/docente/calificar', 'ProfesorController::calificarEntrega');
+        $routes->get('/docente/descargar-entrega/(:num)', 'ProfesorController::descargarEntrega/$1');
         
         // Panel de profesor & estados rápidos
         $routes->get('/api/profesor/clases', 'ProfesorController::misClases');
@@ -109,12 +106,16 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->post('/api/admin/horario/actualizar-carrera', 'AdminController::actualizarHorarioPdf');
         $routes->get('/api/admin/metricas', 'AdminController::metricas');
 
-        // Gestión de Profesores (Aprobación, Denegación y Revocación)
+        // Gestión de Profesores (Aprobación, Denegación, Revocación y Asignación de Secciones)
         $routes->get('/api/admin/solicitudes-profesores', 'AdminController::solicitudesProfesores');
         $routes->post('/api/admin/aprobar-profesor/(:num)', 'AdminController::aprobarProfesor/$1');
         $routes->post('/api/admin/denegar-profesor/(:num)', 'AdminController::denegarProfesor/$1');
         $routes->post('/api/admin/rechazar-profesor/(:num)', 'AdminController::denegarProfesor/$1'); // compatibilidad
         $routes->post('/api/admin/revocar-profesor/(:num)', 'AdminController::revocarProfesor/$1');
+        $routes->get('/api/admin/profesor-secciones/(:num)', 'AdminController::obtenerSeccionesDocente/$1');
+        $routes->get('/api/admin/buscar-secciones', 'AdminController::buscarSeccionesParaAsignar');
+        $routes->post('/api/admin/asignar-seccion', 'AdminController::asignarSeccionDocente');
+        $routes->post('/api/admin/desasignar-seccion', 'AdminController::desasignarSeccionDocente');
 
         // Gestión de Usuarios (Listar, Detalle, Banear, Desbanear, Eliminar y Roles)
         $routes->get('/api/admin/usuarios', 'AdminController::listarUsuarios');

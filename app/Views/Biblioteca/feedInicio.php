@@ -34,6 +34,9 @@
             <?php if ($categoriaActual && $categoriaActual !== 'todas'): ?>
                 <input type="hidden" name="categoria" value="<?= esc($categoriaActual) ?>">
             <?php endif; ?>
+            <?php if ($carreraActual && $carreraActual !== 'todas'): ?>
+                <input type="hidden" name="carrera" value="<?= esc($carreraActual) ?>">
+            <?php endif; ?>
             <input type="text" id="buscador-vivo" name="q" value="<?= esc($busquedaActual) ?>" placeholder="Buscar por título, materia o nombre del autor..." autocomplete="off">
             <button type="submit">
                 <i class="bx bx-search"></i> Buscar
@@ -41,33 +44,76 @@
         </form>
     </div>
 
+    <!-- Barra de Filtros por Carrera (Estudiantes y Docentes) -->
+    <div class="filtros-carrera-wrapper" style="margin-bottom: 16px;">
+        <div class="filtros-carrera-label" style="font-size: 0.82rem; font-weight: 700; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+            <i class="bx bx-filter-alt"></i> Filtrar por Carrera:
+        </div>
+        <div class="filtros-carreras-pills">
+            <?php foreach ($carrerasDefinidas as $cod => $info): ?>
+                <?php
+                    $activo = ($carreraActual === $cod);
+                    $urlFiltro = base_url('biblioteca?carrera=' . urlencode($cod));
+                    if ($categoriaActual && $categoriaActual !== 'todas') {
+                        $urlFiltro .= '&categoria=' . urlencode($categoriaActual);
+                    }
+                    if (!empty($busquedaActual)) {
+                        $urlFiltro .= '&q=' . urlencode($busquedaActual);
+                    }
+                    $conteoCar = $conteosCarreras[$cod] ?? 0;
+                ?>
+                <a href="<?= $urlFiltro ?>" class="btn-filtro-carrera <?= $activo ? 'activo' : '' ?>" data-carrera="<?= esc($cod) ?>">
+                    <i class="bx <?= esc($info['icono']) ?>"></i> <?= esc($info['nombre']) ?>
+                    <span class="badge-conteo-carrera"><?= (int)$conteoCar ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+
     <!-- Pestañas de Filtros por Categoría (Chips) -->
+    <?php
+        $baseParams = [];
+        if ($carreraActual && $carreraActual !== 'todas') {
+            $baseParams['carrera'] = $carreraActual;
+        }
+        if (!empty($busquedaActual)) {
+            $baseParams['q'] = $busquedaActual;
+        }
+
+        $generarUrlCat = function($cat = null) use ($baseParams) {
+            $p = $baseParams;
+            if ($cat && $cat !== 'todas') {
+                $p['categoria'] = $cat;
+            }
+            return base_url('biblioteca' . (!empty($p) ? '?' . http_build_query($p) : ''));
+        };
+    ?>
     <nav class="filtros-categorias">
-        <a href="<?= base_url('biblioteca' . (!empty($busquedaActual) ? '?q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('todas') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'todas') ? 'activo' : '' ?>">
             <i class="bx bx-grid-alt"></i> Todos los Aportes
             <span class="badge-conteo"><?= (int) ($conteos['todos'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=guias' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('guias') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'guias') ? 'activo' : '' ?>">
             <i class="bx bx-book-bookmark"></i> Guías
             <span class="badge-conteo"><?= (int) ($conteos['guias'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=ejercicios' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('ejercicios') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'ejercicios') ? 'activo' : '' ?>">
             <i class="bx bx-edit-alt"></i> Ejercicios
             <span class="badge-conteo"><?= (int) ($conteos['ejercicios'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=resumenes' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('resumenes') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'resumenes') ? 'activo' : '' ?>">
             <i class="bx bx-file-blank"></i> Resúmenes
             <span class="badge-conteo"><?= (int) ($conteos['resumenes'] ?? 0) ?></span>
         </a>
 
-        <a href="<?= base_url('biblioteca?categoria=otros' . (!empty($busquedaActual) ? '&q=' . urlencode($busquedaActual) : '')) ?>" 
+        <a href="<?= $generarUrlCat('otros') ?>" 
            class="btn-filtro <?= ($categoriaActual === 'otros') ? 'activo' : '' ?>">
             <i class="bx bx-folder"></i> Otros
             <span class="badge-conteo"><?= (int) ($conteos['otros'] ?? 0) ?></span>
@@ -126,7 +172,17 @@
                                 <i class="<?= $iconoTag ?>"></i>
                             </div>
                             <div class="tarjeta-info-top">
-                                <span class="badge-categoria <?= $catBadgeClass ?>"><?= $catTexto ?></span>
+                                <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px;">
+                                    <span class="badge-categoria <?= $catBadgeClass ?>"><?= $catTexto ?></span>
+                                    <?php 
+                                        $carrCod = $aporte['carrera'] ?? ($aporte['autor_carrera'] ?? 'GENERAL');
+                                        if (empty($carrCod)) $carrCod = 'GENERAL';
+                                        $infoCarrera = $carrerasDefinidas[$carrCod] ?? null;
+                                    ?>
+                                    <span class="badge-carrera-biblioteca badge-carrera-<?= strtolower(esc($carrCod)) ?>">
+                                        <?= esc($infoCarrera['nombre'] ?? $carrCod) ?>
+                                    </span>
+                                </div>
                                 <h3 class="titulo-archivo" title="<?= esc($aporte['titulo']) ?>">
                                     <?= esc($aporte['titulo']) ?>
                                 </h3>
@@ -151,12 +207,7 @@
                     <div class="tarjeta-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                         <span class="peso-badge"><?= strtoupper($ext) ?> • <?= $pesoTexto ?></span>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <?php if (in_array($ext, ['pdf', 'doc', 'docx', 'txt'])): ?>
-                                <button type="button" class="btn-leer-aporte" data-id="<?= $aporte['id'] ?>" data-titulo="<?= esc($aporte['titulo']) ?>" data-ext="<?= esc($ext) ?>" data-url="<?= base_url('biblioteca/ver/' . $aporte['id']) ?>" onclick="abrirLectorAporte(this.dataset.id, this.dataset.titulo, this.dataset.url, this.dataset.ext)">
-                                    <i class="bx bx-book-open"></i> Leer
-                                </button>
-                            <?php endif; ?>
-                            <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="marcarAporteDescargado(<?= $aporte['id'] ?>)">
+                            <a href="<?= base_url('biblioteca/descargar/' . $aporte['id']) ?>" class="btn-descargar btn-descarga-item" data-aporte-id="<?= $aporte['id'] ?>" onclick="return marcarAporteDescargado(event, <?= $aporte['id'] ?>)">
                                 <i class="bx bx-download"></i> <span class="txt-btn-descarga">Descargar</span>
                             </a>
                         </div>
@@ -164,6 +215,32 @@
                 </article>
             <?php endforeach; ?>
         </div>
+
+        <?php if (!empty($totalPaginas) && $totalPaginas > 1): ?>
+            <?php
+                $pagParams = $baseParams;
+                if ($categoriaActual && $categoriaActual !== 'todas') {
+                    $pagParams['categoria'] = $categoriaActual;
+                }
+                $urlPag = static function (int $p) use ($pagParams): string {
+                    $q = array_merge($pagParams, ['page' => $p]);
+                    return base_url('biblioteca?' . http_build_query($q));
+                };
+            ?>
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:22px; padding:12px 16px; border-radius:12px; background:var(--lay8-bg-subtle); border:1px solid var(--lay8-border-subtle);">
+                <span style="font-size:0.85rem; color:var(--lay8-text-muted); font-weight:600;">
+                    Página <?= (int) $paginaActual ?> de <?= (int) $totalPaginas ?> (<?= (int) $totalAportes ?> aportes)
+                </span>
+                <div style="display:flex; gap:8px;">
+                    <?php if ($paginaActual > 1): ?>
+                        <a href="<?= $urlPag($paginaActual - 1) ?>" class="btn-filtro" style="text-decoration:none;"><i class="bx bx-chevron-left"></i> Anterior</a>
+                    <?php endif; ?>
+                    <?php if ($paginaActual < $totalPaginas): ?>
+                        <a href="<?= $urlPag($paginaActual + 1) ?>" class="btn-filtro" style="text-decoration:none;">Siguiente <i class="bx bx-chevron-right"></i></a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php else: ?>
         <div class="estado-vacio">
             <i class="bx bx-folder-open icono-vacio"></i>
@@ -177,142 +254,8 @@
 
 </div>
 
-<script src="<?= base_url('js/mammoth.browser.min.js') ?>"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const inputVivo = document.getElementById('buscador-vivo');
-        const tarjetas = document.querySelectorAll('.tarjeta-aporte');
+<?= $this->endSection() ?>
 
-        if (inputVivo && tarjetas.length > 0) {
-            inputVivo.addEventListener('input', function() {
-                const termino = this.value.toLowerCase().trim();
-
-                tarjetas.forEach(function(card) {
-                    const titulo  = card.getAttribute('data-titulo') || '';
-                    const autor   = card.getAttribute('data-autor') || '';
-                    const archivo = card.getAttribute('data-archivo') || '';
-
-                    if (titulo.includes(termino) || autor.includes(termino) || archivo.includes(termino)) {
-                        card.style.display = 'flex';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        }
-        actualizarBotonesDescargados();
-    });
-
-    function abrirLectorAporte(id, titulo, url, ext) {
-        document.getElementById('titulo-lector-doc').textContent = titulo;
-        document.getElementById('btn-descargar-desde-visor').href = '<?= rtrim(base_url('biblioteca/descargar'), '/') ?>/' + id;
-
-        const iframe = document.getElementById('iframe-visor-doc');
-        const docxContainer = document.getElementById('visor-doc-docx-container');
-
-        if (ext === 'docx') {
-            iframe.style.display = 'none';
-            docxContainer.style.display = 'block';
-            docxContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;"><i class="bx bx-loader-alt bx-spin" style="font-size: 2.2rem; color: #2563eb;"></i><p style="margin-top: 10px; font-weight: 600;">Cargando documento Word (.docx)...</p></div>';
-
-            fetch(url)
-                .then(r => r.arrayBuffer())
-                .then(buffer => {
-                    if (window.mammoth) {
-                        return mammoth.convertToHtml({ arrayBuffer: buffer });
-                    } else {
-                        throw new Error('Lector Word no disponible');
-                    }
-                })
-                .then(result => {
-                    docxContainer.innerHTML = `
-                        <div class="docx-doc-content" style="max-width: 820px; margin: 0 auto;">
-                            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; color: #1e40af; margin-bottom: 22px; display: flex; align-items: center; gap: 6px;">
-                                <i class="bx bxs-file-doc" style="font-size: 1.2rem;"></i> Documento Word oficial (.docx) convertido para lectura en línea
-                            </div>
-                            ${result.value}
-                        </div>
-                    `;
-                })
-                .catch(err => {
-                    docxContainer.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #64748b;">
-                            <i class="bx bxs-file-doc" style="font-size: 3rem; color: #3b82f6;"></i>
-                            <h4 style="margin: 12px 0 6px 0; color: #0f172a;">Vista previa en línea</h4>
-                            <p style="margin: 0 0 16px 0; font-size: 0.88rem;">Puedes descargar el archivo original para abrirlo directamente en Microsoft Word.</p>
-                            <a href="${document.getElementById('btn-descargar-desde-visor').href}" class="btn-subir-cta" style="display: inline-flex;">
-                                <i class="bx bx-download"></i> Descargar Documento
-                            </a>
-                        </div>
-                    `;
-                });
-        } else {
-            if (docxContainer) docxContainer.style.display = 'none';
-            iframe.style.display = 'block';
-            iframe.src = url;
-        }
-
-        document.getElementById('modal-lector-biblioteca').style.display = 'flex';
-    }
-
-    function cerrarLectorAporte() {
-        document.getElementById('modal-lector-biblioteca').style.display = 'none';
-        document.getElementById('iframe-visor-doc').src = '';
-        const docxContainer = document.getElementById('visor-doc-docx-container');
-        if (docxContainer) {
-            docxContainer.innerHTML = '';
-            docxContainer.style.display = 'none';
-        }
-    }
-
-    function marcarAporteDescargado(id) {
-        try {
-            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
-            if (!desc.includes(id)) {
-                desc.push(id);
-                localStorage.setItem('lay8_descargados', JSON.stringify(desc));
-            }
-            actualizarBotonesDescargados();
-        } catch(e) {}
-    }
-
-    function actualizarBotonesDescargados() {
-        try {
-            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
-            document.querySelectorAll('.btn-descarga-item').forEach(btn => {
-                const id = parseInt(btn.getAttribute('data-aporte-id'));
-                if (desc.includes(id)) {
-                    btn.style.background = '#10b981';
-                    btn.style.color = '#ffffff';
-                    btn.style.borderColor = '#059669';
-                    btn.innerHTML = '<i class="bx bx-check-double"></i> Guardado';
-                    btn.title = 'Ya tienes este archivo descargado en tu dispositivo';
-                }
-            });
-        } catch(e) {}
-    }
-</script>
-
-<!-- Modal Lector Nativo de la Biblioteca (Revisión Haryerit) -->
-<div id="modal-lector-biblioteca" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 99999;" onclick="if(event.target === this) cerrarLectorAporte()">
-  <div class="modal-editar-perfil-content" style="max-width: 950px; width: 100%; height: 90vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
-    <div class="modal-editar-header" style="padding: 14px 20px; background: #1e3a8a; color: white; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; color: white; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        <i class="bx bx-book-reader" style="color: #60a5fa; font-size: 1.3rem;"></i>
-        <span id="titulo-lector-doc" style="max-width: 580px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Visor de Documento</span>
-      </h3>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <a id="btn-descargar-desde-visor" href="#" class="btn-descargar" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border: none; border-radius: 6px; color: white; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-          <i class="bx bx-download"></i> Descargar
-        </a>
-        <button type="button" class="btn-cerrar-carreras" onclick="cerrarLectorAporte()" style="color: white; font-size: 1.6rem; background: none; border: none; cursor: pointer;">&times;</button>
-      </div>
-    </div>
-    <div style="flex: 1; background: #1e293b; position: relative; overflow: hidden; display: flex; flex-direction: column;">
-      <iframe id="iframe-visor-doc" src="" style="width: 100%; height: 100%; border: none;"></iframe>
-      <div id="visor-doc-docx-container" style="display: none; width: 100%; height: 100%; overflow-y: auto; padding: 35px 45px; background: #ffffff; color: #1e293b; box-sizing: border-box; line-height: 1.7; font-family: 'Hind', sans-serif;"></div>
-    </div>
-  </div>
-</div>
-
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/biblioteca.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -301,7 +301,7 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0;
     box-sizing: border-box;
 
-    animation: slideLeft 0.4s ease-out forwards;
+    animation: slideLeft 0.3s ease-out;
 }
 
 .layout-grid.modo-focus {
@@ -327,11 +327,9 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes slideLeft {
     from {
         opacity: 0;
-        transform: translateX(30px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
     }
 }
 
@@ -629,33 +627,33 @@ html {
 
 html.dark-mode {
     color-scheme: dark;
-    background-color: #0b1120 !important;
+    background-color: #0b1120;
 }
 
 /* Reglas Generales de Modo Oscuro */
 html.dark-mode, 
 body.dark-mode, 
 html.dark-mode body {
-    background: #0f172a !important;
-    background: linear-gradient(180deg, #0b1120 70%, #1e293b 100%) !important;
-    background-attachment: fixed !important;
-    color: #e2e8f0 !important;
+    background: #0f172a;
+    background: linear-gradient(180deg, #0b1120 70%, #1e293b 100%);
+    background-attachment: fixed;
+    color: #e2e8f0;
 }
 
 html.dark-mode .barra-superior,
 body.dark-mode .barra-superior {
-    background-color: #0c1427 !important;
+    background-color: #0c1427;
     border-bottom: 1px solid #1e293b;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
 }
 
 html.dark-mode .content-box,
 body.dark-mode .content-box {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
+    background-color: #1e293b;
+    color: #f1f5f9;
     border-left: none;
     border-top: none;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 body.dark-mode .sidebar {
@@ -663,36 +661,36 @@ body.dark-mode .sidebar {
 }
 
 body.dark-mode .menu-links a {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .menu-links a:hover,
 body.dark-mode .menu-links a.active {
-    background-color: rgba(59, 130, 246, 0.18) !important;
-    color: #60a5fa !important;
-    border-left-color: #60a5fa !important;
+    background-color: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+    border-left-color: #60a5fa;
 }
 
 body.dark-mode .sidebar-footer .logout-btn {
-    background: rgba(30, 41, 59, 0.65) !important;
-    border-color: rgba(51, 65, 85, 0.8) !important;
-    color: #94a3b8 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(30, 41, 59, 0.65);
+    border-color: rgba(51, 65, 85, 0.8);
+    color: #94a3b8;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .sidebar-footer .logout-btn i {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .sidebar-footer .logout-btn:hover {
-    background: rgba(239, 68, 68, 0.2) !important;
-    border-color: #ef4444 !important;
-    color: #fca5a5 !important;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
 }
 
 body.dark-mode .sidebar-footer .logout-btn:hover i,
 body.dark-mode .sidebar-footer .logout-btn:hover span {
-    color: #f87171 !important;
+    color: #f87171;
 }
 
 body.dark-mode .content-area::-webkit-scrollbar-track {
@@ -708,70 +706,70 @@ body.dark-mode .content-area::-webkit-scrollbar-thumb:hover {
 }
 
 body.dark-mode .content-area {
-    background-color: #1e293b !important;
+    background-color: #1e293b;
     border-left: 1px solid #334155;
     border-top: 1px solid #334155;
-    box-shadow: -4px 0px 20px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: -4px 0px 20px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .content-box {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
+    background-color: #1e293b;
+    color: #f1f5f9;
     border-left: none;
     border-top: none;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 body.dark-mode .content-box h1,
 body.dark-mode .content-box h2,
 body.dark-mode .content-box h3,
 body.dark-mode .content-box h4 {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .content-box p {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-expandir-layout {
-    background-color: #1e293b !important;
-    color: #f8fafc !important;
+    background-color: #1e293b;
+    color: #f8fafc;
 }
 
 body.dark-mode .focus-icon {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .dropdown-menu {
-    background-color: #1e293b !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .dropdown-item {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .dropdown-item:hover {
-    background-color: #334155 !important;
-    color: #ffffff !important;
+    background-color: #334155;
+    color: #ffffff;
 }
 
 body.dark-mode .tarjeta-opcion {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .tarjeta-opcion.activa,
 body.dark-mode .tarjeta-opcion:hover {
-    background-color: #334155 !important;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
+    background-color: #334155;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .card-global {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #334155;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* ==========================================================================
@@ -973,54 +971,54 @@ body.dark-mode .card-global {
 
 /* Modal en Modo Oscuro */
 body.dark-mode .modal-ajustes-content {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
-    box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.5) !important;
+    background-color: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 20px 35px -5px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .modal-ajustes-header,
 body.dark-mode .modal-ajustes-footer {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .modal-ajustes-header h3 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .btn-cerrar-modal {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-cerrar-modal:hover {
-    background-color: #334155 !important;
-    color: #ffffff !important;
+    background-color: #334155;
+    color: #ffffff;
 }
 
 body.dark-mode .ajuste-item {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .ajuste-titulo {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .ajuste-descripcion {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-modal-guardar {
-    background-color: #3b82f6 !important;
+    background-color: #3b82f6;
 }
 
 body.dark-mode .btn-modal-guardar:hover {
-    background-color: #2563eb !important;
+    background-color: #2563eb;
 }
 
 
 /* ==========================================================================
-   ESTILOS ADAPTABLES MODO OSCURO (REVISIÓN HARYERIT - INPUTS Y CAJAS)
+   ESTILOS ADAPTABLES MODO OSCURO (REVISIÃ“N HARYERIT - INPUTS Y CAJAS)
    ========================================================================== */
 .editar-seguridad-box {
     background: #eff6ff;
@@ -1061,66 +1059,66 @@ body.dark-mode .input-global,
 .dark-mode .input-global,
 html.dark-mode input.input-global,
 body.dark-mode input.input-global {
-    background-color: #0f172a !important;
-    color: #f8fafc !important;
-    border: 1.5px solid #334155 !important;
+    background-color: #0f172a;
+    color: #f8fafc;
+    border: 1.5px solid #334155;
 }
 html.dark-mode .input-global:focus,
 body.dark-mode .input-global:focus,
 .dark-mode .input-global:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
 }
 html.dark-mode .input-global::placeholder,
 body.dark-mode .input-global::placeholder,
 .dark-mode .input-global::placeholder {
-    color: #64748b !important;
+    color: #64748b;
 }
 html.dark-mode input[type="file"].input-global,
 body.dark-mode input[type="file"].input-global,
 .dark-mode input[type="file"].input-global {
-    background-color: #0f172a !important;
-    color: #cbd5e1 !important;
-    border-color: #334155 !important;
+    background-color: #0f172a;
+    color: #cbd5e1;
+    border-color: #334155;
 }
 html.dark-mode input[type="file"]::file-selector-button,
 body.dark-mode input[type="file"]::file-selector-button,
 .dark-mode input[type="file"]::file-selector-button {
-    background-color: #1e293b !important;
-    color: #f1f5f9 !important;
-    border: 1px solid #475569 !important;
-    border-radius: 8px !important;
-    padding: 6px 12px !important;
-    cursor: pointer !important;
-    font-weight: 600 !important;
-    margin-right: 10px !important;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 10px;
 }
 html.dark-mode .editar-seguridad-box,
 body.dark-mode .editar-seguridad-box,
 .dark-mode .editar-seguridad-box {
-    background: rgba(30, 58, 138, 0.22) !important;
-    border-color: #1e40af !important;
+    background: rgba(30, 58, 138, 0.22);
+    border-color: #1e40af;
 }
 html.dark-mode .editar-seguridad-box .label-seguridad,
 body.dark-mode .editar-seguridad-box .label-seguridad,
 .dark-mode .editar-seguridad-box .label-seguridad {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 html.dark-mode .editar-seguridad-box .form-sublabel-editar,
 body.dark-mode .editar-seguridad-box .form-sublabel-editar,
 .dark-mode .editar-seguridad-box .form-sublabel-editar {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 html.dark-mode .editar-seguridad-box .label-pass-seguridad,
 body.dark-mode .editar-seguridad-box .label-pass-seguridad,
 .dark-mode .editar-seguridad-box .label-pass-seguridad {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 html.dark-mode .modal-editar-perfil-content,
 body.dark-mode .modal-editar-perfil-content,
 .dark-mode .modal-editar-perfil-content {
-    background-color: #1e293b !important;
-    color: #f8fafc !important;
+    background-color: #1e293b;
+    color: #f8fafc;
 }
 html.dark-mode .modal-editar-header,
 body.dark-mode .modal-editar-header,
@@ -1128,17 +1126,31 @@ body.dark-mode .modal-editar-header,
 html.dark-mode .modal-editar-footer,
 body.dark-mode .modal-editar-footer,
 .dark-mode .modal-editar-footer {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
+    background-color: #0f172a;
+    border-color: #334155;
 }
+.btn-zoom-avatar {
+    background: #e2e8f0;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 html.dark-mode .btn-zoom-avatar,
 body.dark-mode .btn-zoom-avatar,
 .dark-mode .btn-zoom-avatar {
-    background-color: #334155 !important;
-    color: #f1f5f9 !important;
+    background-color: #334155;
+    color: #f1f5f9;
 }
 
-/* Página dedicada de Ajustes */
+/* PÃ¡gina dedicada de Ajustes */
 .ajustes-pagina-contenedor {
     max-width: 700px;
     margin: 0 auto;
@@ -1180,75 +1192,75 @@ body.dark-mode .btn-zoom-avatar,
 }
 
 body.dark-mode .ajustes-pagina-header h2 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .ajustes-seccion-card {
-    background-color: #1e293b !important;
-    border-color: #334155 !important;
+    background-color: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .ajustes-seccion-card h3 {
-    color: #e2e8f0 !important;
-    border-color: #334155 !important;
+    color: #e2e8f0;
+    border-color: #334155;
 }
 
 /* Adaptaciones de Modo Oscuro para Perfil y Biblioteca */
 body.dark-mode .perfil-container div[style*="background: #fff"],
 body.dark-mode .perfil-container div[style*="background:#fff"] {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 body.dark-mode .perfil-container h2,
 body.dark-mode .perfil-container h3 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .perfil-container p {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .tarjeta-aporte {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .titulo-archivo {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .tarjeta-meta {
-    border-color: #334155 !important;
-    color: #94a3b8 !important;
+    border-color: #334155;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-filtro-carrera {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #94a3b8 !important;
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-filtro-carrera:hover {
-    background: #1e293b !important;
-    color: #60a5fa !important;
-    border-color: #60a5fa !important;
+    background: #1e293b;
+    color: #60a5fa;
+    border-color: #60a5fa;
 }
 body.dark-mode .btn-filtro-carrera.activo {
-    background: #2563eb !important;
-    color: white !important;
-    border-color: #2563eb !important; 
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb; 
 }
 
 body.dark-mode .estado-vacio {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .estado-vacio h3 {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 
@@ -1256,10 +1268,9 @@ body.dark-mode .estado-vacio h3 {
    ESTILOS DE BIBLIOTECA, MAPA Y FORMULARIOS DENTRO DEL DASHBOARD
    ========================================================================== */
 
-/* Header común */
+/* Header comÃºn */
 .biblio-header-flex,
-.mapa-header-box,
-.header-subida-dashboard {
+.mapa-header-box {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1271,8 +1282,7 @@ body.dark-mode .estado-vacio h3 {
 }
 
 .biblio-header-flex h2,
-.mapa-header-box h2,
-.header-subida-dashboard h2 {
+.mapa-header-box h2 {
     font-size: 1.7rem;
     color: #1e3a8a;
     margin: 0 0 6px 0;
@@ -1282,8 +1292,7 @@ body.dark-mode .estado-vacio h3 {
 }
 
 .biblio-header-flex p,
-.mapa-header-box p,
-.header-subida-dashboard p {
+.mapa-header-box p {
     color: #64748b;
     margin: 0;
     font-size: 0.95rem;
@@ -1307,25 +1316,6 @@ body.dark-mode .estado-vacio h3 {
 .btn-subir-cta:hover {
     background-color: #059669;
     transform: translateY(-2px);
-}
-
-.btn-volver-dashboard-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    color: #475569;
-    background: #f1f5f9;
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.88rem;
-    transition: all 0.2s;
-}
-
-.btn-volver-dashboard-link:hover {
-    background: #e2e8f0;
-    color: #1e3a8a;
 }
 
 /* Buscador */
@@ -1373,7 +1363,7 @@ body.dark-mode .estado-vacio h3 {
     background-color: #1d4ed8;
 }
 
-/* Filtros por Categoría */
+/* Filtros por CategorÃ­a */
 .filtros-categorias {
     display: flex;
     gap: 10px;
@@ -1423,6 +1413,104 @@ body.dark-mode .estado-vacio h3 {
     background: rgba(255, 255, 255, 0.25);
     color: white;
 }
+
+/* Filtros por Carrera de Biblioteca */
+.filtros-carreras-pills {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+}
+
+.btn-filtro-carrera {
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-filtro-carrera:hover {
+    border-color: #3b82f6;
+    color: #1e3a8a;
+    background: #eff6ff;
+}
+
+.btn-filtro-carrera.activo {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.badge-conteo-carrera {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.btn-filtro-carrera.activo .badge-conteo-carrera {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+body.dark-mode .btn-filtro-carrera,
+html.dark-mode .btn-filtro-carrera {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.dark-mode .btn-filtro-carrera:hover,
+html.dark-mode .btn-filtro-carrera:hover {
+    background: #334155;
+    color: #ffffff;
+    border-color: #60a5fa;
+}
+
+body.dark-mode .btn-filtro-carrera.activo,
+html.dark-mode .btn-filtro-carrera.activo {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+/* Badge de Carrera en la Tarjeta de Biblioteca */
+.badge-carrera-biblioteca {
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.badge-carrera-ing-inf { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-carrera-ing-mar { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.badge-carrera-ing-amb { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.badge-carrera-adm     { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.badge-carrera-tur     { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+.badge-carrera-general { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+body.dark-mode .badge-carrera-ing-inf { background: #1e3a8a33; color: #93c5fd; border-color: #1e40af; }
+body.dark-mode .badge-carrera-ing-mar { background: #0369a133; color: #7dd3fc; border-color: #0284c7; }
+body.dark-mode .badge-carrera-ing-amb { background: #065f4633; color: #6ee7b7; border-color: #059669; }
+body.dark-mode .badge-carrera-adm     { background: #78350f33; color: #fde68a; border-color: #d97706; }
+body.dark-mode .badge-carrera-tur     { background: #83184333; color: #f472b6; border-color: #db2777; }
+body.dark-mode .badge-carrera-general { background: #4c1d9533; color: #c4b5fd; border-color: #7c3aed; }
 
 /* Grid de Tarjeticas de Aportes */
 .grid-aportes {
@@ -1573,7 +1661,22 @@ body.dark-mode .estado-vacio h3 {
     transform: scale(1.02);
 }
 
-/* Estado Vacío */
+.badge-aporte-guardado {
+    background-color: #10b981;
+    color: #ffffff;
+    border: 1px solid #059669;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    user-select: none;
+}
+
+/* Estado VacÃ­o */
 .estado-vacio {
     background: #ffffff;
     border-radius: 14px;
@@ -1686,18 +1789,20 @@ body.dark-mode .estado-vacio h3 {
 /* Modal Aula */
 .modal-info-aula {
     position: fixed;
+    inset: 0;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(4px);
-    z-index: 2000;
+    z-index: 99999;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .modal-contenido-aula {
@@ -1867,121 +1972,121 @@ body.dark-mode .estado-vacio h3 {
 body.dark-mode .biblio-header-flex h2,
 body.dark-mode .mapa-header-box h2,
 body.dark-mode .header-subida-dashboard h2 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .biblio-header-flex p,
 body.dark-mode .mapa-header-box p,
 body.dark-mode .header-subida-dashboard p {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .biblio-header-flex,
 body.dark-mode .mapa-header-box,
 body.dark-mode .header-subida-dashboard {
-    border-color: #334155 !important;
+    border-color: #334155;
 }
 
 body.dark-mode .btn-volver-dashboard-link {
-    background: #0f172a !important;
-    color: #cbd5e1 !important;
-    border: 1px solid #334155 !important;
+    background: #0f172a;
+    color: #cbd5e1;
+    border: 1px solid #334155;
 }
 
 body.dark-mode .btn-volver-dashboard-link:hover {
-    background: #1e293b !important;
-    color: #60a5fa !important;
+    background: #1e293b;
+    color: #60a5fa;
 }
 
 body.dark-mode .caja-busqueda {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .caja-busqueda input {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .btn-filtro {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #94a3b8 !important;
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-filtro:hover {
-    background: #1e293b !important;
-    color: #60a5fa !important;
-    border-color: #60a5fa !important;
+    background: #1e293b;
+    color: #60a5fa;
+    border-color: #60a5fa;
 }
 
 body.dark-mode .btn-filtro.activo {
-    background: #2563eb !important;
-    color: white !important;
-    border-color: #2563eb !important;
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
 }
 
 body.dark-mode .btn-filtro .badge-conteo {
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: #cbd5e1 !important;
+    background: rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
 }
 
 body.dark-mode .tarjeta-aporte {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 body.dark-mode .tarjeta-aporte:hover {
-    border-color: #60a5fa !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+    border-color: #60a5fa;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .titulo-archivo {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .nombre-archivo-original {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .tarjeta-meta {
-    border-color: #334155 !important;
-    color: #94a3b8 !important;
+    border-color: #334155;
+    color: #94a3b8;
 }
 
 body.dark-mode .peso-badge {
-    background: #1e293b !important;
-    color: #cbd5e1 !important;
+    background: #1e293b;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-descargar {
-    background-color: #2563eb !important;
+    background-color: #2563eb;
     color: #fff
 }
 
 body.dark-mode .btn-descargar:hover {
-    background-color: #1d4ed8 !important;
+    background-color: #1d4ed8;
 }
 
 body.dark-mode .estado-vacio {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .estado-vacio h3 {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .estado-vacio p {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 /* Modo oscuro Mapa */
 body.dark-mode .leyenda-mapa-moderna {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #94a3b8 !important;
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
 }
 
 body.dark-mode .leyenda-titulo-seccion {
@@ -1992,123 +2097,123 @@ body.dark-mode .item-leyenda-badge {
     color: #94a3b8;
 }
 body.dark-mode .contenedor-mapa {
-    background: #0b1329 !important;
-    border-color: #334155 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+    background: #0b1329;
+    border-color: #334155;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 body.dark-mode .modal-contenido-aula {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
 }
 
 body.dark-mode .modal-aula-header {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .modal-aula-header h3 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .btn-cerrar-modal-aula {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-cerrar-modal-aula:hover {
-    background: #334155 !important;
-    color: #ffffff !important;
+    background: #334155;
+    color: #ffffff;
 }
 
 body.dark-mode .banner-clase-activa {
-    background: rgba(239, 68, 68, 0.15) !important;
-    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
 }
 
 body.dark-mode .banner-clase-activa .banner-estado-titulo {
-    color: #fca5a5 !important;
+    color: #fca5a5;
 }
 
 body.dark-mode .banner-clase-activa .banner-materia-nombre {
-    color: #fef2f2 !important;
+    color: #fef2f2;
 }
 
 body.dark-mode .banner-clase-activa .banner-tiempo-detalle {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .banner-clase-proxima {
-    background: rgba(234, 179, 8, 0.15) !important;
-    border-color: #eab308 !important;
+    background: rgba(234, 179, 8, 0.15);
+    border-color: #eab308;
 }
 
 body.dark-mode .banner-clase-proxima .banner-estado-titulo {
-    color: #fef08a !important;
+    color: #fef08a;
 }
 
 body.dark-mode .banner-clase-proxima .banner-materia-nombre {
-    color: #fefce8 !important;
+    color: #fefce8;
 }
 
 body.dark-mode .dia-horario-bloque h4 {
-    color: #93c5fd !important;
-    border-color: #334155 !important;
+    color: #93c5fd;
+    border-color: #334155;
 }
 
 body.dark-mode .lista-sesiones li {
-    border-color: #334155 !important;
-    color: #cbd5e1 !important;
+    border-color: #334155;
+    color: #cbd5e1;
 }
 
 body.dark-mode .sub-seccion {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .sin-horarios-msg {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 /* Modo oscuro formulario subida */
 body.dark-mode .card-formulario-subida {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .card-formulario-subida label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .card-formulario-subida input[type="text"],
 body.dark-mode .card-formulario-subida select {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .dropzone-file {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .dropzone-texto {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .dropzone-subtexto {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .info-restricciones {
-    background: #0f172a !important;
-    border-color: #3b82f6 !important;
-    color: #93c5fd !important;
+    background: #0f172a;
+    border-color: #3b82f6;
+    color: #93c5fd;
 }
 
 
 /* ==========================================================================
-   MODAL DE PERFIL Y TARJETA DE PERFIL (DISEÑO REFERENCIA)
+   MODAL DE PERFIL Y TARJETA DE PERFIL (DISEÃ‘O REFERENCIA)
    ========================================================================== */
 
 .modal-perfil-overlay {
@@ -2266,7 +2371,7 @@ body.dark-mode .info-restricciones {
     width: 100%;
 }
 
-/* Cuadrícula de Datos 2x2 */
+/* CuadrÃ­cula de Datos 2x2 */
 .perfil-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2296,7 +2401,7 @@ body.dark-mode .info-restricciones {
     word-break: break-word;
 }
 
-/* Pie con botón de Editar perfil */
+/* Pie con botÃ³n de Editar perfil */
 .perfil-card-bottom {
     display: flex;
     justify-content: flex-end;
@@ -2330,65 +2435,65 @@ body.dark-mode .info-restricciones {
 
 body.dark-mode .modal-perfil-content,
 body.dark-mode .perfil-card-standalone {
-    background: #141f33 !important;
-    background: linear-gradient(180deg, #18263d 0%, #0f1929 100%) !important;
-    border-color: #273e63 !important;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6) !important;
+    background: #141f33;
+    background: linear-gradient(180deg, #18263d 0%, #0f1929 100%);
+    border-color: #273e63;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
 }
 
 body.dark-mode .btn-cerrar-modal-perfil {
-    background: rgba(30, 41, 59, 0.8) !important;
-    color: #94a3b8 !important;
+    background: rgba(30, 41, 59, 0.8);
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-cerrar-modal-perfil:hover {
-    background: #334155 !important;
-    color: #f8fafc !important;
+    background: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .perfil-card-banner {
-    background: linear-gradient(180deg, #1e3a63 0%, #11233b 100%) !important;
+    background: linear-gradient(180deg, #1e3a63 0%, #11233b 100%);
 }
 
 body.dark-mode .perfil-card-avatar {
-    border-color: #3b82f6 !important;
-    background: #0f172a !important;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5) !important;
+    border-color: #3b82f6;
+    background: #0f172a;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .perfil-user-name {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .perfil-pill-badge {
-    border-color: #60a5fa !important;
-    color: #93c5fd !important;
-    background: rgba(96, 165, 250, 0.12) !important;
+    border-color: #60a5fa;
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.12);
 }
 
 body.dark-mode .perfil-user-handle {
-    color: #8da6c7 !important;
+    color: #8da6c7;
 }
 
 body.dark-mode .perfil-blue-divider {
-    background-color: #3b82f6 !important;
+    background-color: #3b82f6;
 }
 
 body.dark-mode .perfil-grid-cell .grid-label {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .perfil-grid-cell .grid-value {
-    color: #e2e8f0 !important;
+    color: #e2e8f0;
 }
 
 body.dark-mode .btn-editar-perfil-trigger {
-    color: #8da6c7 !important;
+    color: #8da6c7;
 }
 
 body.dark-mode .btn-editar-perfil-trigger:hover {
-    color: #60a5fa !important;
-    background: rgba(96, 165, 250, 0.12) !important;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.12);
 }
 
 
@@ -2688,7 +2793,7 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     color: #0f172a;
 }
 
-/* Modal Editar Perfil (Diseño Cuadrado Optimizado) */
+/* Modal Editar Perfil (DiseÃ±o Cuadrado Optimizado) */
 .modal-editar-header {
     display: flex;
     justify-content: space-between;
@@ -2733,19 +2838,6 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     background-color: rgba(100, 116, 139, 0.7);
 }
 
-.modal-editar-grid-2col {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    gap: 18px;
-    align-items: start;
-}
-
-.modal-editar-col-izq,
-.modal-editar-col-der {
-    display: flex;
-    flex-direction: column;
-}
-
 .form-group-editar {
     margin-bottom: 14px;
 }
@@ -2767,31 +2859,6 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     line-height: 1.35;
 }
 
-.editar-foto-preview-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 10px 14px;
-    border-radius: 12px;
-}
-
-.preview-mini-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #1e3a8a;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-}
-
-.editar-foto-acciones {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
 .editar-seguridad-box {
     background: #f8fafc;
     padding: 12px 14px;
@@ -2802,12 +2869,6 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
 .label-seguridad {
     color: #1e3a8a;
     font-size: 0.88rem;
-}
-
-.label-pass-confirm {
-    font-size: 0.86rem;
-    margin-top: 10px;
-    margin-bottom: 4px;
 }
 
 .input-file-certificacion {
@@ -2926,103 +2987,99 @@ body.dark-mode .btn-editar-perfil-trigger:hover {
     .modal-editar-body {
         padding: 14px 16px;
     }
-    .modal-editar-grid-2col {
-        grid-template-columns: 1fr;
-        gap: 14px;
-    }
 }
 
 /* Modo Oscuro para Selector de Carreras y Modal Editar */
 body.dark-mode .tarjeta-carrera-display {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .carrera-display-nombre {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .btn-cambiar-carrera {
-    background: #1e293b !important;
-    color: #93c5fd !important;
+    background: #1e293b;
+    color: #93c5fd;
 }
 
 body.dark-mode .modal-carreras-content,
 body.dark-mode .modal-editar-perfil-content {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6) !important;
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6);
 }
 
 body.dark-mode .modal-carreras-header,
 body.dark-mode .modal-editar-header,
 body.dark-mode .modal-carreras-footer,
 body.dark-mode .modal-editar-footer {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .modal-carreras-header h3,
 body.dark-mode .modal-editar-header h3 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .btn-cerrar-carreras {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-cerrar-carreras:hover {
-    color: #ffffff !important;
+    color: #ffffff;
 }
 
 body.dark-mode .modal-carreras-subtitulo {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .card-carrera-item,
 body.dark-mode .carrera-card-opcion {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .card-carrera-item:hover,
 body.dark-mode .carrera-card-opcion:hover {
-    background: #1e293b !important;
-    border-color: #60a5fa !important;
+    background: #1e293b;
+    border-color: #60a5fa;
 }
 
 body.dark-mode .card-carrera-item.activa,
 body.dark-mode .carrera-card-opcion.seleccionada {
-    background: #1a2a47 !important;
-    border-color: #3b82f6 !important;
+    background: #1a2a47;
+    border-color: #3b82f6;
 }
 
 body.dark-mode .carrera-card-textos strong,
 body.dark-mode .carrera-info-box strong {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .carrera-card-textos span,
 body.dark-mode .carrera-info-box span {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .form-label-editar {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .form-sublabel-editar {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .editar-foto-preview-row {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .btn-confirmar-carrera,
 body.dark-mode .btn-guardar-perfil {
-    background: #2563eb !important;
+    background: #2563eb;
 }
 
 body.dark-mode .modal-editar-body::-webkit-scrollbar-track {
@@ -3034,43 +3091,43 @@ body.dark-mode .modal-editar-body::-webkit-scrollbar-thumb {
 }
 
 body.dark-mode .editar-foto-preview-row {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .preview-mini-avatar {
-    border-color: #3b82f6 !important;
+    border-color: #3b82f6;
 }
 
 body.dark-mode .editar-seguridad-box {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .label-seguridad {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 body.dark-mode .input-file-certificacion,
 body.dark-mode .input-pass-perfil {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode #modal-editar-perfil .carrera-card-opcion {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode #modal-editar-perfil .carrera-card-opcion:hover {
-    background: #1e293b !important;
-    border-color: #60a5fa !important;
+    background: #1e293b;
+    border-color: #60a5fa;
 }
 
 body.dark-mode #modal-editar-perfil .carrera-card-opcion.seleccionada {
-    background: #1a2a47 !important;
-    border-color: #3b82f6 !important;
+    background: #1a2a47;
+    border-color: #3b82f6;
 }
 
 body.dark-mode #modal-editar-perfil .carrera-icon-circle {
@@ -3084,31 +3141,31 @@ body.dark-mode #modal-editar-perfil .carrera-card-opcion.seleccionada .carrera-i
 }
 
 body.dark-mode #modal-editar-perfil .carrera-info-box strong {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode #modal-editar-perfil .carrera-info-box span {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-confirmar-carrera:hover,
 body.dark-mode .btn-guardar-perfil:hover {
-    background: #1d4ed8 !important;
+    background: #1d4ed8;
 }
 
 body.dark-mode .btn-cancelar-modal {
-    background: #334155 !important;
-    color: #cbd5e1 !important;
+    background: #334155;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-cancelar-modal:hover {
-    background: #475569 !important;
-    color: #ffffff !important;
+    background: #475569;
+    color: #ffffff;
 }
 
 
 /* ==========================================================================
-   PANEL DE ADMINISTRACIÓN Y CONTROL CENTRAL
+   PANEL DE ADMINISTRACIÃ“N Y CONTROL CENTRAL
    ========================================================================== */
 
 .admin-dashboard-container {
@@ -3201,7 +3258,7 @@ body.dark-mode .btn-cancelar-modal:hover {
     font-weight: 500;
 }
 
-/* Pestañas de Navegación del Panel */
+/* PestaÃ±as de NavegaciÃ³n del Panel */
 .admin-tabs-bar {
     display: flex;
     gap: 8px;
@@ -3259,7 +3316,7 @@ body.dark-mode .btn-cancelar-modal:hover {
     display: block;
 }
 
-/* Caja de Sección */
+/* Caja de SecciÃ³n */
 .admin-section-box {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -3394,7 +3451,7 @@ body.dark-mode .btn-cancelar-modal:hover {
     border-radius: 4px;
 }
 
-/* Botones de Acción Admin */
+/* Botones de AcciÃ³n Admin */
 .acciones-btn-group {
     display: inline-flex;
     align-items: center;
@@ -3449,7 +3506,7 @@ body.dark-mode .btn-cancelar-modal:hover {
     color: white;
 }
 
-/* Estado Vacío */
+/* Estado VacÃ­o */
 .admin-empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -3516,190 +3573,145 @@ body.dark-mode .btn-cancelar-modal:hover {
     font-size: 0.8rem;
 }
 
-.file-drop-area {
-    border: 2px dashed #93c5fd;
-    background: #eff6ff;
-    padding: 25px 20px;
-    border-radius: 12px;
-    text-align: center;
-    position: relative;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.file-drop-area:hover {
-    background: #dbeafe;
-}
-
-.file-drop-area input[type="file"] {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.file-drop-icon {
-    font-size: 2.2rem;
-    color: #3b82f6;
-    display: block;
-    margin-bottom: 6px;
-}
-
-.file-drop-msg {
-    font-size: 0.88rem;
-    color: #1e40af;
-    font-weight: 600;
-}
-
-.archivo-seleccionado-nombre {
-    margin-top: 10px;
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #0f172a;
-}
-
 /* ==========================================================================
-   MODO OSCURO PARA EL PANEL DE ADMINISTRACIÓN
+   MODO OSCURO PARA EL PANEL DE ADMINISTRACIÃ“N
    ========================================================================== */
 
 body.dark-mode .admin-header-row h2 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .admin-header-row h2 i {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 body.dark-mode .badge-admin-pill {
-    background: #1e293b !important;
-    color: #93c5fd !important;
-    border-color: #3b82f6 !important;
+    background: #1e293b;
+    color: #93c5fd;
+    border-color: #3b82f6;
 }
 
 body.dark-mode .kpi-card {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .kpi-card:hover {
-    border-color: #60a5fa !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+    border-color: #60a5fa;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .kpi-num {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .kpi-label {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .admin-tabs-bar {
-    border-bottom-color: #334155 !important;
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .tab-btn-admin {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .tab-btn-admin:hover {
-    color: #93c5fd !important;
-    background: #1e293b !important;
+    color: #93c5fd;
+    background: #1e293b;
 }
 
 body.dark-mode .tab-btn-admin.activa {
-    color: #93c5fd !important;
-    border-bottom-color: #60a5fa !important;
-    background: #1e293b !important;
+    color: #93c5fd;
+    border-bottom-color: #60a5fa;
+    background: #1e293b;
 }
 
 body.dark-mode .admin-section-box {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 body.dark-mode .section-box-header h3 {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .section-box-header p {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .tabla-admin th {
-    background: #0f172a !important;
-    color: #94a3b8 !important;
-    border-bottom-color: #334155 !important;
+    background: #0f172a;
+    color: #94a3b8;
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .tabla-admin td {
-    color: #cbd5e1 !important;
-    border-bottom-color: #334155 !important;
+    color: #cbd5e1;
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .tabla-admin tr:hover td {
-    background: #1a2538 !important;
+    background: #1a2538;
 }
 
 body.dark-mode .badge-carrera-tag {
-    background: #0f172a !important;
-    color: #93c5fd !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    color: #93c5fd;
+    border-color: #334155;
 }
 
 body.dark-mode .badge-categoria-tag {
-    background: #0f172a !important;
-    color: #cbd5e1 !important;
+    background: #0f172a;
+    color: #cbd5e1;
 }
 
 body.dark-mode .horario-status-card,
 body.dark-mode .horario-upload-card {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .horario-status-card h4,
 body.dark-mode .horario-upload-card h4 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .horario-status-list li {
-    border-bottom-color: #1e293b !important;
-    color: #cbd5e1 !important;
+    border-bottom-color: #1e293b;
+    color: #cbd5e1;
 }
 
 body.dark-mode .file-drop-area {
-    background: #1e293b !important;
-    border-color: #3b82f6 !important;
+    background: #1e293b;
+    border-color: #3b82f6;
 }
 
 body.dark-mode .file-drop-area:hover {
-    background: #253349 !important;
+    background: #253349;
 }
 
 body.dark-mode .file-drop-msg {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .archivo-seleccionado-nombre {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .admin-empty-state h4 {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .admin-empty-state p {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 
 /* ==========================================================================
-   MÓDULO DE AULAS Y CRONOGRAMA ACADÉMICO (TIPO CLASSROOM SENCILLO)
+   MÃ“DULO DE AULAS Y CRONOGRAMA ACADÃ‰MICO (TIPO CLASSROOM SENCILLO)
    ========================================================================== */
 
 .aulas-header-acciones {
@@ -3709,12 +3721,12 @@ body.dark-mode .admin-empty-state p {
     flex-wrap: wrap;
 }
 
-.btn-secundario-aulas {
-    background: #1C53B0 !important;
+.btn-subir-cta.btn-secundario-aulas {
+    background: #1C53B0;
 }
 
-.btn-secundario-aulas:hover {
-    background: #1e40af !important;
+.btn-subir-cta.btn-secundario-aulas:hover {
+    background: #1e40af;
 }
 
 /* Grid de Materias / Aulas Virtuales */
@@ -3843,7 +3855,7 @@ body.dark-mode .admin-empty-state p {
     gap: 5px;
 }
 
-/* Modalidad y Ubicación / Mapa */
+/* Modalidad y UbicaciÃ³n / Mapa */
 .modalidad-ubicacion-box {
     margin-bottom: 15px;
 }
@@ -3977,7 +3989,7 @@ body.dark-mode .admin-empty-state p {
     border-color: #1e3a8a;
 }
 
-/* Panel Vacío */
+/* Panel VacÃ­o */
 .panel-vacio-aulas {
     text-align: center;
     padding: 60px 20px;
@@ -4099,11 +4111,11 @@ body.dark-mode .admin-empty-state p {
     border-bottom: 2px solid #cbd5e1;
 }
 
-.celda-hora-bloque {
+.tabla-horario-umc .celda-hora-bloque {
     background: #f8fafc;
     color: #334155;
     text-align: center;
-    vertical-align: middle !important;
+    vertical-align: middle;
     font-size: 0.8rem;
 }
 
@@ -4289,8 +4301,8 @@ body.dark-mode .admin-empty-state p {
     display: block;
 }
 
-.texto-vencido {
-    color: #dc2626 !important;
+.fecha-vencimiento.texto-vencido {
+    color: #dc2626;
 }
 
 .alerta-vencido-tag {
@@ -4329,58 +4341,8 @@ body.dark-mode .admin-empty-state p {
 }
 
 /* ==========================================================================
-   TAB 4: CARGAR / ARMAR HORARIO (FORMULARIOS)
+   FORMULARIOS Y MODALES DE ACTIVIDADES (AULAS / DOCENTE)
    ========================================================================== */
-
-.grid-cargar-horario {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-    gap: 24px;
-}
-
-.card-formulario-aulas {
-    background: #ffffff;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    padding: 24px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.03);
-}
-
-.card-form-header {
-    display: flex;
-    gap: 15px;
-    align-items: flex-start;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.icono-header-card {
-    width: 44px;
-    height: 44px;
-    background: #eff6ff;
-    color: #1e3a8a;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.card-form-header h3 {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-
-.card-form-header p {
-    font-size: 0.82rem;
-    color: #64748b;
-    margin: 0;
-    line-height: 1.4;
-}
 
 .formulario-estilo-lay8 {
     display: flex;
@@ -4433,47 +4395,6 @@ body.dark-mode .admin-empty-state p {
     gap: 12px;
 }
 
-.caja-subida-dropzone {
-    border: 2px dashed #93c5fd;
-    background: #f8fafc;
-    border-radius: 10px;
-    padding: 30px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.caja-subida-dropzone:hover {
-    background: #eff6ff;
-    border-color: #1e3a8a;
-}
-
-.icono-dropzone {
-    font-size: 3rem;
-    color: #3b82f6;
-    margin-bottom: 8px;
-    display: block;
-}
-
-.label-archivo-custom {
-    display: block;
-    cursor: pointer;
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: #1e3a8a;
-    margin-bottom: 6px;
-}
-
-.label-archivo-custom input[type="file"] {
-    display: none;
-}
-
-.ayuda-dropzone {
-    font-size: 0.78rem;
-    color: #64748b;
-    display: block;
-}
-
 .btn-cta-submit {
     background: #1e3a8a;
     color: #ffffff;
@@ -4495,58 +4416,19 @@ body.dark-mode .admin-empty-state p {
     transform: translateY(-1px);
 }
 
-.alerta-registro-requerido {
-    text-align: center;
-    padding: 35px 20px;
-    background: #fffbeb;
-    border-radius: 10px;
-    border: 1px solid #fde68a;
-}
-
-.alerta-registro-requerido h4 {
-    color: #92400e;
-    font-size: 1.05rem;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.alerta-registro-requerido p {
-    color: #78350f;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    margin: 0;
-}
-
-.modal-actividad-ancho {
-    max-width: 520px !important;
-    max-height: 88vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
+.modal-contenido-aula.modal-actividad-ancho {
+    max-width: 520px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .modal-actividad-ancho .formulario-estilo-lay8 {
-    overflow-y: auto !important;
-    max-height: calc(88vh - 65px) !important;
-    padding: 22px 24px !important;
-    box-sizing: border-box !important;
-}
-
-/* ==========================================================================
-   SELECTOR MULTIPLE DE BLOQUES HORARIOS UMC Y HERRAMIENTAS DE HORARIO
-   ========================================================================== */
-
-.subtexto-bloques-info {
-    font-size: 0.78rem;
-    color: #64748b;
-    font-weight: 500;
-}
-
-.selector-turnos-bloques {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+    overflow-y: auto;
+    max-height: calc(88vh - 65px);
+    padding: 22px 24px;
+    box-sizing: border-box;
 }
 
 .btn-turno-filtro {
@@ -4572,123 +4454,6 @@ body.dark-mode .admin-empty-state p {
     border-color: #1e3a8a;
 }
 
-.grid-bloques-selector {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 8px;
-    max-height: 230px;
-    overflow-y: auto;
-    padding: 8px 4px 4px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #fafbfc;
-}
-
-.card-bloque-check {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 10px;
-    background: #ffffff;
-    border: 1.5px solid #cbd5e1;
-    border-radius: 8px;
-    cursor: pointer;
-    position: relative;
-    user-select: none;
-    transition: all 0.18s ease;
-}
-
-.card-bloque-check:hover {
-    border-color: #94a3b8;
-    background: #f1f5f9;
-}
-
-.card-bloque-check input[type="checkbox"] {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 16px;
-    height: 16px;
-    accent-color: #2563eb;
-    cursor: pointer;
-}
-
-.card-bloque-check.seleccionado,
-.card-bloque-check:has(input[type="checkbox"]:checked) {
-    background: #eff6ff;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 1px #2563eb;
-}
-
-.bloque-hora-badge {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #1e40af;
-    background: #dbeafe;
-    padding: 1px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    width: fit-content;
-    margin-bottom: 4px;
-}
-
-.bloque-hora-tiempo {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.2;
-}
-
-.bloque-hora-turno {
-    font-size: 0.72rem;
-    color: #64748b;
-    margin-top: 2px;
-}
-
-.barra-resumen-bloques {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-    border-radius: 8px;
-    margin-top: 8px;
-}
-
-.info-bloques-seleccionados {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #166534;
-}
-
-.rango-horas-calculado {
-    display: block;
-    font-size: 0.78rem;
-    color: #15803d;
-    font-weight: 500;
-}
-
-.btn-limpiar-seleccion-bloques {
-    background: transparent;
-    border: 1px solid #86efac;
-    color: #166534;
-    font-size: 0.76rem;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s ease;
-}
-
-.btn-limpiar-seleccion-bloques:hover {
-    background: #dcfce7;
-}
-
 .btn-limpiar-horario-action {
     background: #fff1f2;
     color: #e11d48;
@@ -4711,264 +4476,225 @@ body.dark-mode .admin-empty-state p {
     color: #be123c;
 }
 
-/* Toast flotante para feedback inmediato en Aulas */
-.toast-notif-aulas {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 9999;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideUpToast 0.3s ease;
-    max-width: 400px;
-}
-
-.toast-notif-aulas.exito {
-    background: #10b981;
-    color: #ffffff;
-}
-
-.toast-notif-aulas.error {
-    background: #ef4444;
-    color: #ffffff;
-}
-
-@keyframes slideUpToast {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 /* ==========================================================================
    ADAPTACIONES DE MODO OSCURO PARA AULAS / CLASSROOM
    ========================================================================== */
 
 body.dark-mode .tarjeta-aula-classroom {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    border-top-color: #3b82f6 !important;
+    background: #0f172a;
+    border-color: #334155;
+    border-top-color: #3b82f6;
 }
 
 body.dark-mode .titulo-materia-aula {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .badge-codigo-materia {
-    background: #1e3a8a !important;
-    color: #bfdbfe !important;
+    background: #1e3a8a;
+    color: #bfdbfe;
 }
 
 body.dark-mode .badge-seccion-materia {
-    background: #1e293b !important;
-    color: #cbd5e1 !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
 }
 
 body.dark-mode .box-presencial {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .box-online {
-    background: #172554 !important;
-    border-color: #1e40af !important;
+    background: #172554;
+    border-color: #1e40af;
 }
 
 body.dark-mode .estado-docente-badge {
-    color: #e2e8f0 !important;
+    color: #e2e8f0;
 }
 
 body.dark-mode .resumen-horario-materia {
-    background: #1e293b !important;
+    background: #1e293b;
 }
 
 body.dark-mode .label-dias-clase {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .lista-mini-horarios li {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .meta-aula-footer {
-    border-top-color: #334155 !important;
+    border-top-color: #334155;
 }
 
 body.dark-mode .panel-vacio-aulas {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .panel-vacio-aulas h3 {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .contenedor-tabla-horario {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .tabla-horario-umc th {
-    background: #1e3a8a !important;
-    border-color: #334155 !important;
+    background: #1e3a8a;
+    border-color: #334155;
 }
 
 body.dark-mode .tabla-horario-umc td {
-    border-color: #334155 !important;
+    border-color: #334155;
 }
 
 body.dark-mode .fila-separador-turno td {
-    background: #1e293b !important;
-    color: #60a5fa !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    color: #60a5fa;
+    border-color: #334155;
 }
 
 body.dark-mode .celda-hora-bloque {
-    background: #1e293b !important;
-    color: #94a3b8 !important;
+    background: #1e293b;
+    color: #94a3b8;
 }
 
 body.dark-mode .bloque-clase-card {
-    background: #1e293b !important;
-    border-left-color: #60a5fa !important;
+    background: #1e293b;
+    border-left-color: #60a5fa;
 }
 
 body.dark-mode .bloque-materia {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .btn-imprimir-horario {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
 }
 
 body.dark-mode .item-actividad-card {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .titulo-actividad {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .chip-actividad {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #cbd5e1 !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
 }
 
 body.dark-mode .chip-actividad.activo {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
+    background: #3b82f6;
+    color: #ffffff;
 }
 
 body.dark-mode .card-formulario-aulas {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .grid-bloques-selector {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .card-bloque-check {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: #1e293b;
+    border-color: #334155;
 }
 
 body.dark-mode .card-bloque-check:hover {
-    background: #334155 !important;
+    background: #334155;
 }
 
 body.dark-mode .card-bloque-check.seleccionado,
 body.dark-mode .card-bloque-check:has(input[type="checkbox"]:checked) {
-    background: #1e3a8a !important;
-    border-color: #60a5fa !important;
-    box-shadow: 0 0 0 1px #60a5fa !important;
+    background: #1e3a8a;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1px #60a5fa;
 }
 
 body.dark-mode .bloque-hora-tiempo {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .bloque-hora-turno {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-turno-filtro {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #cbd5e1 !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-turno-filtro.activo {
-    background: #2563eb !important;
-    color: #ffffff !important;
-    border-color: #2563eb !important;
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
 }
 
 body.dark-mode .barra-resumen-bloques {
-    background: #064e3b !important;
-    border-color: #059669 !important;
+    background: #064e3b;
+    border-color: #059669;
 }
 
 body.dark-mode .info-bloques-seleccionados {
-    color: #a7f3d0 !important;
+    color: #a7f3d0;
 }
 
 body.dark-mode .rango-horas-calculado {
-    color: #6ee7b7 !important;
+    color: #6ee7b7;
 }
 
 body.dark-mode .btn-limpiar-seleccion-bloques {
-    border-color: #059669 !important;
-    color: #a7f3d0 !important;
+    border-color: #059669;
+    color: #a7f3d0;
 }
 
 body.dark-mode .btn-limpiar-horario-action {
-    background: #450a0a !important;
-    border-color: #7f1d1d !important;
-    color: #fca5a5 !important;
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fca5a5;
 }
 
 body.dark-mode .card-form-header {
-    border-bottom-color: #334155 !important;
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .card-form-header h3 {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .caja-subida-dropzone {
-    background: #1e293b !important;
-    border-color: #3b82f6 !important;
+    background: #1e293b;
+    border-color: #3b82f6;
 }
 
 body.dark-mode .select-lay8,
 body.dark-mode .input-lay8 {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .campo-grupo label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
-/* Reglas de impresión para el Horario */
+/* Reglas de impresiÃ³n para el Horario */
 @media print {
     .barra-superior,
     .sidebar,
@@ -5010,12 +4736,12 @@ body.dark-mode .campo-grupo label {
 }
 
 
-/* Adaptación de Términos y Condiciones en Registro (Dark Mode) */
+/* AdaptaciÃ³n de TÃ©rminos y Condiciones en Registro (Dark Mode) */
 body.dark-mode .checkbox-terminos-label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 body.dark-mode .checkbox-terminos-label a {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 
@@ -5140,17 +4866,17 @@ body.dark-mode .checkbox-terminos-label a {
 }
 
 .contenedor-mapa.is-fullscreen {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: none !important;
-    max-height: none !important;
-    border-radius: 0 !important;
-    border: none !important;
-    margin: 0 !important;
-    z-index: 999999 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    z-index: 999999;
 }
 
 .mapa-viewport {
@@ -5181,7 +4907,7 @@ body.dark-mode .checkbox-terminos-label a {
 }
 
 .mapa-canvas.animar-zoom {
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .imagen-mapa {
@@ -5212,18 +4938,18 @@ body.dark-mode .checkbox-terminos-label a {
 }
 
 .pin-contenedor:hover {
-    transform: translate(-50%, -50%) scale(calc(var(--pin-scale, 1) * 1.35)) !important;
-    z-index: 99 !important;
+    transform: translate(-50%, -50%) scale(calc(var(--pin-scale, 1) * 1.35));
+    z-index: 99;
 }
 
 /* Modo Vista General (LOD - Level of Detail) */
 .mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-libre {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
 }
 
-/* En vista general, las ocupadas y próximas se muestran claramente */
+/* En vista general, las ocupadas y prÃ³ximas se muestran claramente */
 .mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-ocupada,
 .mapa-canvas.modo-vista-general .pin-contenedor.pin-estado-proxima {
     opacity: 0.95;
@@ -5232,35 +4958,37 @@ body.dark-mode .checkbox-terminos-label a {
 }
 
 /* Filtro de carreras activo */
-.mapa-canvas.filtro-activo .pin-contenedor {
-    opacity: 0.15 !important;
-    pointer-events: none !important;
+#mapa-canvas.filtro-activo .pin-contenedor {
+    opacity: 0.15;
+    pointer-events: none;
     transition: opacity 0.25s ease;
 }
 
-.mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    z-index: 50 !important;
+#mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+    z-index: 50;
 }
 
-.mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado .pin-badge {
+#mapa-canvas.filtro-activo .pin-contenedor.pin-resaltado .pin-badge {
     box-shadow: 0 0 0 3px #ffffff, 0 0 16px rgba(37, 99, 235, 0.85);
 }
 
 /* Forzar mostrar todos los pines si el usuario lo activa */
-.mapa-canvas.forzar-ver-pines .pin-contenedor {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
+#mapa-canvas.forzar-ver-pines .pin-contenedor,
+#mapa-canvas.forzar-ver-pines .pin-contenedor.pin-estado-libre {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
 }
 
 /* Forzar ocultar todos los pines */
-.mapa-canvas.forzar-ocultar-pines .pin-contenedor {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
+#mapa-canvas.forzar-ocultar-pines .pin-contenedor,
+#mapa-canvas.forzar-ocultar-pines .pin-contenedor.pin-resaltado {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
 }
 
 /* Insignia circular del pin */
@@ -5313,7 +5041,7 @@ body.dark-mode .checkbox-terminos-label a {
     100% { transform: scale(1.6); opacity: 0; }
 }
 
-/* Pin Amarillo: Próxima clase */
+/* Pin Amarillo: PrÃ³xima clase */
 .pin-badge.pin-amarilla {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     box-shadow: 0 3px 10px rgba(245, 158, 11, 0.5), 0 0 0 2px #ffffff;
@@ -5469,369 +5197,15 @@ body.dark-mode .checkbox-terminos-label a {
     transition: opacity 0.4s ease;
 }
 
-/* =========================================================================
-   WIDGET FLOTANTE DE AYUDA / GUÍA DE APARTADO (ESQUINA INFERIOR DERECHA)
-   ========================================================================= */
-
-.guia-apartado-widget {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    z-index: 9990;
-    font-family: var(--fuente-cuerpo, 'Hind', sans-serif);
-}
-
-/* Botón disparador (mini cuadro con símbolo de sugerencia / duda) */
-.guia-apartado-btn {
-    width: 46px;
-    height: 46px;
-    background: #ffffff;
-    border: 1.5px solid #2563eb;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    user-select: none;
-    outline: none;
-    color: #1e3a8a;
-}
-
-.guia-apartado-btn:hover,
-.guia-apartado-widget.is-open .guia-apartado-btn {
-    background: #1e3a8a;
-    color: #ffffff;
-    border-color: #1e3a8a;
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 10px 25px rgba(30, 58, 138, 0.35);
-}
-
-.guia-icono-principal {
-    font-size: 1.55rem;
-    line-height: 1;
-    transition: transform 0.22s ease;
-}
-
-.guia-apartado-btn:hover .guia-icono-principal {
-    transform: rotate(12deg);
-}
-
-/* Indicador de punto pulsante */
-.guia-dot-pulso {
-    position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 11px;
-    height: 11px;
-    background: #3b82f6;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
-    animation: guia-pulso-anim 2s infinite;
-}
-
-@keyframes guia-pulso-anim {
-    0% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-    70% { transform: scale(1.1); opacity: 0.9; box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
-    100% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-}
-
-/* Tarjeta desplegable con la descripción detallada */
-.guia-apartado-card {
-    position: absolute;
-    bottom: calc(100% + 12px);
-    right: 0;
-    width: 350px;
-    max-width: calc(100vw - 36px);
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 16px 40px -8px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0, 0, 0, 0.05);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px) scale(0.96);
-    transform-origin: bottom right;
-    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                visibility 0.22s;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: 10000;
-}
-
-/* Al posicionar el cursor O al darle clic */
-.guia-apartado-widget:hover .guia-apartado-card,
-.guia-apartado-widget.is-open .guia-apartado-card {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
-}
-
-/* Cabecera de la tarjeta */
-.guia-card-header {
-    padding: 14px 16px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-}
-
-.guia-header-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    background: #eff6ff;
-    color: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.35rem;
-    flex-shrink: 0;
-    border: 1px solid #bfdbfe;
-}
-
-.guia-header-titles {
-    flex: 1;
-    min-width: 0;
-}
-
-.guia-tag-modulo {
-    display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #2563eb;
-    margin-bottom: 2px;
-}
-
-.guia-card-title {
-    font-family: var(--fuente-titulos, 'Montserrat', sans-serif);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
-    line-height: 1.25;
-}
-
-.guia-btn-cerrar {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    color: #64748b;
-    cursor: pointer;
-    padding: 4px;
-    line-height: 1;
-    border-radius: 6px;
-    transition: background 0.15s, color 0.15s;
-}
-
-.guia-btn-cerrar:hover {
-    background: #e2e8f0;
-    color: #0f172a;
-}
-
-/* Cuerpo de la tarjeta */
-.guia-card-body {
-    padding: 16px;
-    max-height: 360px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.guia-card-desc {
-    font-size: 0.84rem;
-    color: #334155;
-    line-height: 1.5;
-    margin: 0;
-}
-
-/* Sección de tips y funciones rápidas */
-.guia-tips-box {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.guia-tips-titulo {
-    font-size: 0.73rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.guia-tip-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 0.78rem;
-    color: #334155;
-    line-height: 1.38;
-}
-
-.guia-tip-item i {
-    font-size: 0.98rem;
-    color: #2563eb;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-.guia-tip-item b {
-    color: #0f172a;
-}
-
-/* Pie de la tarjeta */
-.guia-card-footer {
-    padding: 9px 16px;
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    font-size: 0.73rem;
-    color: #64748b;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.guia-card-footer i {
-    color: #f59e0b;
-    font-size: 0.95rem;
-}
-
-/* Compatibilidad con Modo Oscuro */
-body.dark-mode .guia-apartado-btn {
-    background: #1e293b;
-    border-color: #3b82f6;
-    color: #93c5fd;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-body.dark-mode .guia-apartado-btn:hover,
-body.dark-mode .guia-apartado-widget.is-open .guia-apartado-btn {
-    background: #2563eb;
-    color: #ffffff;
-    border-color: #60a5fa;
-}
-
-body.dark-mode .guia-apartado-card {
-    background: #1e293b;
-    border-color: #334155;
-    box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.6);
-}
-
-body.dark-mode .guia-card-header {
-    background: #0f172a;
-    border-bottom-color: #334155;
-}
-
-body.dark-mode .guia-header-icon-box {
-    background: #1e293b;
-    color: #60a5fa;
-    border-color: #2563eb;
-}
-
-body.dark-mode .guia-card-title {
-    color: #f8fafc;
-}
-
-body.dark-mode .guia-tag-modulo {
-    color: #60a5fa;
-}
-
-body.dark-mode .guia-btn-cerrar {
-    color: #94a3b8;
-}
-
-body.dark-mode .guia-btn-cerrar:hover {
-    background: #334155;
-    color: #ffffff;
-}
-
-body.dark-mode .guia-card-desc {
-    color: #cbd5e1;
-}
-
-body.dark-mode .guia-tips-box {
-    background: #0f172a;
-    border-color: #334155;
-}
-
-body.dark-mode .guia-tips-titulo {
-    color: #94a3b8;
-}
-
-body.dark-mode .guia-tip-item {
-    color: #cbd5e1;
-}
-
-body.dark-mode .guia-tip-item b {
-    color: #f8fafc;
-}
-
-body.dark-mode .guia-card-footer {
-    background: #0f172a;
-    border-top-color: #334155;
-    color: #94a3b8;
-}
-
 /* ==========================================================================
-   ESTILOS DE MODO OSCURO PARA CAJAS DE AJUSTES, BOTÓN LEER Y VISOR WORD (REVISIÓN HARYERIT)
+   ESTILOS DE MODO OSCURO PARA CAJAS DE AJUSTES (REVISIÃ“N HARYERIT)
    ========================================================================== */
-
-/* Botón Leer Aporte en Biblioteca */
-.btn-leer-aporte {
-    background: #eff6ff;
-    color: #1e40af;
-    border: 1.5px solid #bfdbfe;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s ease;
-}
-
-.btn-leer-aporte:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
-}
-
-body.dark-mode .btn-leer-aporte,
-html.dark-mode .btn-leer-aporte {
-    background: #1e293b !important;
-    color: #93c5fd !important;
-    border-color: #3b82f6 !important;
-}
-
-body.dark-mode .btn-leer-aporte:hover,
-html.dark-mode .btn-leer-aporte:hover {
-    background: #273549 !important;
-    color: #bfdbfe !important;
-}
 
 /* Cajas de inputs en Ajustes de Cuenta y Perfil (Cajitas blancas reportadas por Haryerit) */
 body.dark-mode .editar-seguridad-box,
 html.dark-mode .editar-seguridad-box {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .editar-seguridad-box input,
@@ -5844,82 +5218,236 @@ body.dark-mode .input-pass-perfil,
 html.dark-mode .editar-seguridad-box input,
 html.dark-mode .input-file-adaptable,
 html.dark-mode #input-pass-perfil {
-    background: #1e293b !important;
-    border: 1.5px solid #334155 !important;
-    color: #f8fafc !important;
+    background: #1e293b;
+    border: 1.5px solid #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .editar-seguridad-box input::file-selector-button,
 body.dark-mode .input-file-adaptable::file-selector-button,
 body.dark-mode .input-file-certificacion::file-selector-button,
 html.dark-mode input[type="file"]::file-selector-button {
-    background: #0f172a !important;
-    color: #93c5fd !important;
-    border: 1px solid #334155 !important;
+    background: #0f172a;
+    color: #93c5fd;
+    border: 1px solid #334155;
 }
 
 /* Tarjetas de Solicitudes y Entregas Docentes en Modo Oscuro */
 body.dark-mode .card-solicitud-docente-item,
 html.dark-mode .card-solicitud-docente-item {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .card-solicitud-docente-item strong,
 body.dark-mode .card-solicitud-docente-item div,
 html.dark-mode .card-solicitud-docente-item strong {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .card-solicitud-docente-item span,
 html.dark-mode .card-solicitud-docente-item span {
-    color: #94a3b8 !important;
-}
-
-/* Visor de Word (.docx) en Modo Oscuro */
-body.dark-mode #visor-doc-docx-container,
-html.dark-mode #visor-doc-docx-container {
-    background: #0f172a !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode #visor-doc-docx-container h1,
-body.dark-mode #visor-doc-docx-container h2,
-body.dark-mode #visor-doc-docx-container h3,
-body.dark-mode #visor-doc-docx-container h4 {
-    color: #93c5fd !important;
-}
-
-body.dark-mode #visor-doc-docx-container p,
-body.dark-mode #visor-doc-docx-container li,
-body.dark-mode #visor-doc-docx-container span {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode #visor-doc-docx-container table,
-body.dark-mode #visor-doc-docx-container td,
-body.dark-mode #visor-doc-docx-container th {
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-/* Overrides para el Panel Admin en Modo Oscuro */
-body.dark-mode .carreras-horarios-summary-box,
-body.dark-mode .carreras-horarios-summary-box > div > div,
-body.dark-mode .carrera-horario-card {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f8fafc !important;
-}
-
-body.dark-mode .btn-seleccionar-pdf {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #cbd5e1 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode code {
-    background: rgba(30, 58, 138, 0.4) !important;
-    color: #93c5fd !important;
+    background: rgba(30, 58, 138, 0.4);
+    color: #93c5fd;
+}
+
+/* ==========================================================================
+   AJUSTES DE CONTRASTE Y MODO OSCURO (REVISIÃ“N 071126)
+   ========================================================================== */
+
+/* 1. Modal Logout */
+.modal-logout-titulo {
+    color: #0f172a;
+}
+.modal-logout-desc {
+    color: #64748b;
+}
+body.dark-mode .modal-logout-titulo {
+    color: #f8fafc;
+}
+body.dark-mode .modal-logout-desc {
+    color: #94a3b8;
+}
+
+/* 2. Modal Solicitudes de Registro Docente & Validaciones */
+.modal-docentes-info-banner {
+    padding: 14px 22px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+/* Solicitudes de Profesores (Tarjetas y Elementos) */
+.card-solicitud-docente-item {
+    border: 1.5px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
+}
+.docente-item-cedula {
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.btn-ver-comprobante-docente {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.btn-ver-comprobante-docente:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+.sin-comprobante-badge {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+.docente-item-acciones {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.btn-docente-accion {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: filter 0.15s ease;
+}
+.btn-docente-accion:hover {
+    filter: brightness(0.92);
+}
+.btn-aprobar-docente-modal {
+    background: #10b981;
+    color: #ffffff;
+}
+.btn-rechazar-docente-modal {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+/* MODO OSCURO: Modal Solicitudes Docentes y Validaciones (Alta Legibilidad) */
+body.dark-mode .modal-docentes-info-banner,
+html.dark-mode .modal-docentes-info-banner {
+    background: #0f172a;
+    border-bottom-color: #334155;
+    color: #cbd5e1;
+}
+body.dark-mode .card-solicitud-docente-item,
+html.dark-mode .card-solicitud-docente-item {
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+}
+body.dark-mode .docente-item-cedula,
+html.dark-mode .docente-item-cedula {
+    background: #1e293b;
+    color: #93c5fd;
+    border: 1px solid #334155;
+}
+body.dark-mode .btn-ver-comprobante-docente,
+html.dark-mode .btn-ver-comprobante-docente {
+    background: #1e293b;
+    color: #e2e8f0;
+    border-color: #334155;
+}
+body.dark-mode .btn-ver-comprobante-docente:hover,
+html.dark-mode .btn-ver-comprobante-docente:hover {
+    background: #334155;
+    color: #ffffff;
+}
+body.dark-mode .docente-item-acciones,
+html.dark-mode .docente-item-acciones {
+    border-top-color: #334155;
+}
+body.dark-mode .modal-editar-footer,
+html.dark-mode .modal-editar-footer {
+    background: #0f172a;
+    border-top-color: #334155;
+}
+
+/* 3. ProgramaciÃ³n en el Mapa (Panel Admin) */
+.carreras-horarios-summary-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+.carreras-horarios-header {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.carreras-horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+}
+.carreras-horarios-chip {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.carreras-chip-code {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+.carreras-chip-count {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+body.dark-mode .carreras-horarios-summary-box {
+    background: #0f172a;
+    border-color: #334155;
+}
+body.dark-mode .carreras-horarios-header span:first-child {
+    color: #94a3b8;
+}
+body.dark-mode .carreras-horarios-chip {
+    background: #1e293b;
+    border-color: #334155;
+}
+body.dark-mode .carreras-chip-code {
+    color: #f8fafc;
+}
+body.dark-mode .carreras-chip-count {
+    color: #94a3b8;
 }

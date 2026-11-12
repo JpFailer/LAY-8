@@ -3,7 +3,41 @@
 <?= $this->section('content') ?>
 
 <div class="feed-contenedor-principal">
-  <div style="display:none;"><?= csrf_field() ?></div>
+  <div class="feed-csrf-hidden"><?= csrf_field() ?></div>
+
+  <?php
+    $estadoVerificacion = $estadoVerificacion ?? (session()->get('estado_verificacion') ?? 'no_aplica');
+    $esAdminSistema     = $esAdminSistema ?? in_array($userRol, ['admin', 'administrador'], true);
+    $esProfesorAprobado = $esProfesorAprobado ?? ($userRol === 'profesor' && $estadoVerificacion === 'aprobado');
+  ?>
+
+  <?php if (session()->getFlashdata('error')): ?>
+    <div class="alerta-notif alerta-error feed-alerta-mb">
+      <i class="bx bx-error-circle feed-alerta-ico"></i>
+      <span><?= esc(session()->getFlashdata('error')) ?></span>
+    </div>
+  <?php endif; ?>
+
+  <?php if (session()->getFlashdata('mensaje')): ?>
+    <div class="alerta-notif alerta-exito feed-alerta-mb">
+      <i class="bx bx-check-circle feed-alerta-ico"></i>
+      <span><?= esc(session()->getFlashdata('mensaje')) ?></span>
+    </div>
+  <?php endif; ?>
+
+  <?php if (session()->getFlashdata('info')): ?>
+    <div class="alerta-notif feed-alerta-mb feed-alerta-info">
+      <i class="bx bx-info-circle feed-alerta-ico"></i>
+      <span><?= esc(session()->getFlashdata('info')) ?></span>
+    </div>
+  <?php endif; ?>
+
+  <?php if ($userRol === 'profesor' && !$esProfesorAprobado): ?>
+    <div class="alerta-notif feed-alerta-mb feed-alerta-aviso">
+      <i class="bx bx-time-five feed-alerta-ico-lg"></i>
+      <span><strong>Verificación docente pendiente:</strong> Tu carnet o constancia institucional está en revisión por un administrador. El acceso al Panel Docente se habilitará tras su aprobación.</span>
+    </div>
+  <?php endif; ?>
 
   <!-- ========================================================================= -->
   <!-- 1. BANNER DINÁMICO DE BIENVENIDA Y JORNADA                              -->
@@ -17,12 +51,11 @@
       ?>
       <h2>
         <?= $saludoMomento ?>, <?= esc($primerNombre) ?>!
-        <?php if (in_array($userRol, ['admin', 'administrador'])): ?>
-          <i class="bx bxs-check-circle" style="color: #2563eb; font-size: 1.3rem; vertical-align: middle;" title="Administrador Verificado"></i>
-        <?php elseif ($userRol === 'profesor'): ?>
-          <i class="bx bxs-check-circle" style="color: #10b981; font-size: 1.3rem; vertical-align: middle;" title="Profesor Verificado"></i>
+        <?php if ($esAdminSistema): ?>
+          <i class="bx bxs-check-circle feed-verif-ico feed-verif-admin" title="Administrador Verificado"></i>
+        <?php elseif ($esProfesorAprobado): ?>
+          <i class="bx bxs-check-circle feed-verif-ico feed-verif-prof" title="Profesor Verificado"></i>
         <?php endif; ?>
-        <span style="font-size: 1.5rem;"></span>
       </h2>
       
       <div class="welcome-meta-chips">
@@ -31,7 +64,7 @@
         </span>
         <span class="welcome-chip">
           <i class="bx bx-shield-quarter"></i>
-          <?= ($userRol === 'profesor') ? 'Cuerpo Docente UMC' : (in_array($userRol, ['admin', 'administrador']) ? 'Panel de Administración' : 'Estudiante Pregrado') ?>
+          <?= ($userRol === 'profesor') ? ($esProfesorAprobado ? 'Cuerpo Docente UMC' : 'Docente (Pendiente de Verificación)') : ($esAdminSistema ? 'Panel de Administración' : 'Estudiante Pregrado') ?>
         </span>
       </div>
     </div>
@@ -78,7 +111,7 @@
                       <?php endif; ?>
                     </div>
                     <div class="clase-aula-info">
-                      <i class="bx bx-map-pin" style="color: #2563eb;"></i>
+                      <i class="bx bx-map-pin feed-ico-pin"></i>
                       <span><?= esc($clase['aula']) ?></span>
                     </div>
                   </div>
@@ -104,18 +137,24 @@
               <a href="<?= base_url('biblioteca') ?>" class="btn-empty-jornada-cta">
                 <i class="bx bx-book-reader"></i> Explorar Biblioteca
               </a>
-              <a href="<?= base_url('aulas') ?>" class="btn-empty-jornada-secondary">
-                <i class="bx bx-time"></i> Ver Horario Semanal
-              </a>
+              <?php if ($esProfesorAprobado): ?>
+                <a href="<?= base_url('docente') ?>" class="btn-empty-jornada-secondary">
+                  <i class="bx bx-chalkboard"></i> Ir a Panel Docente
+                </a>
+              <?php elseif ($userRol !== 'profesor'): ?>
+                <a href="<?= base_url('aulas?tab=horario') ?>" class="btn-empty-jornada-secondary">
+                  <i class="bx bx-time"></i> Ver Horario Semanal
+                </a>
+              <?php endif; ?>
             </div>
           </div>
         <?php endif; ?>
       </section>
 
       <!-- ===================================================================== -->
-      <!-- B. COMPOSER DE COMUNICADOS (SOLO DOCENTES Y ADMINISTRADORES)          -->
+      <!-- B. COMPOSER DE COMUNICADOS (SOLO DOCENTES VERIFICADOS Y ADMINS)       -->
       <!-- ===================================================================== -->
-      <?php if (in_array($userRol, ['profesor', 'admin', 'administrador'], true)): ?>
+      <?php if ($esProfesorAprobado || $esAdminSistema): ?>
         <section class="composer-noticia-card">
           <div class="composer-header-row">
             <i class="bx bx-edit-alt"></i>
@@ -128,7 +167,7 @@
             <textarea name="contenido" id="composer-contenido" class="composer-textarea-cuerpo" placeholder="Escribe aquí los detalles del aviso, directrices de clase o novedades para la comunidad..." required></textarea>
 
             <div class="composer-bottom-controls">
-              <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="feed-composer-left">
                 <select name="categoria" id="composer-categoria" class="composer-select-categoria">
                   <option value="Institucional">Institucional</option>
                   <option value="Académico">Académico</option>
@@ -157,12 +196,12 @@
       <!-- C. TABLÓN DE NOTICIAS CON LIKES E HILOS ESTILO REDDIT                 -->
       <!-- ===================================================================== -->
       <section class="seccion-tablon-muro">
-        <div class="card-header-feed" style="margin-bottom: 8px;">
+        <div class="card-header-feed feed-header-mb">
           <h3>
             <i class="bx bx-news"></i>
             Tablón de Noticias y Comunicados UMC
           </h3>
-          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">
+          <span class="feed-count-muted">
             <?= count($noticias) ?> <?= (count($noticias) == 1) ? 'publicación' : 'publicaciones' ?>
           </span>
         </div>
@@ -194,9 +233,9 @@
                     <div class="autor-nombre-line">
                       <span class="autor-nombre-txt"><?= esc($autorNombre) ?></span>
                       <?php if (in_array($rolAutor, ['admin', 'administrador'])): ?>
-                        <span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                        <span class="check-verificado-admin" title="Administrador Verificado"><i class="bx bxs-check-circle"></i></span>
                       <?php elseif ($rolAutor === 'profesor'): ?>
-                        <span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                        <span class="check-verificado-profesor" title="Profesor Verificado"><i class="bx bxs-check-circle"></i></span>
                       <?php endif; ?>
                       <span class="badge-rol-autor <?= $badgeRolClass ?>"><?= $badgeRolTexto ?></span>
                     </div>
@@ -399,26 +438,53 @@
             <span>Mapa UMC</span>
           </a>
 
-          <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #f3e8ff; color: #7c3aed;">
-              <i class="bx bx-time"></i>
-            </div>
-            <span>Mi Horario</span>
-          </a>
+          <?php if ($userRol === 'profesor'): ?>
+            <!-- Accesos rápidos exclusivos para Profesores (Sin aulas ni horario de estudiantes) -->
+            <?php if ($esProfesorAprobado): ?>
+              <a href="<?= base_url('docente') ?>" class="btn-acceso-rapido">
+                <div class="icono-acceso-rapido" style="background: #dcfce7; color: #059669;">
+                  <i class="bx bx-chalkboard"></i>
+                </div>
+                <span>Panel Docente</span>
+              </a>
+            <?php endif; ?>
 
-          <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #dcfce7; color: #166534;">
-              <i class="bx bx-cloud-upload"></i>
-            </div>
-            <span>Subir Aporte</span>
-          </a>
+            <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #e0f2fe; color: #0284c7;">
+                <i class="bx bx-cloud-upload"></i>
+              </div>
+              <span>Subir Aporte</span>
+            </a>
 
-          <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido">
-            <div class="icono-acceso-rapido" style="background: #ffedd5; color: #c2410c;">
-              <i class="bx bx-door-open"></i>
-            </div>
-            <span>Aulas UMC</span>
-          </a>
+            <a href="<?= base_url('biblioteca') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #fef3c7; color: #d97706;">
+                <i class="bx bx-book-reader"></i>
+              </div>
+              <span>Biblioteca</span>
+            </a>
+          <?php else: ?>
+            <!-- Accesos rápidos para Estudiantes y Administradores -->
+            <a href="<?= base_url('aulas?tab=horario') ?>" class="btn-acceso-rapido" title="Ver mi horario de clases semanal">
+              <div class="icono-acceso-rapido" style="background: #f3e8ff; color: #7c3aed;">
+                <i class="bx bx-time"></i>
+              </div>
+              <span>Mi Horario</span>
+            </a>
+
+            <a href="<?= base_url('biblioteca/subir') ?>" class="btn-acceso-rapido">
+              <div class="icono-acceso-rapido" style="background: #dcfce7; color: #166534;">
+                <i class="bx bx-cloud-upload"></i>
+              </div>
+              <span>Subir Aporte</span>
+            </a>
+
+            <a href="<?= base_url('aulas') ?>" class="btn-acceso-rapido" title="Explorar aulas y materias de mi carrera">
+              <div class="icono-acceso-rapido" style="background: #ffedd5; color: #c2410c;">
+                <i class="bx bx-door-open"></i>
+              </div>
+              <span>Aulas UMC</span>
+            </a>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -429,279 +495,8 @@
   </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- 3. INTERACCIONES AJAX EN TIEMPO REAL (LIKES, COMUNICADOS, HILOS REDDIT)    -->
-<!-- ========================================================================= -->
-<script>
-  const BASE_URL_FEED = '<?= base_url() ?>/';
-  const CSRF_TOKEN_NAME = '<?= csrf_token() ?>';
-  const CSRF_HEADER_NAME = '<?= csrf_header() ?>';
+<?= $this->endSection() ?>
 
-  function getCsrfHeaders() {
-    const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-    const csrfInput = document.querySelector('input[name="' + CSRF_TOKEN_NAME + '"]');
-    if (csrfInput && csrfInput.value) {
-      headers[CSRF_HEADER_NAME] = csrfInput.value;
-    }
-    return headers;
-  }
-
-  function appendCsrf(formData) {
-    const csrfInput = document.querySelector('input[name="' + CSRF_TOKEN_NAME + '"]');
-    if (csrfInput && csrfInput.value && !formData.has(CSRF_TOKEN_NAME)) {
-      formData.append(CSRF_TOKEN_NAME, csrfInput.value);
-    }
-  }
-
-  // A. Publicar Comunicado Oficial (Docentes y Admins)
-  function publicarNoticiaFeed(e) {
-    e.preventDefault();
-    const btn = document.getElementById('btn-submit-comunicado');
-    const form = document.getElementById('formPublicarNoticia');
-    if (!form || !btn) return;
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Publicando...';
-
-    const formData = new FormData(form);
-    appendCsrf(formData);
-
-    fetch(BASE_URL_FEED + 'api/feed/publicar', {
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bx bx-paper-plane"></i> Publicar';
-
-      if (res && res.success) {
-        window.location.reload();
-      } else {
-        alert(res.mensaje || 'Error al publicar el comunicado.');
-      }
-    })
-    .catch(err => {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bx bx-paper-plane"></i> Publicar';
-      console.error(err);
-      alert('Error de conexión al emitir el comunicado.');
-    });
-  }
-
-  // B. Alternar Me Gusta (Like/Unlike) con micro-animación
-  function toggleLikeNoticia(noticiaId) {
-    const btn = document.getElementById('btn-like-' + noticiaId);
-    const conteoEl = document.getElementById('conteo-likes-' + noticiaId);
-    if (!btn) return;
-
-    fetch(BASE_URL_FEED + 'api/feed/toggle-like/' + noticiaId, { 
-      method: 'POST',
-      headers: getCsrfHeaders()
-    })
-      .then(r => r.json())
-      .then(res => {
-        if (res && res.success) {
-          if (res.liked) {
-            btn.classList.add('dio-like');
-            btn.querySelector('i').className = 'bx bxs-heart';
-          } else {
-            btn.classList.remove('dio-like');
-            btn.querySelector('i').className = 'bx bx-heart';
-          }
-          if (conteoEl) {
-            conteoEl.innerText = res.total_likes;
-          }
-        }
-      })
-      .catch(err => console.error(err));
-  }
-
-  // C. Toggle Desplegable de Comentarios
-  function toggleHilosComentarios(noticiaId) {
-    const seccion = document.getElementById('hilos-comentarios-' + noticiaId);
-    const btn = document.getElementById('btn-toggle-comentarios-' + noticiaId);
-    if (!seccion) return;
-
-    const estaOculto = (seccion.style.display === 'none' || seccion.style.display === '');
-    seccion.style.display = estaOculto ? 'flex' : 'none';
-    if (btn) {
-      if (estaOculto) btn.classList.add('abierto');
-      else btn.classList.remove('abierto');
-    }
-  }
-
-  // D. Enviar Comentario Principal
-  function enviarComentarioPrincipal(e, noticiaId) {
-    e.preventDefault();
-    const input = document.getElementById('input-comentario-' + noticiaId);
-    if (!input || !input.value.trim()) return;
-
-    const texto = input.value.trim();
-    input.value = '';
-
-    const formData = new FormData();
-    formData.append('contenido', texto);
-    appendCsrf(formData);
-
-    fetch(BASE_URL_FEED + 'api/feed/comentar/' + noticiaId, {
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-      if (res && res.success && res.comentario) {
-        const contenedor = document.getElementById('contenedor-hilos-' + noticiaId);
-        const conteoEl = document.getElementById('conteo-comentarios-' + noticiaId);
-        if (conteoEl) conteoEl.innerText = res.total_comentarios;
-
-        if (contenedor) {
-          const msgVacio = contenedor.querySelector('.msg-sin-comentarios');
-          if (msgVacio) msgVacio.remove();
-
-          const c = res.comentario;
-          const avatarUrl = c.foto_perfil ? (BASE_URL_FEED + c.foto_perfil) : (BASE_URL_FEED + 'img/usuario.png');
-          const badgeRolClass = (c.rol === 'profesor') ? 'badge-docente' : (['admin','administrador'].includes(c.rol) ? 'badge-admin' : 'badge-estudiante');
-          const badgeRolTexto = (c.rol === 'profesor') ? 'Docente' : (['admin','administrador'].includes(c.rol) ? 'Admin' : 'Estudiante');
-
-          const checkIconBadge = (c.rol === 'profesor') 
-            ? '<span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>'
-            : (['admin','administrador'].includes(c.rol) 
-                ? '<span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>' 
-                : '');
-
-          const nuevoItemHtml = `
-            <div class="comentario-item-wrapper" id="comentario-item-${c.id}">
-              <div class="comentario-burbuja">
-                <div class="comentario-header-row">
-                  <img src="${avatarUrl}" class="avatar-comentario" alt="Avatar">
-                  <span class="nombre-comentarista">${c.primer_nombre} ${c.apellidos}</span>
-                  ${checkIconBadge}
-                  <span class="rol-badge-comentario ${badgeRolClass}">${badgeRolTexto}</span>
-                  <span class="tiempo-comentario">Justo ahora</span>
-                </div>
-                <p class="texto-comentario-p">${c.contenido}</p>
-                <button type="button" class="btn-responder-comentario" onclick="abrirCajaRespuestaInline(${noticiaId}, ${c.id})">
-                  <i class="bx bx-reply"></i> Responder
-                </button>
-                <div class="caja-respuesta-inline" id="caja-reply-${c.id}" style="display: none;">
-                  <input type="text" class="input-respuesta-inline" id="input-reply-${c.id}" placeholder="Escribe tu respuesta...">
-                  <button type="button" class="btn-enviar-respuesta-inline" onclick="enviarRespuestaInline(${noticiaId}, ${c.id})">Responder</button>
-                </div>
-              </div>
-              <div class="hilo-respuestas-anidadas" id="respuestas-padre-${c.id}"></div>
-            </div>`;
-
-          contenedor.insertAdjacentHTML('beforeend', nuevoItemHtml);
-        }
-      } else {
-        alert(res.mensaje || 'Error al enviar comentario.');
-      }
-    })
-    .catch(err => console.error(err));
-  }
-
-  // E. Abrir Caja de Respuesta Inline (Reddit style)
-  function abrirCajaRespuestaInline(noticiaId, comentarioId) {
-    const caja = document.getElementById('caja-reply-' + comentarioId);
-    if (!caja) return;
-    const isHidden = (caja.style.display === 'none' || caja.style.display === '');
-    caja.style.display = isHidden ? 'flex' : 'none';
-    if (isHidden) {
-      const input = document.getElementById('input-reply-' + comentarioId);
-      if (input) input.focus();
-    }
-  }
-
-  // F. Enviar Respuesta Anidada
-  function enviarRespuestaInline(noticiaId, parentId) {
-    const input = document.getElementById('input-reply-' + parentId);
-    if (!input || !input.value.trim()) return;
-
-    const texto = input.value.trim();
-    input.value = '';
-
-    const caja = document.getElementById('caja-reply-' + parentId);
-    if (caja) caja.style.display = 'none';
-
-    const formData = new FormData();
-    formData.append('contenido', texto);
-    formData.append('parent_id', parentId);
-    appendCsrf(formData);
-
-    fetch(BASE_URL_FEED + 'api/feed/comentar/' + noticiaId, {
-      method: 'POST',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      body: formData
-    })
-    .then(r => r.json())
-    .then(res => {
-      if (res && res.success && res.comentario) {
-        const contenedorRespuestas = document.getElementById('respuestas-padre-' + parentId);
-        const conteoEl = document.getElementById('conteo-comentarios-' + noticiaId);
-        if (conteoEl) conteoEl.innerText = res.total_comentarios;
-
-        if (contenedorRespuestas) {
-          const c = res.comentario;
-          const avatarUrl = c.foto_perfil ? (BASE_URL_FEED + c.foto_perfil) : (BASE_URL_FEED + 'img/usuario.png');
-          const badgeRolClass = (c.rol === 'profesor') ? 'badge-docente' : (['admin','administrador'].includes(c.rol) ? 'badge-admin' : 'badge-estudiante');
-          const badgeRolTexto = (c.rol === 'profesor') ? 'Docente' : (['admin','administrador'].includes(c.rol) ? 'Admin' : 'Estudiante');
-
-          const checkIconBadgeResp = (c.rol === 'profesor') 
-            ? '<span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>'
-            : (['admin','administrador'].includes(c.rol) 
-                ? '<span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.05rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>' 
-                : '');
-
-          const respuestaHtml = `
-            <div class="comentario-burbuja" id="comentario-item-${c.id}">
-              <div class="comentario-header-row">
-                <img src="${avatarUrl}" class="avatar-comentario" alt="Avatar">
-                <span class="nombre-comentarista">${c.primer_nombre} ${c.apellidos}</span>
-                ${checkIconBadgeResp}
-                <span class="rol-badge-comentario ${badgeRolClass}">${badgeRolTexto}</span>
-                <span class="tiempo-comentario">Justo ahora</span>
-              </div>
-              <p class="texto-comentario-p">${c.contenido}</p>
-            </div>`;
-
-          contenedorRespuestas.insertAdjacentHTML('beforeend', respuestaHtml);
-        }
-      } else {
-        alert(res.mensaje || 'Error al responder.');
-      }
-    })
-    .catch(err => console.error(err));
-  }
-
-  // G. Eliminar Comunicado
-  function eliminarNoticiaPost(noticiaId) {
-    if (!confirm('¿Estás seguro de que deseas eliminar este comunicado del tablón universitario?')) {
-      return;
-    }
-
-    fetch(BASE_URL_FEED + 'api/feed/eliminar/' + noticiaId, { 
-      method: 'POST',
-      headers: getCsrfHeaders()
-    })
-      .then(r => r.json())
-      .then(res => {
-        if (res && res.success) {
-          const card = document.getElementById('noticia-' + noticiaId);
-          if (card) {
-            card.style.transition = 'all 0.3s ease';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.95)';
-            setTimeout(() => card.remove(), 300);
-          }
-        } else {
-          alert(res.mensaje || 'No se pudo eliminar.');
-        }
-      })
-      .catch(err => console.error(err));
-  }
-</script>
-
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/feed.js') ?>"></script>
 <?= $this->endSection() ?>

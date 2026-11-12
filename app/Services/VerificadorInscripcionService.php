@@ -66,8 +66,9 @@ class VerificadorInscripcionService
         }
 
         if (!$pythonExecutable) {
+            $redireccionNul = DIRECTORY_SEPARATOR === '\\' ? '2>nul' : '2>/dev/null';
             foreach (['python', 'python3'] as $cmd) {
-                $test = @shell_exec($cmd . ' -c "import pypdf; print(\'OK\')" 2>nul');
+                $test = @shell_exec($cmd . ' -c "import pypdf; print(\'OK\')" ' . $redireccionNul);
                 if ($test && trim($test) === 'OK') {
                     $pythonExecutable = $cmd;
                     break;
@@ -356,28 +357,41 @@ class VerificadorInscripcionService
     }
 
     /**
-     * Analiza y verifica un archivo PDF de inscripción.
-     * Retorna un arreglo estructurado con la validez, confianza y datos extraídos.
+     * Analiza y verifica un archivo PDF de inscripción priorizando el motor nativo PHP (smalot/pdfparser)
+     * para no depender de Python en producción; usa Python solo como respaldo si PHP no extrajo el texto/materias.
      */
     public function verificar(string $rutaPdf, ?string $carreraEsperada = null): array
     {
-        // 1. Intentar con el motor inteligente Python (pypdf/pdfminer)
+        $resultado = $this->verificarConMotorPhp($rutaPdf, $carreraEsperada);
+        if (!empty($resultado['es_valido']) || (!empty($resultado['lineas_extraidas']) && !empty($resultado['carrera_codigo']) && !empty($resultado['materias']))) {
+            return $resultado;
+        }
+
+        // Respaldo opcional con Python únicamente si el parser PHP nativo no pudo interpretar el PDF
         $resultadoPython = $this->verificarConMotorPython($rutaPdf);
-        if ($resultadoPython !== null && is_array($resultadoPython) && !empty($resultadoPython['es_valido'])) {
-            if (!empty($carreraEsperada) && !empty($resultadoPython['carrera_codigo']) && $resultadoPython['carrera_codigo'] !== $carreraEsperada) {
-                $carreraDoc = $resultadoPython['carrera_nombre'] ?? $resultadoPython['carrera_codigo'];
-                $carreraEsp = $this->nombresCarreras[$carreraEsperada] ?? $carreraEsperada;
-                $resultadoPython['es_valido'] = false;
-                $resultadoPython['motivo_invalidez'] = "Inconsistencia de carrera: El comprobante presentado pertenece a '{$carreraDoc}', pero intentas registrar o cambiarte a '{$carreraEsp}'.";
+        if ($resultadoPython !== null && is_array($resultadoPython)) {
+            if (!empty($resultadoPython['es_valido'])) {
+                if (!empty($carreraEsperada) && !empty($resultadoPython['carrera_codigo']) && $resultadoPython['carrera_codigo'] !== $carreraEsperada) {
+                    $carreraDoc = $resultadoPython['carrera_nombre'] ?? $resultadoPython['carrera_codigo'];
+                    $carreraEsp = $this->nombresCarreras[$carreraEsperada] ?? $carreraEsperada;
+                    $resultadoPython['es_valido'] = false;
+                    $resultadoPython['motivo_invalidez'] = "Inconsistencia de carrera: El comprobante presentado pertenece a '{$carreraDoc}', pero intentas registrar o cambiarte a '{$carreraEsp}'.";
+                }
+                return $resultadoPython;
             }
-            return $resultadoPython;
+            if (!empty($resultadoPython['motivo_invalidez']) && ($resultadoPython['lineas_extraidas'] ?? 0) > 0) {
+                return $resultadoPython;
+            }
         }
 
-        if ($resultadoPython !== null && is_array($resultadoPython) && !empty($resultadoPython['motivo_invalidez']) && ($resultadoPython['lineas_extraidas'] ?? 0) > 0) {
-            return $resultadoPython;
-        }
+        return $resultado;
+    }
 
-        // 2. Respaldo nativo en PHP
+    /**
+     * Motor primario en PHP puro (smalot/pdfparser + streams nativos) sin dependencia externa de Python.
+     */
+    protected function verificarConMotorPhp(string $rutaPdf, ?string $carreraEsperada = null): array
+    {
         $resultado = [
             'es_valido'                 => false,
             'motivo_invalidez'          => null,

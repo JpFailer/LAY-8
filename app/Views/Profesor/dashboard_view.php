@@ -1,9 +1,29 @@
 <?= $this->extend('Dashboard/main_view') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= asset_url('css/docente.css') ?>">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="biblioteca-dashboard-contenedor docente-dashboard-contenedor">
 
-    <!-- Encabezado del Módulo Docente -->
+        <!-- Encabezado del Módulo Docente -->
+    <?php if (in_array(session()->get('rol'), ['administrador', 'admin'], true)): ?>
+        <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 44px; height: 44px; border-radius: 10px; background: #dbeafe; color: #1e40af; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                    <i class="bx bx-shield-quarter"></i>
+                </div>
+                <div>
+                    <strong style="color: #1e3a8a; font-size: 0.95rem; display: block;">Modo Supervisión de Administrador</strong>
+                    <span style="font-size: 0.84rem; color: #475569;">Como administrador visualizas todas las secciones del campus. Los profesores solo ven las asignaturas que tú les asignes.</span>
+                </div>
+            </div>
+            <a href="<?= base_url('admin?tab=docentes') ?>" class="btn-subir-cta" style="padding: 8px 18px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                <i class="bx bx-slider-alt"></i> Asignar Secciones a Profesores
+            </a>
+        </div>
+    <?php endif; ?>
     <div class="biblio-header-flex">
         <div>
             <h2 style="display: flex; align-items: center; gap: 8px; margin: 0;">
@@ -35,7 +55,7 @@
         </div>
     <?php endif; ?>
 
-    <!-- Tarjetas de Métricas del Docente -->
+    <!-- metricas arriba -->
     <div class="kpi-grid-admin" style="margin-bottom: 24px;">
         <div class="kpi-card">
             <div class="kpi-icon icon-blue"><i class="bx bx-door-open"></i></div>
@@ -70,82 +90,115 @@
         </div>
     </div>
 
-    <!-- Pestañas de Navegación del Panel Docente -->
-    <nav class="filtros-categorias">
-        <button type="button" class="btn-filtro activo" id="tabbtn-doc-secciones" onclick="cambiarTabDocente('secciones')">
-            <i class="bx bx-grid-alt"></i> Mis Secciones y Estado en Vivo
-            <span class="badge-conteo"><?= (int) $totalSecciones ?></span>
-        </button>
+    <!-- Pestañas de Navegación del Panel Docente y Buscador en Vivo -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+        <nav class="filtros-categorias" style="margin-bottom: 0;">
+            <button type="button" class="btn-filtro activo" id="tabbtn-doc-secciones" onclick="cambiarTabDocente('secciones')">
+                <i class="bx bx-grid-alt"></i> Mis Secciones y Estado en Vivo
+                <span class="badge-conteo" id="badge-conteo-secciones"><?= (int) $totalSecciones ?></span>
+            </button>
 
-        <button type="button" class="btn-filtro" id="tabbtn-doc-evaluaciones" onclick="cambiarTabDocente('evaluaciones')">
-            <i class="bx bx-list-check"></i> Evaluaciones y Tareas (Classroom)
-            <span class="badge-conteo"><?= (int) $totalActividades ?></span>
-        </button>
-    </nav>
+            <button type="button" class="btn-filtro" id="tabbtn-doc-evaluaciones" onclick="cambiarTabDocente('evaluaciones')">
+                <i class="bx bx-list-check"></i> Evaluaciones y Tareas (Classroom)
+                <span class="badge-conteo"><?= (int) $totalActividades ?></span>
+            </button>
+        </nav>
 
-    <!-- ========================================================================= -->
+        <div class="docente-search-container">
+            <i class="bx bx-search docente-search-icon"></i>
+            <input type="text" 
+                   id="filtro-secciones-docente" 
+                   class="input-lay8 docente-search-input" 
+                   placeholder="Buscar materia, sección o aula..." 
+                   autocomplete="off"
+                   oninput="filtrarSeccionesDocente(this.value)">
+            <button type="button" 
+                    id="btn-limpiar-busqueda-docente" 
+                    class="btn-clear-search-docente" 
+                    style="display: none;" 
+                    onclick="limpiarBuscadorDocente()" 
+                    title="Limpiar búsqueda">
+                <i class="bx bx-x"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- PESTAÑA 1: SECCIONES Y TRANSMISIÓN DE ESTADO EN VIVO                      -->
-    <!-- ========================================================================= -->
-    <div id="tab-doc-secciones" class="tab-contenido-docente">
+    <?php
+        $esModoServidor = !empty($esModoServidor);
+        $pag = $paginacion ?? [
+            'totalFiltradas' => count($secciones),
+            'paginaActual'   => 1,
+            'totalPaginas'   => max(1, (int) ceil(count($secciones) / 12)),
+            'porPagina'      => 12,
+        ];
+        $inicioPag = $pag['totalFiltradas'] > 0 ? (($pag['paginaActual'] - 1) * $pag['porPagina']) + 1 : 0;
+        $finPag = min($pag['paginaActual'] * $pag['porPagina'], $pag['totalFiltradas']);
+    ?>
+    <div id="tab-doc-secciones" class="tab-contenido-docente" data-modo-servidor="<?= $esModoServidor ? '1' : '0' ?>" data-total-paginas="<?= (int) $pag['totalPaginas'] ?>">
+        <!-- Estado vacío cuando la búsqueda no arroja resultados -->
+        <div id="sin-resultados-docente" class="panel-vacio-docente" style="display: none;">
+            <div class="icono-vacio"><i class="bx bx-search-alt docente-sin-res-ico"></i></div>
+            <h3 class="docente-sin-res-tit">No se encontraron secciones</h3>
+            <p id="texto-sin-resultados-docente" class="docente-sin-res-txt">No hay secciones que coincidan con la búsqueda.</p>
+            <button type="button" class="btn-subir-cta" onclick="limpiarBuscadorDocente()">
+                <i class="bx bx-refresh"></i> Ver todas las secciones
+            </button>
+        </div>
+
         <?php if (!empty($secciones)): ?>
+            <?php if (!empty($carrerasPresentesDoc) && count($carrerasPresentesDoc) > 1): ?>
+                <div class="docente-filtros-carrera-bar" id="docente-filtros-carrera">
+                    <span class="docente-filtros-label"><i class="bx bx-filter-alt"></i> Carrera:</span>
+                    <button type="button" class="btn-carrera-docente activo" data-carrera="" onclick="filtrarCarreraDocente('', this)">
+                        Todas (<?= (int) $totalSecciones ?>)
+                    </button>
+                    <?php foreach ($carrerasPresentesDoc as $codCar => $metaCar): ?>
+                        <button type="button" class="btn-carrera-docente" data-carrera="<?= esc($codCar) ?>" onclick="filtrarCarreraDocente('<?= esc($codCar, 'js') ?>', this)">
+                            <?= esc($metaCar['etiqueta']) ?> (<?= (int) $metaCar['total'] ?>)
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <div id="docente-paginacion-top" class="docente-paginacion-bar" style="<?= $pag['totalFiltradas'] <= 1 ? 'display: none;' : '' ?>">
+                <div class="docente-pag-info" id="docente-pag-info-top">
+                    Mostrando <?= $inicioPag ?> - <?= $finPag ?> de <?= (int) $pag['totalFiltradas'] ?> secciones
+                </div>
+                <div class="docente-paginacion-controles">
+                    <label for="docente-tamano-pagina" class="docente-label-tamano">Por página:</label>
+                    <select id="docente-tamano-pagina" class="docente-select-tamano" onchange="cambiarTamanoPaginaDocente(this.value)">
+                        <option value="12" <?= $pag['porPagina'] === 12 ? 'selected' : '' ?>>12</option>
+                        <option value="24" <?= $pag['porPagina'] === 24 ? 'selected' : '' ?>>24</option>
+                        <option value="48" <?= $pag['porPagina'] === 48 ? 'selected' : '' ?>>48</option>
+                    </select>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-prev-top" onclick="cambiarPaginaDocente(-1)" <?= $pag['paginaActual'] <= 1 ? 'disabled' : '' ?>>
+                        <i class="bx bx-chevron-left"></i> Anterior
+                    </button>
+                    <span class="docente-pag-indicador" id="docente-pag-indicador-top">Pág. <?= (int) $pag['paginaActual'] ?> / <?= (int) $pag['totalPaginas'] ?></span>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-next-top" onclick="cambiarPaginaDocente(1)" <?= $pag['paginaActual'] >= $pag['totalPaginas'] ? 'disabled' : '' ?>>
+                        Siguiente <i class="bx bx-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
             <div class="grid-aportes grid-aulas-classroom">
-                <?php foreach ($secciones as $sec): ?>
-                    <?php
-                        $est = $sec['estado_hoy'];
-                        $esOnline = ($est && $est['modalidad'] === 'online');
-                        $aulasSec = [];
-                        if (!empty($sec['horarios'])) {
-                            foreach ($sec['horarios'] as $h) {
-                                if (!in_array($h['aula'], $aulasSec, true)) $aulasSec[] = $h['aula'];
-                            }
-                        }
-                    ?>
-                    <article class="tarjeta-aporte tarjeta-aula-classroom" style="display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div class="cabecera-tarjeta-aula">
-                                <div class="aula-header-info">
-                                    <span class="badge-codigo-materia"><?= esc($sec['codigo_materia']) ?></span>
-                                    <span class="badge-seccion-materia">Secc. <?= esc($sec['codigo_seccion']) ?></span>
-                                    <span class="badge-conteo" style="background: #eff6ff; color: #2563eb;">
-                                        <i class="bx bx-user"></i> <?= (int)$sec['total_estudiantes'] ?> alumnos
-                                    </span>
-                                </div>
-                                <h3 class="titulo-materia-aula"><?= esc($sec['materia']) ?></h3>
-                                <p class="profesor-materia" style="color: #64748b;">
-                                    <i class="bx bx-map-pin"></i> Aula: <strong><?= !empty($aulasSec) ? esc(implode(', ', $aulasSec)) : 'Por definir' ?></strong>
-                                </p>
-                            </div>
+                <?= view('Profesor/_tarjetas_secciones', ['secciones' => $secciones, 'esModoServidor' => $esModoServidor]) ?>
+            </div>
 
-                            <!-- Estado actual reportado -->
-                            <div class="estado-docente-box <?= $esOnline ? 'box-online' : 'box-presencial' ?>" style="margin-top: 10px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <strong><i class="bx <?= $esOnline ? 'bx-video' : 'bx-walk' ?>"></i> Estado Hoy:</strong>
-                                    <span style="font-size: 0.76rem; text-transform: uppercase; font-weight: 700;"><?= $esOnline ? 'Clase Virtual' : 'Presencial' ?></span>
-                                </div>
-                                <div style="font-size: 0.88rem; margin-top: 4px; font-weight: 600;">
-                                    <?= $est ? esc($est['estado_rapido']) : 'Sin estado reportado hoy' ?>
-                                </div>
-                                <?php if ($est && !empty($est['enlace_virtual'])): ?>
-                                    <div style="margin-top: 6px;">
-                                        <a href="<?= esc($est['enlace_virtual']) ?>" target="_blank" style="color: #2563eb; font-size: 0.8rem; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">
-                                            <i class="bx bx-link-external"></i> Ir a sala virtual
-                                        </a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- Botones de Acción para la Sección -->
-                        <div style="margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap;">
-                            <button type="button" class="btn-subir-cta" style="flex: 1; padding: 8px 12px; font-size: 0.82rem;" onclick="abrirModalEstadoSeccion(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>', '<?= esc($sec['codigo_seccion'], 'js') ?>')">
-                                <i class="bx bx-broadcast"></i> Cambiar Estado
-                            </button>
-                            <button type="button" class="btn-subir-cta btn-secundario-aulas" style="flex: 1; padding: 8px 12px; font-size: 0.82rem;" onclick="preseleccionarSeccionTarea(<?= (int)$sec['id'] ?>)">
-                                <i class="bx bx-plus"></i> Asignar Tarea
-                            </button>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+            <div id="docente-paginacion-bottom" class="docente-paginacion-bar bottom" style="display: <?= $pag['totalFiltradas'] > $pag['porPagina'] ? 'flex' : 'none' ?>;">
+                <div class="docente-pag-info" id="docente-pag-info-bottom">
+                    Mostrando <?= $inicioPag ?> - <?= $finPag ?> de <?= (int) $pag['totalFiltradas'] ?> secciones
+                </div>
+                <div class="docente-paginacion-controles">
+                    <button type="button" class="btn-pag-docente" id="btn-pag-prev-bottom" onclick="cambiarPaginaDocente(-1)" <?= $pag['paginaActual'] <= 1 ? 'disabled' : '' ?>>
+                        <i class="bx bx-chevron-left"></i> Anterior
+                    </button>
+                    <span class="docente-pag-indicador" id="docente-pag-indicador-bottom">Pág. <?= (int) $pag['paginaActual'] ?> / <?= (int) $pag['totalPaginas'] ?></span>
+                    <button type="button" class="btn-pag-docente" id="btn-pag-next-bottom" onclick="cambiarPaginaDocente(1)" <?= $pag['paginaActual'] >= $pag['totalPaginas'] ? 'disabled' : '' ?>>
+                        Siguiente <i class="bx bx-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         <?php else: ?>
             <div class="estado-vacio">
@@ -156,12 +209,10 @@
         <?php endif; ?>
     </div>
 
-    <!-- ========================================================================= -->
     <!-- PESTAÑA 2: EVALUACIONES Y REVISIÓN DE ENTREGAS (Classroom)                -->
-    <!-- ========================================================================= -->
     <div id="tab-doc-evaluaciones" class="tab-contenido-docente" style="display: none;">
         <?php if (!empty($actividades)): ?>
-            <div class="contenedor-tabla-horario" style="margin-top: 10px;">
+            <div class="contenedor-tabla-horario docente-tabla-mt">
                 <table class="tabla-horario-umc">
                     <thead>
                         <tr>
@@ -179,29 +230,29 @@
                             <tr>
                                 <td>
                                     <strong><?= esc($act['materia']) ?></strong>
-                                    <div style="font-size: 0.78rem; color: #64748b;">Secc. <?= esc($act['codigo_seccion']) ?></div>
+                                    <div class="docente-tabla-sub">Secc. <?= esc($act['codigo_seccion']) ?></div>
                                 </td>
                                 <td>
                                     <strong><?= esc($act['titulo']) ?></strong>
                                     <?php if (!empty($act['descripcion'])): ?>
-                                        <div style="font-size: 0.78rem; color: #64748b; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <div class="docente-tabla-desc">
                                             <?= esc($act['descripcion']) ?>
                                         </div>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge-codigo-materia" style="text-transform: capitalize;">
+                                    <span class="badge-codigo-materia docente-badge-tipo-cap">
                                         <?= esc($act['tipo']) ?>
                                     </span>
                                 </td>
-                                <td style="font-size: 0.84rem;">
+                                <td class="docente-td-fecha">
                                     <i class="bx bx-calendar"></i> <?= date('d/m/Y H:i', strtotime($act['fecha_entrega'])) ?>
                                 </td>
                                 <td>
                                     <strong><?= (float)$act['ponderacion'] ?>%</strong>
                                 </td>
                                 <td>
-                                    <span class="badge-conteo" style="background: <?= $act['sin_calificar'] > 0 ? '#fef3c7' : '#dcfce7' ?>; color: <?= $act['sin_calificar'] > 0 ? '#b45309' : '#166534' ?>; padding: 4px 8px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700;">
+                                    <span class="badge-conteo docente-badge-entregas <?= $act['sin_calificar'] > 0 ? 'docente-badge-entregas-pend' : 'docente-badge-entregas-ok' ?>">
                                         <i class="bx bx-check-circle"></i> <?= (int)$act['total_entregas'] ?> entregas
                                         <?php if ($act['sin_calificar'] > 0): ?>
                                             (<?= (int)$act['sin_calificar'] ?> pendientes)
@@ -209,7 +260,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalRevisarEntregas(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>')">
+                                    <button type="button" class="btn-subir-cta docente-btn-calificar" onclick="abrirModalRevisarEntregas(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>')">
                                         <i class="bx bx-edit"></i> Calificar Alumnos
                                     </button>
                                 </td>
@@ -223,7 +274,7 @@
                 <i class="bx bx-task icono-vacio"></i>
                 <h3>No has publicado tareas o evaluaciones</h3>
                 <p>Publica asignaciones para tus alumnos con fecha de entrega, ponderación y comentarios para que aparezcan en su cronograma académico.</p>
-                <button type="button" class="btn-subir-cta" onclick="abrirModalCrearTareaDocente()" style="display: inline-flex; margin-top: 10px;">
+                <button type="button" class="btn-subir-cta docente-btn-empty-cta" onclick="abrirModalCrearTareaDocente()">
                     <i class="bx bx-plus-circle"></i> Crear Primera Evaluación
                 </button>
             </div>
@@ -234,28 +285,28 @@
 
 <!-- Modal: Cambiar Estado en Vivo de la Clase -->
 <div id="modalEstadoSeccion" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEstadoSeccion()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 520px;">
+    <div class="modal-contenido-aula modal-actividad-ancho docente-modal-ancho-sm">
         <div class="modal-aula-header">
             <h3><i class="bx bx-broadcast"></i> Actualizar Estado en Vivo</h3>
             <span onclick="cerrarModalEstadoSeccion()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formEstadoSeccion" onsubmit="enviarEstadoClaseDocente(event)" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formEstadoSeccion" onsubmit="enviarEstadoClaseDocente(event)" class="formulario-estilo-lay8 docente-modal-form-pad">
             <?= csrf_field() ?>
             <input type="hidden" name="seccion_id" id="estado_seccion_id">
 
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;" class="card-recup-box-inputs">
-                <strong id="estado_modal_materia" style="display: block; color: #1e40af; font-size: 0.95rem;"></strong>
-                <span style="font-size: 0.78rem; color: #3b82f6;">Al guardar, se enviará una notificación instantánea a todos los alumnos inscritos.</span>
+            <div class="docente-modal-banner card-recup-box-inputs">
+                <strong id="estado_modal_materia" class="docente-modal-banner-tit"></strong>
+                <span class="docente-modal-banner-sub">Al guardar, se enviará una notificación instantánea a todos los alumnos inscritos.</span>
             </div>
 
             <div class="campo-grupo">
                 <label><i class="bx bx-devices"></i> Modalidad de Hoy:</label>
-                <div style="display: flex; gap: 10px;">
-                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                <div class="docente-modalidad-row">
+                    <label class="docente-modalidad-opt">
                         <input type="radio" name="modalidad" value="presencial" checked onchange="toggleEnlaceVirtual(false)">
                         <span><i class="bx bx-walk"></i> Presencial (En el Aula)</span>
                     </label>
-                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                    <label class="docente-modalidad-opt">
                         <input type="radio" name="modalidad" value="online" onchange="toggleEnlaceVirtual(true)">
                         <span><i class="bx bx-video"></i> Online (Virtual)</span>
                     </label>
@@ -270,7 +321,7 @@
             <div class="campo-grupo">
                 <label for="estado_rapido"><i class="bx bx-comment-detail"></i> Mensaje de Estado Rápido:</label>
                 <input type="text" name="estado_rapido" id="estado_rapido" required placeholder="Ej: En camino al aula, llego en 10 min..." class="input-lay8">
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                <div class="docente-chips-rapidos">
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('En el aula de clase')">En el aula</button>
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('En camino / Tráfico')">En camino</button>
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('Clase virtual activa')">Clase virtual</button>
@@ -292,18 +343,18 @@
 
 <!-- Modal: Crear Tarea / Evaluación Oficial de la Sección -->
 <div id="modalTareaDocente" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalTareaDocente()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 560px;">
+    <div class="modal-contenido-aula modal-actividad-ancho docente-modal-ancho-md">
         <div class="modal-aula-header">
             <h3><i class="bx bx-task"></i> Publicar Nueva Evaluación Oficial</h3>
             <span onclick="cerrarModalTareaDocente()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formTareaDocente" onsubmit="enviarTareaDocente(event)" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formTareaDocente" onsubmit="enviarTareaDocente(event)" class="formulario-estilo-lay8 docente-modal-form-pad">
             <?= csrf_field() ?>
             <div class="campo-grupo">
                 <label for="tarea_seccion_id"><i class="bx bx-door-open"></i> Asignatura & Sección:</label>
                 <select name="seccion_id" id="tarea_seccion_id" required class="select-lay8">
                     <option value="" disabled selected>-- Selecciona la sección --</option>
-                    <?php foreach ($secciones as $sec): ?>
+                    <?php foreach (($seccionesSelect ?? $secciones) as $sec): ?>
                         <option value="<?= (int)$sec['id'] ?>"><?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)</option>
                     <?php endforeach; ?>
                 </select>
@@ -350,23 +401,23 @@
 
 <!-- Modal: Revisar Entregas de Alumnos y Calificar -->
 <div id="modalRevisarEntregas" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalRevisarEntregas()">
-    <div class="modal-contenido-aula" style="max-width: 820px; width: 100%; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px;">
-        <div class="modal-aula-header" style="background: #1e3a8a; color: white;">
-            <h3 style="margin: 0; color: white;"><i class="bx bx-clipboard"></i> Entregas de Alumnos: <span id="titulo_evaluacion_modal"></span></h3>
-            <span onclick="cerrarModalRevisarEntregas()" class="btn-cerrar-modal-aula" style="color: white;" title="Cerrar">&times;</span>
+    <div class="modal-contenido-aula docente-modal-entregas-caja">
+        <div class="modal-aula-header docente-modal-entregas-head">
+            <h3><i class="bx bx-clipboard"></i> Entregas de Alumnos: <span id="titulo_evaluacion_modal"></span></h3>
+            <span onclick="cerrarModalRevisarEntregas()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
 
-        <div style="padding: 16px 22px; overflow-y: auto; flex: 1;">
-            <div id="cargando_entregas" style="text-align: center; padding: 30px; color: #64748b;">
-                <i class="bx bx-loader-alt bx-spin" style="font-size: 2rem;"></i>
+        <div class="docente-modal-entregas-body">
+            <div id="cargando_entregas" class="docente-entregas-status">
+                <i class="bx bx-loader-alt bx-spin"></i>
                 <p>Cargando entregas de los estudiantes...</p>
             </div>
 
             <div id="contenedor_lista_entregas" style="display: none;">
-                <div id="lista_entregas_items" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="lista_entregas_items" class="docente-entregas-list"></div>
             </div>
 
-            <div id="sin_entregas_msg" style="display: none; text-align: center; padding: 30px; color: #64748b;">
+            <div id="sin_entregas_msg" class="docente-entregas-status" style="display: none;">
                 <i class="bx bx-inbox" style="font-size: 3rem; color: #cbd5e1;"></i>
                 <p>Aún ningún alumno ha subido entrega para esta evaluación.</p>
             </div>
@@ -374,229 +425,8 @@
     </div>
 </div>
 
-<script>
-    const BASE_URL = '<?= base_url() ?>';
-
-    function cambiarTabDocente(tabId) {
-        document.querySelectorAll('.tab-contenido-docente').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.filtros-categorias .btn-filtro').forEach(b => b.classList.remove('activo'));
-
-        const seccionTarget = document.getElementById('tab-doc-' + tabId);
-        const btnTarget     = document.getElementById('tabbtn-doc-' + tabId);
-
-        if (seccionTarget) seccionTarget.style.display = 'block';
-        if (btnTarget) btnTarget.classList.add('activo');
-    }
-
-    // Modal Estado de Sección
-    function abrirModalEstadoSeccion(seccionId, materia, seccion) {
-        document.getElementById('estado_seccion_id').value = seccionId;
-        document.getElementById('estado_modal_materia').textContent = materia + ' (Sección ' + seccion + ')';
-        document.getElementById('modalEstadoSeccion').style.display = 'flex';
-    }
-
-    function cerrarModalEstadoSeccion() {
-        document.getElementById('modalEstadoSeccion').style.display = 'none';
-    }
-
-    function toggleEnlaceVirtual(esOnline) {
-        document.getElementById('campo_enlace_virtual').style.display = esOnline ? 'block' : 'none';
-    }
-
-    function setEstadoPredefinido(texto) {
-        document.getElementById('estado_rapido').value = texto;
-    }
-
-    async function enviarEstadoClaseDocente(e) {
-        e.preventDefault();
-        const form = document.getElementById('formEstadoSeccion');
-        const btn = document.getElementById('btnGuardarEstado');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Transmitiendo estado...';
-
-        try {
-            const formData = new FormData(form);
-            const resp = await fetch(BASE_URL + 'docente/actualizar-estado', {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Estado transmitido correctamente a los alumnos!');
-                window.location.reload();
-            } else {
-                alert(res.error || (res.errores ? Object.values(res.errores).join('\\n') : 'Error al guardar estado.'));
-            }
-        } catch(err) {
-            alert('Error de red al actualizar estado.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
-    }
-
-    // Modal Crear Tarea Docente
-    function abrirModalCrearTareaDocente() {
-        document.getElementById('modalTareaDocente').style.display = 'flex';
-    }
-
-    function cerrarModalTareaDocente() {
-        document.getElementById('modalTareaDocente').style.display = 'none';
-    }
-
-    function preseleccionarSeccionTarea(seccionId) {
-        document.getElementById('tarea_seccion_id').value = seccionId;
-        abrirModalCrearTareaDocente();
-    }
-
-    async function enviarTareaDocente(e) {
-        e.preventDefault();
-        const form = document.getElementById('formTareaDocente');
-        const btn = document.getElementById('btnGuardarTareaDocente');
-        const origText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Publicando evaluación...';
-
-        try {
-            const formData = new FormData(form);
-            const resp = await fetch(BASE_URL + 'docente/crear-tarea', {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Evaluación publicada con éxito!');
-                window.location.reload();
-            } else {
-                alert(res.error || (res.errores ? Object.values(res.errores).join('\\n') : 'Error al crear la evaluación.'));
-            }
-        } catch (err) {
-            alert('Error de conexión al crear la tarea.');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = origText;
-        }
-    }
-
-    // Modal Revisar Entregas
-    async function abrirModalRevisarEntregas(actividadId, titulo) {
-        document.getElementById('titulo_evaluacion_modal').textContent = titulo;
-        document.getElementById('modalRevisarEntregas').style.display = 'flex';
-        document.getElementById('cargando_entregas').style.display = 'block';
-        document.getElementById('contenedor_lista_entregas').style.display = 'none';
-        document.getElementById('sin_entregas_msg').style.display = 'none';
-
-        try {
-            const resp = await fetch(BASE_URL + 'docente/entregas/' + actividadId, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            const res = await resp.json();
-            document.getElementById('cargando_entregas').style.display = 'none';
-
-            if (!res.success || !res.entregas || res.entregas.length === 0) {
-                document.getElementById('sin_entregas_msg').style.display = 'block';
-                return;
-            }
-
-            document.getElementById('contenedor_lista_entregas').style.display = 'block';
-            const contenedor = document.getElementById('lista_entregas_items');
-            contenedor.innerHTML = '';
-
-            res.entregas.forEach(ent => {
-                const nombreEst = (ent.primer_nombre + ' ' + (ent.segundo_nombre ? ent.segundo_nombre + ' ' : '') + ent.apellidos).trim();
-                const calificada = ent.calificacion !== null && ent.calificacion !== undefined;
-
-                const card = document.createElement('div');
-                card.className = 'card-solicitud-docente-item';
-                card.style.cssText = 'border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px;';
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 0.96rem; display: flex; align-items: center; gap: 6px;">
-                                <i class="bx bx-user" style="color: #2563eb;"></i> ${nombreEst}
-                                <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">(C.I: ${ent.cedula || 'N/A'})</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
-                                <i class="bx bx-calendar"></i> Entregado: ${ent.created_at || 'Reciente'}
-                            </div>
-                            ${ent.comentario_alumno ? `<div style="font-size: 0.84rem; color: #334155; margin-top: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 6px; font-style: italic;">"${ent.comentario_alumno}"</div>` : ''}
-                        </div>
-                        <div>
-                            ${ent.archivo_ruta ? `
-                                <a href="${BASE_URL}docente/descargar-entrega/${ent.id}" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="bx bx-download"></i> Descargar Trabajo (${ent.archivo_nombre || 'archivo'})
-                                </a>
-                            ` : `<span style="font-size: 0.8rem; color: #94a3b8;">Sin archivo adjunto</span>`}
-                        </div>
-                    </div>
-
-                    <!-- Formulario de Calificación inline -->
-                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <label style="font-size: 0.82rem; font-weight: 700;">Calificación:</label>
-                            <input type="number" step="0.5" min="0" max="100" id="nota_entrega_${ent.id}" value="${calificada ? ent.calificacion : ''}" placeholder="0-20" class="input-lay8" style="width: 80px; padding: 6px 8px; font-weight: 700;">
-                        </div>
-                        <div style="flex: 1; min-width: 180px;">
-                            <input type="text" id="feedback_entrega_${ent.id}" value="${ent.feedback_profesor || ''}" placeholder="Retroalimentación para el alumno..." class="input-lay8" style="width: 100%; padding: 6px 10px;">
-                        </div>
-                        <button type="button" class="btn-subir-cta" onclick="guardarCalificacionEntrega(${ent.id})" style="padding: 6px 14px; font-size: 0.82rem;">
-                            <i class="bx bx-save"></i> ${calificada ? 'Actualizar Nota' : 'Calificar'}
-                        </button>
-                    </div>
-                `;
-                contenedor.appendChild(card);
-            });
-        } catch(e) {
-            document.getElementById('cargando_entregas').style.display = 'none';
-            document.getElementById('sin_entregas_msg').style.display = 'block';
-            document.getElementById('sin_entregas_msg').innerHTML = '<p style="color: #ef4444;">Error al cargar las entregas.</p>';
-        }
-    }
-
-    function cerrarModalRevisarEntregas() {
-        document.getElementById('modalRevisarEntregas').style.display = 'none';
-    }
-
-    async function guardarCalificacionEntrega(entregaId) {
-        const notaInput = document.getElementById('nota_entrega_' + entregaId);
-        const fbInput = document.getElementById('feedback_entrega_' + entregaId);
-
-        if (!notaInput || notaInput.value === '') {
-            alert('Por favor ingresa una nota numérica.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('entrega_id', entregaId);
-        formData.append('calificacion', notaInput.value);
-        formData.append('feedback', fbInput ? fbInput.value : '');
-
-        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
-        const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-        if (csrfInput) {
-            formData.append('<?= csrf_token() ?>', csrfInput.value);
-            headers['<?= csrf_header() ?>'] = csrfInput.value;
-        }
-
-        try {
-            const resp = await fetch(BASE_URL + 'docente/calificar', {
-                method: 'POST',
-                body: formData,
-                headers: headers
-            });
-            const res = await resp.json();
-            if (res.success) {
-                alert(res.mensaje || '¡Calificación registrada con éxito!');
-            } else {
-                alert(res.error || 'Error al guardar la calificación.');
-            }
-        } catch(e) {
-            alert('Error de conexión al calificar.');
-        }
-    }
-</script>
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/docente.js') ?>"></script>
+<?= $this->endSection() ?>
 
 <?= $this->endSection() ?>
