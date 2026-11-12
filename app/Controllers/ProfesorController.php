@@ -7,6 +7,7 @@ use App\Models\EstadoClaseModel;
 use App\Models\NotificacionModel;
 use App\Models\InscripcionModel;
 use App\Models\UsuarioModel;
+use App\Services\ActividadService;
 use App\Services\DocentePanelService;
 
 class ProfesorController extends BaseController
@@ -354,71 +355,28 @@ class ProfesorController extends BaseController
             ]);
         }
 
-        $seccionId = (int) $this->request->getPost('seccion_id');
-        $titulo = strip_tags(trim((string)$this->request->getPost('titulo')));
-        $tipo = $this->request->getPost('tipo');
-        $fechaEntrega = str_replace('T', ' ', (string)$this->request->getPost('fecha_entrega'));
-        $ponderacion = $this->request->getPost('ponderacion') ? (float)$this->request->getPost('ponderacion') : 0;
-        $descripcion = strip_tags(trim((string)$this->request->getPost('descripcion')));
+        $res = (new ActividadService())->crearActividadEnSeccion(
+            $profesorId,
+            (string) $rol,
+            [
+                'seccion_id'    => $this->request->getPost('seccion_id'),
+                'titulo'        => $this->request->getPost('titulo'),
+                'tipo'          => $this->request->getPost('tipo'),
+                'fecha_entrega' => $this->request->getPost('fecha_entrega'),
+                'ponderacion'   => $this->request->getPost('ponderacion'),
+                'descripcion'   => $this->request->getPost('descripcion'),
+            ],
+            true
+        );
 
-        // Validación de pertenencia de sección
-        $seccionModel = new SeccionModel();
-        $builderSec = $seccionModel
-            ->select('secciones.*, materias.nombre as materia')
-            ->join('materias', 'materias.id = secciones.materia_id')
-            ->where('secciones.id', $seccionId);
-
-        if (!in_array($rol, ['administrador', 'admin'], true)) {
-            $builderSec->where('secciones.profesor_id', $profesorId);
-        }
-
-        $seccionInfo = $builderSec->first();
-        if (!$seccionInfo) {
-            return $this->response->setStatusCode(403)->setJSON([
-                'success' => false,
-                'error'   => 'Acceso denegado: No tienes permisos para crear evaluaciones en esta sección.'
-            ]);
-        }
-
-        $actividadModel = new \App\Models\ActividadClaseModel();
-        $actividadId = $actividadModel->insert([
-            'seccion_id'    => $seccionId,
-            'creado_por'    => $profesorId,
-            'es_personal'   => 0, // Tarea oficial para toda la sección
-            'titulo'        => $titulo,
-            'tipo'          => $tipo,
-            'fecha_entrega' => $fechaEntrega,
-            'ponderacion'   => $ponderacion,
-            'descripcion'   => $descripcion,
-            'created_at'    => date('Y-m-d H:i:s'),
-        ]);
-
-        // Disparar notificaciones a todos los alumnos de la sección
-        $inscripcionModel = new InscripcionModel();
-        $alumnos = $inscripcionModel->obtenerEstudiantesDeSeccion($seccionId);
-        $notifModel = new NotificacionModel();
-
-        $materiaNombre = $seccionInfo['materia'] ?? 'tu asignatura';
-
-        foreach ($alumnos as $al) {
-            $notifModel->insert([
-                'estudiante_id'  => (int)$al['estudiante_id'],
-                'profesor_id'    => $profesorId,
-                'seccion_id'     => $seccionId,
-                'tipo'           => 'tarea_pendiente',
-                'titulo'         => "Nueva {$tipo}: {$titulo} ({$materiaNombre})",
-                'mensaje'        => $descripcion ?: "El profesor ha agendado una nueva actividad para entregar antes del {$fechaEntrega}.",
-                'modalidad'      => 'presencial',
-                'enlace_accion'  => 'aulas?tab=actividades',
-                'leido'          => 0,
-                'created_at'     => date('Y-m-d H:i:s'),
-            ]);
+        if (!$res['ok']) {
+            return $this->response->setStatusCode($res['status'])->setJSON(['success' => false, 'error' => $res['error']]);
         }
 
         return $this->response->setJSON([
             'success'      => true,
-            'mensaje'      => "¡Actividad '{$titulo}' creada con éxito y notificada a los estudiantes!",
-            'actividad_id' => $actividadId
+            'mensaje'      => "¡Actividad '{$res['titulo']}' creada con éxito y notificada a los estudiantes!",
+            'actividad_id' => $res['actividad_id'],
         ]);
     }
 
@@ -431,32 +389,22 @@ class ProfesorController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.']);
         }
 
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
-
-        $actividad = (new \App\Models\ActividadClaseModel())->find($actividadId);
-        if (!$actividad) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
+        $verif = (new ActividadService())->obtenerActividadParaDocente(
+            $actividadId,
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol')
+        );
+        if (!$verif['ok']) {
+            return $this->response->setStatusCode($verif['status'])->setJSON(['success' => false, 'error' => $verif['error']]);
         }
 
-        if (!in_array($rol, ['administrador', 'admin'], true)) {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para visualizar entregas de esta actividad.']);
-            }
-        }
-
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entregas = $entregaModel->obtenerEntregasDeActividad($actividadId);
+        $entregas = (new \App\Models\EntregaActividadModel())->obtenerEntregasDeActividad($actividadId);
 
         return $this->response->setJSON([
             'success'   => true,
-            'actividad' => $actividad,
+            'actividad' => $verif['actividad'],
             'total'     => count($entregas),
-            'entregas'  => $entregas
+            'entregas'  => $entregas,
         ]);
     }
 
@@ -469,70 +417,23 @@ class ProfesorController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere ser docente aprobado por un administrador.']);
         }
 
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
+        $res = (new ActividadService())->calificarEntregaEstudiante(
+            (int) $this->request->getPost('entrega_id'),
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol'),
+            $this->request->getPost('calificacion'),
+            strip_tags(trim((string) $this->request->getPost('feedback')))
+        );
 
-        $entregaId = (int) $this->request->getPost('entrega_id');
-        $nota = $this->request->getPost('calificacion');
-        $feedback = strip_tags(trim((string)$this->request->getPost('feedback')));
-
-        if (!is_numeric($nota) || $nota < 0 || $nota > 100) {
-            return $this->response->setStatusCode(400)->setJSON([
-                'success' => false,
-                'error'   => 'La calificación debe ser un valor numérico válido (ej: de 0 a 20 o de 0 a 100).'
-            ]);
+        if (!$res['ok']) {
+            return $this->response->setStatusCode($res['status'])->setJSON(['success' => false, 'error' => $res['error']]);
         }
-
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entrega = $entregaModel->find($entregaId);
-        if (!$entrega) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Entrega no encontrada.']);
-        }
-
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        if (!$actividad) {
-            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad asociada no encontrada.']);
-        }
-
-        if (!in_array($rol, ['administrador', 'admin'], true)) {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para calificar entregas de esta sección.']);
-            }
-        }
-
-        $entregaModel->update($entregaId, [
-            'calificacion'      => (float)$nota,
-            'feedback_profesor' => $feedback,
-            'calificado_por'    => $profesorId,
-            'calificado_en'     => date('Y-m-d H:i:s'),
-        ]);
-
-        // Notificar al alumno de su calificación
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        $tituloAct = $actividad['titulo'] ?? 'Evaluación';
-
-        (new NotificacionModel())->insert([
-            'estudiante_id'  => (int)$entrega['estudiante_id'],
-            'profesor_id'    => $profesorId,
-            'seccion_id'     => (int)($actividad['seccion_id'] ?? 0),
-            'tipo'           => 'alerta_estado',
-            'titulo'         => "Calificación publicada: {$tituloAct}",
-            'mensaje'        => "Tu entrega ha sido calificada con {$nota} pts." . ($feedback ? ' Comentario del docente: ' . $feedback : ''),
-            'modalidad'      => 'presencial',
-            'enlace_accion'  => 'aulas?tab=actividades',
-            'leido'          => 0,
-            'created_at'     => date('Y-m-d H:i:s'),
-        ]);
 
         return $this->response->setJSON([
             'success'      => true,
-            'mensaje'      => 'Calificación y retroalimentación guardadas con éxito.',
-            'calificacion' => (float)$nota,
-            'feedback'     => $feedback
+            'mensaje'      => $res['mensaje'],
+            'calificacion' => $res['calificacion'],
+            'feedback'     => $res['feedback'],
         ]);
     }
 
@@ -545,28 +446,18 @@ class ProfesorController extends BaseController
             return redirect()->to(base_url('dashboard'))->with('error', 'Acceso exclusivo para profesores aprobados por un administrador.');
         }
 
-        $profesorId = (int) session()->get('usuario_id');
-        $rol = session()->get('rol');
-
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $entrega = $entregaModel->find($entregaId);
+        $entrega = (new \App\Models\EntregaActividadModel())->find($entregaId);
         if (!$entrega || empty($entrega['archivo_ruta'])) {
             return redirect()->back()->with('error', 'No hay archivo adjunto en esta entrega.');
         }
 
-        $actividad = (new \App\Models\ActividadClaseModel())->find($entrega['actividad_id']);
-        if (!$actividad) {
-            return redirect()->back()->with('error', 'Actividad no encontrada.');
-        }
-
-        if (!in_array($rol, ['administrador', 'admin'], true)) {
-            $seccion = (new SeccionModel())
-                ->where('id', $actividad['seccion_id'])
-                ->where('profesor_id', $profesorId)
-                ->first();
-            if (!$seccion) {
-                return redirect()->back()->with('error', 'No tienes permisos para descargar entregas de esta sección.');
-            }
+        $verif = (new ActividadService())->obtenerActividadParaDocente(
+            (int) $entrega['actividad_id'],
+            (int) session()->get('usuario_id'),
+            (string) session()->get('rol')
+        );
+        if (!$verif['ok']) {
+            return redirect()->back()->with('error', $verif['error']);
         }
 
         $nombreLimpio = basename($entrega['archivo_ruta']);

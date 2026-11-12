@@ -138,9 +138,9 @@
     <div id="tab-doc-secciones" class="tab-contenido-docente" data-modo-servidor="<?= $esModoServidor ? '1' : '0' ?>" data-total-paginas="<?= (int) $pag['totalPaginas'] ?>">
         <!-- Estado vacío cuando la búsqueda no arroja resultados -->
         <div id="sin-resultados-docente" class="panel-vacio-docente" style="display: none;">
-            <div class="icono-vacio"><i class="bx bx-search-alt" style="font-size: 2.5rem; color: #94a3b8; margin-bottom: 8px;"></i></div>
-            <h3 style="margin: 0 0 6px 0;">No se encontraron secciones</h3>
-            <p id="texto-sin-resultados-docente" style="color: #64748b; margin: 0 0 16px 0; font-size: 0.88rem;">No hay secciones que coincidan con la búsqueda.</p>
+            <div class="icono-vacio"><i class="bx bx-search-alt docente-sin-res-ico"></i></div>
+            <h3 class="docente-sin-res-tit">No se encontraron secciones</h3>
+            <p id="texto-sin-resultados-docente" class="docente-sin-res-txt">No hay secciones que coincidan con la búsqueda.</p>
             <button type="button" class="btn-subir-cta" onclick="limpiarBuscadorDocente()">
                 <i class="bx bx-refresh"></i> Ver todas las secciones
             </button>
@@ -166,7 +166,7 @@
                     Mostrando <?= $inicioPag ?> - <?= $finPag ?> de <?= (int) $pag['totalFiltradas'] ?> secciones
                 </div>
                 <div class="docente-paginacion-controles">
-                    <label for="docente-tamano-pagina" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Por página:</label>
+                    <label for="docente-tamano-pagina" class="docente-label-tamano">Por página:</label>
                     <select id="docente-tamano-pagina" class="docente-select-tamano" onchange="cambiarTamanoPaginaDocente(this.value)">
                         <option value="12" <?= $pag['porPagina'] === 12 ? 'selected' : '' ?>>12</option>
                         <option value="24" <?= $pag['porPagina'] === 24 ? 'selected' : '' ?>>24</option>
@@ -212,7 +212,7 @@
     <!-- PESTAÑA 2: EVALUACIONES Y REVISIÓN DE ENTREGAS (Classroom)                -->
     <div id="tab-doc-evaluaciones" class="tab-contenido-docente" style="display: none;">
         <?php if (!empty($actividades)): ?>
-            <div class="contenedor-tabla-horario" style="margin-top: 10px;">
+            <div class="contenedor-tabla-horario docente-tabla-mt">
                 <table class="tabla-horario-umc">
                     <thead>
                         <tr>
@@ -230,29 +230,29 @@
                             <tr>
                                 <td>
                                     <strong><?= esc($act['materia']) ?></strong>
-                                    <div style="font-size: 0.78rem; color: #64748b;">Secc. <?= esc($act['codigo_seccion']) ?></div>
+                                    <div class="docente-tabla-sub">Secc. <?= esc($act['codigo_seccion']) ?></div>
                                 </td>
                                 <td>
                                     <strong><?= esc($act['titulo']) ?></strong>
                                     <?php if (!empty($act['descripcion'])): ?>
-                                        <div style="font-size: 0.78rem; color: #64748b; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        <div class="docente-tabla-desc">
                                             <?= esc($act['descripcion']) ?>
                                         </div>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge-codigo-materia" style="text-transform: capitalize;">
+                                    <span class="badge-codigo-materia docente-badge-tipo-cap">
                                         <?= esc($act['tipo']) ?>
                                     </span>
                                 </td>
-                                <td style="font-size: 0.84rem;">
+                                <td class="docente-td-fecha">
                                     <i class="bx bx-calendar"></i> <?= date('d/m/Y H:i', strtotime($act['fecha_entrega'])) ?>
                                 </td>
                                 <td>
                                     <strong><?= (float)$act['ponderacion'] ?>%</strong>
                                 </td>
                                 <td>
-                                    <span class="badge-conteo" style="background: <?= $act['sin_calificar'] > 0 ? '#fef3c7' : '#dcfce7' ?>; color: <?= $act['sin_calificar'] > 0 ? '#b45309' : '#166534' ?>; padding: 4px 8px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700;">
+                                    <span class="badge-conteo docente-badge-entregas <?= $act['sin_calificar'] > 0 ? 'docente-badge-entregas-pend' : 'docente-badge-entregas-ok' ?>">
                                         <i class="bx bx-check-circle"></i> <?= (int)$act['total_entregas'] ?> entregas
                                         <?php if ($act['sin_calificar'] > 0): ?>
                                             (<?= (int)$act['sin_calificar'] ?> pendientes)
@@ -260,7 +260,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalRevisarEntregas(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>')">
+                                    <button type="button" class="btn-subir-cta docente-btn-calificar" onclick="abrirModalRevisarEntregas(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>')">
                                         <i class="bx bx-edit"></i> Calificar Alumnos
                                     </button>
                                 </td>
@@ -274,7 +274,7 @@
                 <i class="bx bx-task icono-vacio"></i>
                 <h3>No has publicado tareas o evaluaciones</h3>
                 <p>Publica asignaciones para tus alumnos con fecha de entrega, ponderación y comentarios para que aparezcan en su cronograma académico.</p>
-                <button type="button" class="btn-subir-cta" onclick="abrirModalCrearTareaDocente()" style="display: inline-flex; margin-top: 10px;">
+                <button type="button" class="btn-subir-cta docente-btn-empty-cta" onclick="abrirModalCrearTareaDocente()">
                     <i class="bx bx-plus-circle"></i> Crear Primera Evaluación
                 </button>
             </div>
@@ -285,28 +285,28 @@
 
 <!-- Modal: Cambiar Estado en Vivo de la Clase -->
 <div id="modalEstadoSeccion" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEstadoSeccion()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 520px;">
+    <div class="modal-contenido-aula modal-actividad-ancho docente-modal-ancho-sm">
         <div class="modal-aula-header">
             <h3><i class="bx bx-broadcast"></i> Actualizar Estado en Vivo</h3>
             <span onclick="cerrarModalEstadoSeccion()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formEstadoSeccion" onsubmit="enviarEstadoClaseDocente(event)" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formEstadoSeccion" onsubmit="enviarEstadoClaseDocente(event)" class="formulario-estilo-lay8 docente-modal-form-pad">
             <?= csrf_field() ?>
             <input type="hidden" name="seccion_id" id="estado_seccion_id">
 
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;" class="card-recup-box-inputs">
-                <strong id="estado_modal_materia" style="display: block; color: #1e40af; font-size: 0.95rem;"></strong>
-                <span style="font-size: 0.78rem; color: #3b82f6;">Al guardar, se enviará una notificación instantánea a todos los alumnos inscritos.</span>
+            <div class="docente-modal-banner card-recup-box-inputs">
+                <strong id="estado_modal_materia" class="docente-modal-banner-tit"></strong>
+                <span class="docente-modal-banner-sub">Al guardar, se enviará una notificación instantánea a todos los alumnos inscritos.</span>
             </div>
 
             <div class="campo-grupo">
                 <label><i class="bx bx-devices"></i> Modalidad de Hoy:</label>
-                <div style="display: flex; gap: 10px;">
-                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                <div class="docente-modalidad-row">
+                    <label class="docente-modalidad-opt">
                         <input type="radio" name="modalidad" value="presencial" checked onchange="toggleEnlaceVirtual(false)">
                         <span><i class="bx bx-walk"></i> Presencial (En el Aula)</span>
                     </label>
-                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1.5px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                    <label class="docente-modalidad-opt">
                         <input type="radio" name="modalidad" value="online" onchange="toggleEnlaceVirtual(true)">
                         <span><i class="bx bx-video"></i> Online (Virtual)</span>
                     </label>
@@ -321,7 +321,7 @@
             <div class="campo-grupo">
                 <label for="estado_rapido"><i class="bx bx-comment-detail"></i> Mensaje de Estado Rápido:</label>
                 <input type="text" name="estado_rapido" id="estado_rapido" required placeholder="Ej: En camino al aula, llego en 10 min..." class="input-lay8">
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px;">
+                <div class="docente-chips-rapidos">
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('En el aula de clase')">En el aula</button>
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('En camino / Tráfico')">En camino</button>
                     <button type="button" class="btn-turno-filtro" onclick="setEstadoPredefinido('Clase virtual activa')">Clase virtual</button>
@@ -343,12 +343,12 @@
 
 <!-- Modal: Crear Tarea / Evaluación Oficial de la Sección -->
 <div id="modalTareaDocente" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalTareaDocente()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 560px;">
+    <div class="modal-contenido-aula modal-actividad-ancho docente-modal-ancho-md">
         <div class="modal-aula-header">
             <h3><i class="bx bx-task"></i> Publicar Nueva Evaluación Oficial</h3>
             <span onclick="cerrarModalTareaDocente()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formTareaDocente" onsubmit="enviarTareaDocente(event)" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formTareaDocente" onsubmit="enviarTareaDocente(event)" class="formulario-estilo-lay8 docente-modal-form-pad">
             <?= csrf_field() ?>
             <div class="campo-grupo">
                 <label for="tarea_seccion_id"><i class="bx bx-door-open"></i> Asignatura & Sección:</label>
@@ -401,23 +401,23 @@
 
 <!-- Modal: Revisar Entregas de Alumnos y Calificar -->
 <div id="modalRevisarEntregas" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalRevisarEntregas()">
-    <div class="modal-contenido-aula" style="max-width: 820px; width: 100%; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px;">
-        <div class="modal-aula-header" style="background: #1e3a8a; color: white;">
-            <h3 style="margin: 0; color: white;"><i class="bx bx-clipboard"></i> Entregas de Alumnos: <span id="titulo_evaluacion_modal"></span></h3>
-            <span onclick="cerrarModalRevisarEntregas()" class="btn-cerrar-modal-aula" style="color: white;" title="Cerrar">&times;</span>
+    <div class="modal-contenido-aula docente-modal-entregas-caja">
+        <div class="modal-aula-header docente-modal-entregas-head">
+            <h3><i class="bx bx-clipboard"></i> Entregas de Alumnos: <span id="titulo_evaluacion_modal"></span></h3>
+            <span onclick="cerrarModalRevisarEntregas()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
 
-        <div style="padding: 16px 22px; overflow-y: auto; flex: 1;">
-            <div id="cargando_entregas" style="text-align: center; padding: 30px; color: #64748b;">
-                <i class="bx bx-loader-alt bx-spin" style="font-size: 2rem;"></i>
+        <div class="docente-modal-entregas-body">
+            <div id="cargando_entregas" class="docente-entregas-status">
+                <i class="bx bx-loader-alt bx-spin"></i>
                 <p>Cargando entregas de los estudiantes...</p>
             </div>
 
             <div id="contenedor_lista_entregas" style="display: none;">
-                <div id="lista_entregas_items" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="lista_entregas_items" class="docente-entregas-list"></div>
             </div>
 
-            <div id="sin_entregas_msg" style="display: none; text-align: center; padding: 30px; color: #64748b;">
+            <div id="sin_entregas_msg" class="docente-entregas-status" style="display: none;">
                 <i class="bx bx-inbox" style="font-size: 3rem; color: #cbd5e1;"></i>
                 <p>Aún ningún alumno ha subido entrega para esta evaluación.</p>
             </div>

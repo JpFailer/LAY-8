@@ -98,16 +98,5 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-    function mostrarNombreArchivoAporte(input) {
-        const contenedor = document.getElementById('nombre-archivo-seleccionado');
-        const texto = document.getElementById('texto-nombre');
-        if (input.files && input.files[0]) {
-            texto.textContent = input.files[0].name;
-            contenedor.style.display = 'block';
-        } else {
-            contenedor.style.display = 'none';
-        }
-    }
-</script>
+<script src="<?= asset_url('js/biblioteca.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <div class="feed-contenedor-principal">
-  <div style="display:none;"><?= csrf_field() ?></div>
+  <div class="feed-csrf-hidden"><?= csrf_field() ?></div>
 
   <?php
     $estadoVerificacion = $estadoVerificacion ?? (session()->get('estado_verificacion') ?? 'no_aplica');
@@ -12,29 +12,29 @@
   ?>
 
   <?php if (session()->getFlashdata('error')): ?>
-    <div class="alerta-notif alerta-error" style="margin-bottom: 16px;">
-      <i class="bx bx-error-circle" style="font-size: 1.25rem;"></i>
+    <div class="alerta-notif alerta-error feed-alerta-mb">
+      <i class="bx bx-error-circle feed-alerta-ico"></i>
       <span><?= esc(session()->getFlashdata('error')) ?></span>
     </div>
   <?php endif; ?>
 
   <?php if (session()->getFlashdata('mensaje')): ?>
-    <div class="alerta-notif alerta-exito" style="margin-bottom: 16px;">
-      <i class="bx bx-check-circle" style="font-size: 1.25rem;"></i>
+    <div class="alerta-notif alerta-exito feed-alerta-mb">
+      <i class="bx bx-check-circle feed-alerta-ico"></i>
       <span><?= esc(session()->getFlashdata('mensaje')) ?></span>
     </div>
   <?php endif; ?>
 
   <?php if (session()->getFlashdata('info')): ?>
-    <div class="alerta-notif" style="margin-bottom: 16px; background: rgba(37, 99, 235, 0.12); border: 1px solid rgba(59, 130, 246, 0.35); color: #93c5fd;">
-      <i class="bx bx-info-circle" style="font-size: 1.25rem;"></i>
+    <div class="alerta-notif feed-alerta-mb feed-alerta-info">
+      <i class="bx bx-info-circle feed-alerta-ico"></i>
       <span><?= esc(session()->getFlashdata('info')) ?></span>
     </div>
   <?php endif; ?>
 
   <?php if ($userRol === 'profesor' && !$esProfesorAprobado): ?>
-    <div class="alerta-notif" style="margin-bottom: 16px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fcd34d;">
-      <i class="bx bx-time-five" style="font-size: 1.3rem;"></i>
+    <div class="alerta-notif feed-alerta-mb feed-alerta-aviso">
+      <i class="bx bx-time-five feed-alerta-ico-lg"></i>
       <span><strong>Verificación docente pendiente:</strong> Tu carnet o constancia institucional está en revisión por un administrador. El acceso al Panel Docente se habilitará tras su aprobación.</span>
     </div>
   <?php endif; ?>
@@ -52,11 +52,10 @@
       <h2>
         <?= $saludoMomento ?>, <?= esc($primerNombre) ?>!
         <?php if ($esAdminSistema): ?>
-          <i class="bx bxs-check-circle" style="color: #2563eb; font-size: 1.3rem; vertical-align: middle;" title="Administrador Verificado"></i>
+          <i class="bx bxs-check-circle feed-verif-ico feed-verif-admin" title="Administrador Verificado"></i>
         <?php elseif ($esProfesorAprobado): ?>
-          <i class="bx bxs-check-circle" style="color: #10b981; font-size: 1.3rem; vertical-align: middle;" title="Profesor Verificado"></i>
+          <i class="bx bxs-check-circle feed-verif-ico feed-verif-prof" title="Profesor Verificado"></i>
         <?php endif; ?>
-        <span style="font-size: 1.5rem;"></span>
       </h2>
       
       <div class="welcome-meta-chips">
@@ -112,7 +111,7 @@
                       <?php endif; ?>
                     </div>
                     <div class="clase-aula-info">
-                      <i class="bx bx-map-pin" style="color: #2563eb;"></i>
+                      <i class="bx bx-map-pin feed-ico-pin"></i>
                       <span><?= esc($clase['aula']) ?></span>
                     </div>
                   </div>
@@ -168,7 +167,7 @@
             <textarea name="contenido" id="composer-contenido" class="composer-textarea-cuerpo" placeholder="Escribe aquí los detalles del aviso, directrices de clase o novedades para la comunidad..." required></textarea>
 
             <div class="composer-bottom-controls">
-              <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="feed-composer-left">
                 <select name="categoria" id="composer-categoria" class="composer-select-categoria">
                   <option value="Institucional">Institucional</option>
                   <option value="Académico">Académico</option>
@@ -197,12 +196,12 @@
       <!-- C. TABLÓN DE NOTICIAS CON LIKES E HILOS ESTILO REDDIT                 -->
       <!-- ===================================================================== -->
       <section class="seccion-tablon-muro">
-        <div class="card-header-feed" style="margin-bottom: 8px;">
+        <div class="card-header-feed feed-header-mb">
           <h3>
             <i class="bx bx-news"></i>
             Tablón de Noticias y Comunicados UMC
           </h3>
-          <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">
+          <span class="feed-count-muted">
             <?= count($noticias) ?> <?= (count($noticias) == 1) ? 'publicación' : 'publicaciones' ?>
           </span>
         </div>
@@ -234,9 +233,9 @@
                     <div class="autor-nombre-line">
                       <span class="autor-nombre-txt"><?= esc($autorNombre) ?></span>
                       <?php if (in_array($rolAutor, ['admin', 'administrador'])): ?>
-                        <span class="check-verificado-admin" title="Administrador Verificado" style="color: #2563eb; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                        <span class="check-verificado-admin" title="Administrador Verificado"><i class="bx bxs-check-circle"></i></span>
                       <?php elseif ($rolAutor === 'profesor'): ?>
-                        <span class="check-verificado-profesor" title="Profesor Verificado" style="color: #10b981; font-size: 1.15rem; display: inline-flex; align-items: center; margin-left: 2px;"><i class="bx bxs-check-circle"></i></span>
+                        <span class="check-verificado-profesor" title="Profesor Verificado"><i class="bx bxs-check-circle"></i></span>
                       <?php endif; ?>
                       <span class="badge-rol-autor <?= $badgeRolClass ?>"><?= $badgeRolTexto ?></span>
                     </div>

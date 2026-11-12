@@ -624,7 +624,7 @@
 
               </div>
 
-              <div class="ajuste-descripcion" style="font-size: 0.83rem; color: #64748b;">
+              <div class="ajuste-descripcion">
 
                 Reduce el brillo y optimiza la paleta visual para navegación nocturna en el campus.
 
@@ -777,7 +777,7 @@
         <input type="hidden" name="foto_recortada" id="input-foto-recortada" value="">
 
         <div class="modal-editar-body" style="padding: 22px 20px; text-align: center;">
-          <p class="form-sublabel-editar" style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">
+          <p class="form-sublabel-editar">
             Ajusta tu foto al encuadre circular 1:1. Puedes arrastrar para centrar y usar el deslizador para hacer zoom:
           </p>
 
@@ -790,11 +790,11 @@
           <!-- Controles de Zoom -->
           <div id="cropper-controles-zoom" style="margin-bottom: 16px;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 260px; margin: 0 auto;">
-              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(-0.1)" title="Reducir zoom" style="background: #e2e8f0; border: none; border-radius: 8px; width: 32px; height: 32px; font-weight: 700; cursor: pointer; color: #334155; display: inline-flex; align-items: center; justify-content: center;">
+              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(-0.1)" title="Reducir zoom">
                 <i class="bx bx-zoom-out"></i>
               </button>
               <input type="range" id="slider-zoom-avatar" min="1" max="3" step="0.02" value="1" oninput="cambiarZoomSlider(this.value)" style="flex: 1; accent-color: #2563eb; cursor: pointer;">
-              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(0.1)" title="Aumentar zoom" style="background: #e2e8f0; border: none; border-radius: 8px; width: 32px; height: 32px; font-weight: 700; cursor: pointer; color: #334155; display: inline-flex; align-items: center; justify-content: center;">
+              <button type="button" class="btn-zoom-avatar" onclick="ajustarZoomAvatar(0.1)" title="Aumentar zoom">
                 <i class="bx bx-zoom-in"></i>
               </button>
             </div>

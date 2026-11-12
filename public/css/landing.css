@@ -1,8 +1,8 @@
 /*----CONTENEDOR PRINCIPAL----*/
 
-body {
+body.landing-body {
     background-color: #f8fafc;
-    display: block !important;
+    display: block;
     min-height: 100vh;
 }
 

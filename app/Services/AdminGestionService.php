@@ -96,15 +96,20 @@ class AdminGestionService
             ->orderBy('usuarios.primer_nombre', 'ASC')
             ->findAll();
 
-        $usuarios = $usuarioModel
-            ->select('id, cedula, primer_nombre, apellidos, nombre_usuario, correo, rol, carrera, estado_verificacion, estado_cuenta, motivo_baneo, fecha_registro, ultimo_acceso')
-            ->orderBy('id', 'DESC')
-            ->findAll(100);
+        $usuariosLimite  = 20;
+        $usuarios        = $usuarioModel->obtenerUsuariosFiltrados([], $usuariosLimite, 0);
+        $usuariosTotal   = $usuarioModel->contarUsuariosFiltrados([]);
+        $usuariosPaginas = max(1, (int) ceil($usuariosTotal / $usuariosLimite));
 
         $aporteModel = new AporteBibliotecaModel();
         $aportes = [];
+        $aportesTotal = 0;
+        $aportesPaginas = 1;
         try {
-            $aportes = $aporteModel->obtenerTodosConUsuario();
+            $biblioPag = (new BibliotecaService($aporteModel))->obtenerAportesPaginados(null, null, null, 1, 20);
+            $aportes        = $biblioPag['aportes'];
+            $aportesTotal   = $biblioPag['total'];
+            $aportesPaginas = $biblioPag['totalPaginas'];
         } catch (\Throwable $e) {}
 
         $auditoriaLogs = $auditoriaModel->ultimosRegistros(40);
@@ -128,27 +133,32 @@ class AdminGestionService
 
         $carrerasHorarios = [];
         foreach ($carrerasDefinidas as $cod => $info) {
-            $rutaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . "horario_{$cod}.pdf";
+            $rutaJson = $carpetaScripts . DIRECTORY_SEPARATOR . "horarios_procesados_{$cod}.json";
+            $rutaPdf  = $carpetaHorarios . DIRECTORY_SEPARATOR . "horario_{$cod}.pdf";
             if (!file_exists($rutaPdf) && $cod === 'ING-INF') {
                 $rutaPdf = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
             }
 
-            $existe = file_exists($rutaPdf);
+            $archivoActivo = file_exists($rutaJson) ? $rutaJson : (file_exists($rutaPdf) ? $rutaPdf : $rutaJson);
+            $existe = file_exists($archivoActivo);
             $carrerasHorarios[$cod] = array_merge($info, [
                 'codigo'              => $cod,
                 'existe_archivo'      => $existe,
-                'tamano_kb'           => $existe ? round(filesize($rutaPdf) / 1024, 2) : 0,
-                'ultima_modificacion' => $existe ? date('d/m/Y H:i', filemtime($rutaPdf)) : 'No cargado',
+                'tamano_kb'           => $existe ? round(filesize($archivoActivo) / 1024, 2) : 0,
+                'ultima_modificacion' => $existe ? date('d/m/Y H:i', filemtime($archivoActivo)) : 'No cargado',
                 'total_clases'        => $clasesPorCarrera[$cod] ?? 0,
-                'nombre_archivo'      => $existe ? basename($rutaPdf) : "horario_{$cod}.pdf",
+                'nombre_archivo'      => $existe ? basename($archivoActivo) : "horarios_procesados_{$cod}.json",
             ]);
         }
 
-        $rutaPdfHorario = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
+        $rutaJsonHorario = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
+        $rutaPdfHorario  = $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf';
+        $archivoPrincipal = file_exists($rutaJsonHorario) ? $rutaJsonHorario : $rutaPdfHorario;
         $horarioInfo = [
-            'existe_archivo'      => file_exists($rutaPdfHorario),
-            'tamano_kb'           => file_exists($rutaPdfHorario) ? round(filesize($rutaPdfHorario) / 1024, 2) : 0,
-            'ultima_modificacion' => file_exists($rutaPdfHorario) ? date('d/m/Y H:i', filemtime($rutaPdfHorario)) : 'No cargado',
+            'nombre_archivo'      => file_exists($archivoPrincipal) ? ('scripts_python/' . basename($archivoPrincipal)) : 'scripts_python/horarios_procesados.json',
+            'existe_archivo'      => file_exists($archivoPrincipal),
+            'tamano_kb'           => file_exists($archivoPrincipal) ? round(filesize($archivoPrincipal) / 1024, 2) : 0,
+            'ultima_modificacion' => file_exists($archivoPrincipal) ? date('d/m/Y H:i', filemtime($archivoPrincipal)) : 'No cargado',
             'total_clases'        => $metricasGlobales['aulas']['total'] > 0 ? array_sum($clasesPorCarrera) : $claseModel->countAllResults(),
             'total_aulas'         => $metricasGlobales['aulas']['total'],
         ];
@@ -161,12 +171,16 @@ class AdminGestionService
                 'baneados'               => $metricasGlobales['usuarios']['baneados'],
                 'total_usuarios'         => $metricasGlobales['usuarios']['total'],
                 'solicitudes_pendientes' => count($solicitudes),
-                'total_aportes'          => count($aportes),
+                'total_aportes'          => $metricasGlobales['biblioteca']['total_aportes'],
             ],
             'solicitudes'       => $solicitudes,
             'profesoresActivos' => $profesoresActivos,
             'usuarios'          => $usuarios,
+            'usuariosTotal'     => $usuariosTotal,
+            'usuariosPaginas'   => $usuariosPaginas,
             'aportes'           => $aportes,
+            'aportesTotal'      => $aportesTotal,
+            'aportesPaginas'    => $aportesPaginas,
             'auditoria'         => $auditoriaLogs,
             'horarioInfo'       => $horarioInfo,
             'carrerasHorarios'  => $carrerasHorarios,

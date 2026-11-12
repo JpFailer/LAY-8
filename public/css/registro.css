@@ -138,15 +138,15 @@
     margin-top: 20px;
 }
 
-.btn-siguiente {
-    width: 250px !important;
-    border-radius: 30px !important;
+.botones-wizard .btn-siguiente {
+    width: 250px;
+    border-radius: 30px;
 }
 
-.btn-mitad {
-    width: 160px !important;
-    border-radius: 30px !important;
-    flex: none !important;
+.botones-wizard .btn-mitad {
+    width: 160px;
+    border-radius: 30px;
+    flex: none;
 }
 
 /*----CONTENEDOR DEL CARNET----*/
@@ -390,45 +390,69 @@
     background: #1e429f;
 }
 
+.form-label-azul {
+    color: #1c53b0;
+}
+
+.checkbox-terminos-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.84rem;
+    color: #475569;
+    cursor: pointer;
+    line-height: 1.45;
+}
+
+.checkbox-terminos-label a {
+    color: #1e3a8a;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.form-footer span {
+    color: #64748b;
+}
+
 /* ==========================================================================
    MODO OSCURO EN LOGIN Y REGISTRO (CON CONTRASTE ÓPTIMO)
    ========================================================================== */
 body.dark-mode .card-global {
-    background-color: #1e293b !important;
-    border: 1px solid #334155 !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45) !important;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
 }
 
 body.dark-mode .form-titulo {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .form-subtitulo-inline {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .registro-logo span {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .form-label {
-    color: #cbd5e1 !important;
-    font-weight: 600 !important;
+    color: #cbd5e1;
+    font-weight: 600;
 }
 
 body.dark-mode .input-global {
-    background-color: #0f172a !important;
-    color: #f8fafc !important;
-    border: 1.5px solid #334155 !important;
+    background-color: #0f172a;
+    color: #f8fafc;
+    border: 1.5px solid #334155;
 }
 
 body.dark-mode .input-global:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 body.dark-mode .progress-bar {
-    border-bottom-color: #334155 !important;
+    border-bottom-color: #334155;
 }
 
 body.dark-mode .progress-bar .step {
@@ -436,108 +460,108 @@ body.dark-mode .progress-bar .step {
 }
 
 body.dark-mode .progress-bar .step.activo {
-    color: #60a5fa !important;
-    border-bottom-color: #60a5fa !important;
+    color: #60a5fa;
+    border-bottom-color: #60a5fa;
 }
 
 body.dark-mode .tarjeta-carrera-display {
-    background-color: #0f172a !important;
-    border-color: #334155 !important;
+    background-color: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .carrera-display-nombre {
-    color: #f1f5f9 !important;
+    color: #f1f5f9;
 }
 
 body.dark-mode .carrera-display-code {
-    background: #1e3a8a !important;
-    color: #bfdbfe !important;
+    background: #1e3a8a;
+    color: #bfdbfe;
 }
 
 body.dark-mode .btn-cambiar-carrera {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #93c5fd !important;
+    background: #1e293b;
+    border-color: #334155;
+    color: #93c5fd;
 }
 
 body.dark-mode .radio-item {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .form-footer span {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .link-global {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 body.dark-mode .checkbox-terminos-label {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .checkbox-terminos-label a {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .modal-terminos-content {
-    background: #1e293b !important;
-    border: 1px solid #334155 !important;
-    color: #f1f5f9 !important;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
 }
 
 body.dark-mode .link-terminos-completo {
-    color: #60a5fa !important;
+    color: #60a5fa;
 }
 
 body.dark-mode .btn-cerrar-modal-terminos {
-    border-color: #475569 !important;
-    color: #cbd5e1 !important;
+    border-color: #475569;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-cerrar-modal-terminos:hover {
-    background: #334155 !important;
-    color: #f8fafc !important;
+    background: #334155;
+    color: #f8fafc;
 }
 
 body.dark-mode .modal-terminos-header,
 body.dark-mode .modal-terminos-footer {
-    background: #0f172a !important;
-    border-color: #334155 !important;
+    background: #0f172a;
+    border-color: #334155;
 }
 
 body.dark-mode .modal-terminos-header h3,
 body.dark-mode .modal-terminos-body h4 {
-    color: #93c5fd !important;
+    color: #93c5fd;
 }
 
 body.dark-mode .modal-terminos-body {
-    color: #cbd5e1 !important;
+    color: #cbd5e1;
 }
 
 body.dark-mode .btn-cerrar-terminos {
-    color: #94a3b8 !important;
+    color: #94a3b8;
 }
 
 body.dark-mode .btn-cerrar-terminos:hover {
-    color: #f8fafc !important;
+    color: #f8fafc;
 }
 
 body.dark-mode .archivo-feedback-box {
-    background: #064e3b !important;
-    border-color: #059669 !important;
+    background: #064e3b;
+    border-color: #059669;
 }
 
 body.dark-mode .archivo-nombre {
-    color: #a7f3d0 !important;
+    color: #a7f3d0;
 }
 
 body.dark-mode .archivo-tamano {
-    color: #6ee7b7 !important;
+    color: #6ee7b7;
 }
 
 body.dark-mode .badge-archivo-ok {
-    background: #022c22 !important;
-    color: #6ee7b7 !important;
-    border-color: #047857 !important;
+    background: #022c22;
+    color: #6ee7b7;
+    border-color: #047857;
 }

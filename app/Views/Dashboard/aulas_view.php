@@ -192,7 +192,7 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <div style="display: flex; gap: 6px; align-items: center;">
+                            <div class="aulas-footer-acciones">
                                 <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
                                     <i class="bx bx-plus"></i> Tarea
                                 </button>
@@ -219,7 +219,7 @@
     <div id="tab-seccion-horario" class="tab-contenido-aulas" style="display: none;">
         <div class="horario-toolbar">
             <div class="toolbar-info">
-                <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                <h3 class="aulas-toolbar-titulo">
                     <i class="bx bx-calendar-event"></i> Horario Académico Personal
                 </h3>
             </div>
@@ -228,10 +228,10 @@
                     <i class="bx bx-printer"></i> Imprimir Horario
                 </button>
                 <button type="button" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario()" title="Restaurar horario oficial asignado por la universidad">
-                    <i class="bx bx-refresh" style="color: #2563eb;"></i> Restaurar Horario Oficial
+                    <i class="bx bx-refresh aulas-ico-refresh"></i> Restaurar Horario Oficial
                 </button>
                 <button type="button" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario()" title="Borrar todos los bloques de mi horario para empezar de nuevo">
-                    <i class="bx bx-trash" style="color: #ef4444;"></i> Limpiar Mi Horario
+                    <i class="bx bx-trash aulas-ico-trash"></i> Limpiar Mi Horario
                 </button>
             </div>
         </div>
@@ -240,7 +240,7 @@
             <table class="tabla-horario-umc">
                 <thead>
                     <tr>
-                        <th style="width: 130px;">Bloque / Turno</th>
+                        <th class="aulas-col-bloque">Bloque / Turno</th>
                         <?php foreach ($diasSemana as $dia): ?>
                             <th><?= esc($dia) ?></th>
                         <?php endforeach; ?>
@@ -301,7 +301,7 @@
     <div id="tab-seccion-actividades" class="tab-contenido-aulas" style="display: none;">
         <div class="actividades-toolbar">
             <div class="toolbar-info">
-                <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                <h3 class="aulas-toolbar-titulo">
                     <i class="bx bx-list-check"></i> Cronograma de Actividades y Tareas
                 </h3>
             </div>
@@ -356,37 +356,37 @@
                             <?php endif; ?>
 
                             <!-- Estado de Entrega & Calificación Estudiante (Classroom) -->
-                            <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <div class="aulas-actividad-estado-row">
                                 <?php if ($tieneEntrega || $tieneCalificacion): ?>
-                                    <span style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                    <span class="aulas-badge-entregada">
                                         <i class="bx bx-check-double"></i> Entregada <?= !empty($act['fecha_entrega_alumno']) ? date('d/m H:i', strtotime($act['fecha_entrega_alumno'])) : '' ?>
                                     </span>
                                     <?php if (!empty($act['entrega_archivo'])): ?>
-                                        <a href="<?= base_url('aulas/descargar-mi-entrega/' . $act['id']) ?>" style="font-size: 0.78rem; color: #2563eb; text-decoration: underline; display: inline-flex; align-items: center; gap: 3px;">
+                                        <a href="<?= base_url('aulas/descargar-mi-entrega/' . $act['id']) ?>" class="aulas-link-entrega">
                                             <i class="bx bx-paperclip"></i> <?= esc($act['entrega_archivo']) ?>
                                         </a>
                                     <?php endif; ?>
                                     <?php if ($tieneCalificacion): ?>
-                                        <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-size: 0.8rem; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                            <i class="bx bxs-award" style="color: #f59e0b;"></i> Calificación: <?= rtrim(rtrim(number_format((float)$act['calificacion'], 2, '.', ''), '0'), '.') ?> pts
+                                        <span class="aulas-badge-calificacion">
+                                            <i class="bx bxs-award aulas-ico-award"></i> Calificación: <?= rtrim(rtrim(number_format((float)$act['calificacion'], 2, '.', ''), '0'), '.') ?> pts
                                         </span>
-                                        <span style="background: #eef2ff; color: #3730a3; font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span class="aulas-badge-evaluada">
                                             <i class="bx bx-lock-alt"></i> Evaluada
                                         </span>
                                         <?php if (!empty($act['feedback_profesor'])): ?>
-                                            <span style="font-size: 0.78rem; color: #475569; font-style: italic;">
+                                            <span class="aulas-feedback-docente">
                                                 Docente: "<?= esc($act['feedback_profesor']) ?>"
                                             </span>
                                         <?php endif; ?>
                                     <?php else: ?>
-                                        <span style="background: #fef3c7; color: #92400e; font-size: 0.78rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;">
+                                        <span class="aulas-badge-pendiente">
                                             Pendiente por calificar
                                         </span>
                                     <?php endif; ?>
                                 <?php endif; ?>
 
                                 <?php if (!$tieneCalificacion): ?>
-                                    <button type="button" class="btn-subir-cta" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
+                                    <button type="button" class="btn-subir-cta aulas-btn-entregar" onclick="abrirModalEntregarTarea(<?= (int)$act['id'] ?>, '<?= esc($act['titulo'], 'js') ?>', '<?= esc($act['materia_nombre'], 'js') ?>')">
                                         <i class="bx bx-upload"></i> <?= $tieneEntrega ? 'Modificar Entrega' : 'Entregar Tarea' ?>
                                     </button>
                                 <?php endif; ?>
@@ -434,7 +434,7 @@
             <h3><i class="bx bx-task"></i> Nueva Actividad / Evaluación</h3>
             <span onclick="cerrarModalNuevaActividad()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8 aulas-modal-form-pad">
             <?= csrf_field() ?>
             <div class="campo-grupo">
                 <label for="act_seccion_id"><i class="bx bx-book-open"></i> Materia:</label>
@@ -488,21 +488,21 @@
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
 <div id="modalEntregarTarea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEntregarTarea()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 500px;">
+    <div class="modal-contenido-aula modal-actividad-ancho aulas-modal-sm">
         <div class="modal-aula-header">
             <h3><i class="bx bx-upload"></i> Entregar Asignación</h3>
             <span onclick="cerrarModalEntregarTarea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <form id="formEntregarTareaAlumno" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8" style="padding: 20px;">
+        <form id="formEntregarTareaAlumno" method="post" enctype="multipart/form-data" class="formulario-estilo-lay8 aulas-modal-form-pad">
             <?= csrf_field() ?>
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 14px;">
-                <strong id="entregar_modal_titulo" style="display: block; color: #1e40af; font-size: 0.96rem;"></strong>
-                <span id="entregar_modal_materia" style="font-size: 0.8rem; color: #3b82f6;"></span>
+            <div class="aulas-entrega-resumen-box">
+                <strong id="entregar_modal_titulo" class="aulas-entrega-resumen-titulo"></strong>
+                <span id="entregar_modal_materia" class="aulas-entrega-resumen-materia"></span>
             </div>
 
             <div class="campo-grupo">
                 <label for="input_archivo_tarea"><i class="bx bx-file"></i> Archivo de la Tarea (PDF, Word, ZIP, JPG):</label>
-                <input type="file" name="archivo_tarea" id="input_archivo_tarea" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg" class="input-lay8" style="padding: 8px;">
+                <input type="file" name="archivo_tarea" id="input_archivo_tarea" accept=".pdf,.doc,.docx,.zip,.rar,.png,.jpg,.jpeg" class="input-lay8 aulas-input-file-pad">
             </div>
 
             <div class="campo-grupo">
@@ -519,21 +519,21 @@
 
 <!-- Modal: Inscripción de Materia Extemporánea (Formal, sin emojis) -->
 <div id="modalInscripcionExtemporanea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalExtemporanea()">
-    <div class="modal-contenido-aula modal-actividad-ancho" style="max-width: 650px;">
+    <div class="modal-contenido-aula modal-actividad-ancho aulas-modal-lg">
         <div class="modal-aula-header">
             <h3><i class="bx bx-plus-circle"></i> Inscripción de Asignatura Extemporánea</h3>
             <span onclick="cerrarModalExtemporanea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
-        <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 16px;">
+        <p class="aulas-modal-subdesc">
             Permite agregar asignaturas autorizadas por la coordinación docente o inscripciones extemporáneas fuera del registro oficial UPE-002.
         </p>
 
         <!-- Filtros y buscador del modal -->
-        <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 220px; position: relative;">
+        <div class="aulas-ext-filtros-row">
+            <div class="aulas-ext-buscador-col">
                 <input type="text" id="buscador-modal-extemporanea" class="input-lay8" placeholder="Buscar por asignatura o código (ej: Programación, CAL604)..." oninput="buscarMateriasExtemporaneas(this.value)">
             </div>
-            <select id="filtro-carrera-extemporanea" class="input-lay8" style="width: auto; min-width: 170px;" onchange="buscarMateriasExtemporaneas(document.getElementById('buscador-modal-extemporanea').value)">
+            <select id="filtro-carrera-extemporanea" class="input-lay8 aulas-ext-carrera-select" onchange="buscarMateriasExtemporaneas(document.getElementById('buscador-modal-extemporanea').value)">
                 <option value="">Todas las carreras</option>
                 <option value="ING-INF" <?= ($usuarioCarrera === 'ING-INF') ? 'selected' : '' ?>>Informática</option>
                 <option value="ING-MAR" <?= ($usuarioCarrera === 'ING-MAR') ? 'selected' : '' ?>>Marítima</option>
@@ -544,14 +544,14 @@
         </div>
 
         <!-- Contenedor de resultados -->
-        <div id="lista-resultados-extemporanea" style="max-height: 340px; overflow-y: auto; border: 1px solid rgba(226, 232, 240, 0.15); border-radius: 8px; padding: 8px; background: rgba(15, 23, 42, 0.3);">
-            <div style="text-align: center; padding: 24px 10px; color: #94a3b8; font-size: 0.86rem;">
-                <i class="bx bx-search-alt" style="font-size: 1.8rem; display: block; margin-bottom: 6px;"></i>
+        <div id="lista-resultados-extemporanea" class="aulas-ext-lista-box">
+            <div class="aulas-ext-empty-hint">
+                <i class="bx bx-search-alt"></i>
                 Ingresa el nombre o código de la asignatura para buscar secciones disponibles.
             </div>
         </div>
 
-        <div style="margin-top: 14px; text-align: right;">
+        <div class="aulas-modal-footer-end">
             <button type="button" class="btn-subir-cta btn-secundario-aulas" onclick="cerrarModalExtemporanea()">
                 Cerrar
             </button>

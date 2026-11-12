@@ -16,7 +16,7 @@
     
   </head>
 
-  <body>
+  <body class="landing-body">
 
     <main class="landing-container">
 

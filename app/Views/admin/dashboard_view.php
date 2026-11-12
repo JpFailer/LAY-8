@@ -110,7 +110,7 @@
 
       <?php if (empty($solicitudes)): ?>
         <div class="admin-empty-state">
-          <i class="bx bx-check-double" style="font-size: 3rem; color: #10b981;"></i>
+          <i class="bx bx-check-double admin-empty-ico-ok"></i>
           <h4>¡Al día! No hay solicitudes pendientes</h4>
           <p>Todos los profesores registrados han sido revisados y procesados.</p>
         </div>
@@ -124,7 +124,7 @@
                 <th>Usuario / Correo</th>
                 <th>Fecha de Registro</th>
                 <th>Comprobante / Carnet</th>
-                <th style="text-align: right;">Acciones</th>
+                <th class="admin-th-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -134,11 +134,11 @@
                     <strong><?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos']) ?></strong>
                   </td>
                   <td>
-                    <code style="background: #eff6ff; color: #1e40af; padding: 3px 7px; border-radius: 5px; font-weight: 600; font-size: 0.85rem;"><?= esc($sol['cedula'] ?? 'N/D') ?></code>
+                    <code class="admin-code-cedula"><?= esc($sol['cedula'] ?? 'N/D') ?></code>
                   </td>
                   <td>
-                    <div style="font-weight: 600;">@<?= esc($sol['nombre_usuario']) ?></div>
-                    <div style="font-size: 0.82rem; color: #64748b;"><?= esc($sol['correo']) ?></div>
+                    <div class="admin-user-main">@<?= esc($sol['nombre_usuario']) ?></div>
+                    <div class="admin-subtexto-muted"><?= esc($sol['correo']) ?></div>
                   </td>
                   <td><?= date('d/m/Y H:i', strtotime($sol['fecha_registro'])) ?></td>
                   <td>
@@ -147,10 +147,10 @@
                         <i class="bx bx-id-card"></i> Ver Carnet
                       </a>
                     <?php else: ?>
-                      <span style="color: #94a3b8; font-size: 0.85rem;">Sin archivo</span>
+                      <span class="admin-sin-archivo">Sin archivo</span>
                     <?php endif; ?>
                   </td>
-                  <td style="text-align: right;">
+                  <td class="admin-td-right">
                     <div class="acciones-btn-group">
                       <button type="button" class="btn-accion-admin btn-aprobar" onclick="aprobarProfesor(<?= (int)$sol['id'] ?>, '<?= esc($sol['nombre_usuario'], 'js') ?>')">
                         <i class="bx bx-check"></i> Aprobar
@@ -182,7 +182,7 @@
 
       <?php if (empty($profesoresActivos)): ?>
         <div class="admin-empty-state">
-          <i class="bx bx-user-x" style="font-size: 2.8rem; color: #94a3b8;"></i>
+          <i class="bx bx-user-x admin-empty-ico-muted"></i>
           <h4>No hay profesores aprobados aún</h4>
           <p>Aprueba las solicitudes docentes pendientes arriba para habilitar su asignación de materias.</p>
         </div>
@@ -195,7 +195,7 @@
                 <th>Cédula</th>
                 <th>Usuario / Correo</th>
                 <th>Secciones Asignadas</th>
-                <th style="text-align: right;">Acciones</th>
+                <th class="admin-th-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -205,18 +205,18 @@
                     <strong><?= esc($prof['primer_nombre'] . ' ' . $prof['apellidos']) ?></strong>
                   </td>
                   <td>
-                    <code style="background: #eff6ff; color: #1e40af; padding: 3px 7px; border-radius: 5px; font-weight: 600; font-size: 0.85rem;"><?= esc($prof['cedula'] ?? 'N/D') ?></code>
+                    <code class="admin-code-cedula"><?= esc($prof['cedula'] ?? 'N/D') ?></code>
                   </td>
                   <td>
-                    <div style="font-weight: 600;">@<?= esc($prof['nombre_usuario']) ?></div>
-                    <div style="font-size: 0.82rem; color: #64748b;"><?= esc($prof['correo']) ?></div>
+                    <div class="admin-user-main">@<?= esc($prof['nombre_usuario']) ?></div>
+                    <div class="admin-subtexto-muted"><?= esc($prof['correo']) ?></div>
                   </td>
                   <td>
-                    <span class="badge-accion-tag" style="background: #eff6ff; color: #2563eb; font-weight: 700;">
+                    <span class="badge-accion-tag admin-badge-secciones">
                       <i class="bx bx-door-open"></i> <?= (int)$prof['total_secciones_asignadas'] ?> secciones
                     </span>
                   </td>
-                  <td style="text-align: right;">
+                  <td class="admin-td-right">
                     <button type="button" class="btn-accion-admin btn-aprobar" onclick="abrirModalAsignarSecciones(<?= (int)$prof['id'] ?>, '<?= esc($prof['primer_nombre'] . ' ' . $prof['apellidos'], 'js') ?>')">
                       <i class="bx bx-link-alt"></i> Asignar Secciones
                     </button>
@@ -254,25 +254,25 @@
               <th>Carrera</th>
               <th>Rol</th>
               <th>Estado</th>
-              <th style="text-align: right;">Acciones</th>
+              <th class="admin-th-right">Acciones</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="tbody-usuarios-admin">
             <?php foreach ($usuarios as $u): ?>
-              <tr class="fila-usuario-item" data-texto="<?= strtolower(esc($u['primer_nombre'] . ' ' . $u['apellidos'] . ' ' . $u['nombre_usuario'] . ' ' . $u['correo'] . ' ' . $u['carrera'] . ' ' . $u['rol'])) ?>">
+              <tr class="fila-usuario-item">
                 <td>#<?= (int)$u['id'] ?></td>
                 <td>
                   <strong><?= esc($u['primer_nombre'] . ' ' . $u['apellidos']) ?></strong>
                   <?php if (in_array($u['rol'], ['admin', 'administrador'], true)): ?>
-                    <i class="bx bxs-check-circle" style="color: #2563eb; vertical-align: middle; margin-left: 2px;" title="Administrador Verificado"></i>
+                    <i class="bx bxs-check-circle admin-ico-verif admin-ico-verif-admin" title="Administrador Verificado"></i>
                   <?php elseif ($u['rol'] === 'profesor' && ($u['estado_verificacion'] ?? '') === 'aprobado'): ?>
-                    <i class="bx bxs-check-circle" style="color: #10b981; vertical-align: middle; margin-left: 2px;" title="Profesor Verificado"></i>
+                    <i class="bx bxs-check-circle admin-ico-verif admin-ico-verif-prof" title="Profesor Verificado"></i>
                   <?php endif; ?>
                 </td>
-                <td><code style="background: #eff6ff; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.84rem;"><?= esc($u['cedula'] ?? 'N/D') ?></code></td>
+                <td><code class="admin-code-cedula"><?= esc($u['cedula'] ?? 'N/D') ?></code></td>
                 <td>
                   <div>@<?= esc($u['nombre_usuario']) ?></div>
-                  <div style="font-size: 0.8rem; color: #64748b;"><?= esc($u['correo']) ?></div>
+                  <div class="admin-subtexto-muted"><?= esc($u['correo']) ?></div>
                 </td>
                 <td><span class="badge-carrera-tag"><?= esc($u['carrera'] ?: 'ING-INF') ?></span></td>
                 <td>
@@ -285,7 +285,7 @@
                     <span class="badge-estado-activo"><i class="bx bx-check-circle"></i> Activo</span>
                   <?php endif; ?>
                 </td>
-                <td style="text-align: right;">
+                <td class="admin-td-right">
                   <div class="acciones-btn-group">
                     <?php if (($u['estado_cuenta'] ?? 'activo') === 'baneado'): ?>
                       <button type="button" class="btn-accion-admin btn-desbanear" onclick="desbanearUsuario(<?= (int)$u['id'] ?>, '<?= esc($u['nombre_usuario'], 'js') ?>')">
@@ -311,6 +311,22 @@
           </tbody>
         </table>
       </div>
+
+      <?php $uTotal = (int) ($usuariosTotal ?? count($usuarios)); $uPaginas = max(1, (int) ($usuariosPaginas ?? 1)); ?>
+      <div class="admin-paginacion-bar" id="admin-usuarios-paginacion" data-pagina="1" data-paginas="<?= $uPaginas ?>" data-total="<?= $uTotal ?>">
+        <span class="admin-pag-info" id="admin-usuarios-pag-info">
+          Mostrando <?= count($usuarios) ?> de <?= $uTotal ?> usuario<?= $uTotal === 1 ? '' : 's' ?>
+        </span>
+        <div class="admin-pag-controles">
+          <button type="button" class="btn-pag-admin" id="btn-usuarios-prev" onclick="cambiarPaginaUsuariosAdmin(-1)" disabled>
+            <i class="bx bx-chevron-left"></i> Anterior
+          </button>
+          <span class="admin-pag-indicador" id="admin-usuarios-pag-indicador">Página 1 de <?= $uPaginas ?></span>
+          <button type="button" class="btn-pag-admin" id="btn-usuarios-next" onclick="cambiarPaginaUsuariosAdmin(1)" <?= $uPaginas <= 1 ? 'disabled' : '' ?>>
+            Siguiente <i class="bx bx-chevron-right"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -322,17 +338,21 @@
           <h3>Moderación de Publicaciones y Recursos</h3>
           <p>Revisa y elimina archivos o publicaciones que infrinjan los términos de uso.</p>
         </div>
+        <div class="admin-search-wrap">
+          <input type="text" id="filtro-biblioteca-admin-input" class="input-global input-admin-search" placeholder="Buscar por título, archivo o usuario..." oninput="filtrarTablaBiblioteca()">
+        </div>
       </div>
 
-      <?php if (empty($aportes)): ?>
+      <?php $aTotal = (int) ($aportesTotal ?? count($aportes)); $aPaginas = max(1, (int) ($aportesPaginas ?? 1)); ?>
+      <?php if ($aTotal === 0): ?>
         <div class="admin-empty-state">
-          <i class="bx bx-folder-open" style="font-size: 3rem; color: #94a3b8;"></i>
+          <i class="bx bx-folder-open admin-empty-ico"></i>
           <h4>No hay aportes registrados</h4>
           <p>La biblioteca aún no cuenta con archivos subidos.</p>
         </div>
       <?php else: ?>
         <div class="tabla-responsive-container">
-          <table class="tabla-admin">
+          <table class="tabla-admin" id="tabla-biblioteca-admin">
             <thead>
               <tr>
                 <th>Recurso</th>
@@ -340,15 +360,15 @@
                 <th>Subido por</th>
                 <th>Tamaño</th>
                 <th>Fecha</th>
-                <th style="text-align: right;">Acciones</th>
+                <th class="admin-th-right">Acciones</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="tbody-biblioteca-admin">
               <?php foreach ($aportes as $ap): ?>
                 <tr>
                   <td>
                     <strong><?= esc($ap['titulo']) ?></strong>
-                    <div style="font-size: 0.8rem; color: #64748b;"><?= esc($ap['nombre_original']) ?></div>
+                    <div class="admin-subtexto-muted"><?= esc($ap['nombre_original']) ?></div>
                   </td>
                   <td><span class="badge-categoria-tag"><?= ucfirst(esc($ap['categoria'])) ?></span></td>
                   <td>
@@ -356,12 +376,12 @@
                     <?php if (!empty($autor)): ?>
                       @<?= esc($autor) ?>
                     <?php else: ?>
-                      <span style="color: #94a3b8;">Desvinculado</span>
+                      <span class="admin-texto-desvinculado">Desvinculado</span>
                     <?php endif; ?>
                   </td>
                   <td><?= round(($ap['tamano_bytes'] ?? 0) / 1024, 1) ?> KB</td>
                   <td><?= !empty($ap['fecha_subida']) ? date('d/m/Y', strtotime($ap['fecha_subida'])) : (!empty($ap['created_at']) ? date('d/m/Y', strtotime($ap['created_at'])) : 'Reciente') ?></td>
-                  <td style="text-align: right;">
+                  <td class="admin-td-right">
                     <div class="acciones-btn-group">
                       <a href="<?= base_url('biblioteca/descargar/' . $ap['id']) ?>" class="btn-accion-admin btn-descargar" target="_blank" title="Descargar comprobante">
                         <i class="bx bx-download"></i>
@@ -376,6 +396,21 @@
             </tbody>
           </table>
         </div>
+
+        <div class="admin-paginacion-bar" id="admin-biblioteca-paginacion" data-pagina="1" data-paginas="<?= $aPaginas ?>" data-total="<?= $aTotal ?>">
+          <span class="admin-pag-info" id="admin-biblioteca-pag-info">
+            Mostrando <?= count($aportes) ?> de <?= $aTotal ?> recurso<?= $aTotal === 1 ? '' : 's' ?>
+          </span>
+          <div class="admin-pag-controles">
+            <button type="button" class="btn-pag-admin" id="btn-biblioteca-prev" onclick="cambiarPaginaBibliotecaAdmin(-1)" disabled>
+              <i class="bx bx-chevron-left"></i> Anterior
+            </button>
+            <span class="admin-pag-indicador" id="admin-biblioteca-pag-indicador">Página 1 de <?= $aPaginas ?></span>
+            <button type="button" class="btn-pag-admin" id="btn-biblioteca-next" onclick="cambiarPaginaBibliotecaAdmin(1)" <?= $aPaginas <= 1 ? 'disabled' : '' ?>>
+              Siguiente <i class="bx bx-chevron-right"></i>
+            </button>
+          </div>
+        </div>
       <?php endif; ?>
     </div>
   </div>
@@ -386,7 +421,7 @@
       <div class="section-box-header">
         <div>
           <h3>Actualización del Horario de Referencia para el Mapa</h3>
-          <p>Sube el documento PDF oficial emitido por la universidad para sincronizar automáticamente las aulas y horarios del campus.</p>
+          <p>Carga el archivo JSON generado localmente con el extractor CGD-001 (o el PDF en entorno local) para sincronizar aulas y horarios sin sobrecargar el servidor.</p>
         </div>
       </div>
 
@@ -394,7 +429,7 @@
         <div class="horario-status-card">
           <h4><i class="bx bx-file"></i> Estado del Archivo Actual</h4>
           <ul class="horario-status-list">
-            <li><strong>Archivo activo:</strong> <code>scripts_python/horario.pdf</code></li>
+            <li><strong>Archivo activo:</strong> <code><?= esc($horarioInfo['nombre_archivo'] ?? 'scripts_python/horarios_procesados.json') ?></code></li>
             <li><strong>Estado en disco:</strong> <?= $horarioInfo['existe_archivo'] ? '<span style="color:#10b981; font-weight:700;">Presente</span>' : '<span style="color:#ef4444; font-weight:700;">No encontrado</span>' ?></li>
             <li><strong>Tamaño:</strong> <?= esc($horarioInfo['tamano_kb']) ?> KB</li>
             <li><strong>Última sincronización:</strong> <?= esc($horarioInfo['ultima_modificacion']) ?></li>
@@ -405,8 +440,8 @@
 
         <div class="horario-upload-card">
           <h4><i class="bx bx-calendar-event"></i> Gestión de Horarios por Carrera</h4>
-          <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">
-            Sincroniza y procesa los documentos PDF oficiales (Formulario CGD-001) para cada carrera de la UMC. Cada carrera cuenta con su programación académica del 1er al último semestre.
+          <p class="admin-horarios-desc">
+            Sincroniza la programación académica por carrera subiendo el archivo <code>.json</code> generado localmente con <code>scripts_python/generar_horarios.bat</code> (en entorno local con Python también admite <code>.pdf</code> CGD-001).
           </p>
 
           <div class="carreras-horarios-summary-box">
@@ -429,8 +464,8 @@
             </div>
           </div>
 
-          <button type="button" class="btn-primary" onclick="abrirModalHorariosCarreras()" style="width: 100%; padding: 13px; font-weight: 600; font-size: 0.95rem; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);">
-            <i class="bx bx-calendar-edit" style="font-size: 1.25rem;"></i> Actualizar horarios de todas las carreras
+          <button type="button" class="btn-primary admin-btn-horarios-full" onclick="abrirModalHorariosCarreras()">
+            <i class="bx bx-calendar-edit"></i> Actualizar horarios de todas las carreras
           </button>
         </div>
       </div>
@@ -468,7 +503,7 @@
                 <td><span class="badge-accion-tag"><?= esc($log['accion']) ?></span></td>
                 <td><?= esc($log['entidad'] ?? 'General') ?> #<?= esc($log['entidad_id'] ?? '-') ?></td>
                 <td>
-                  <code style="font-size: 0.78rem;"><?= esc($log['detalles'] ?? '{}') ?></code>
+                  <code class="admin-code-log"><?= esc($log['detalles'] ?? '{}') ?></code>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -483,13 +518,13 @@
 <!-- MODALES INTERACTIVOS PARA ACCIONES ADMINISTRATIVAS -->
 <!-- Modal: Denegar Profesor con Motivo -->
 <div id="modal-denegar-profesor" class="modal-carreras-overlay" style="display: none;">
-  <div class="modal-editar-perfil-content" style="max-width: 480px;">
+  <div class="modal-editar-perfil-content admin-modal-sm">
     <div class="modal-editar-header">
-      <h3 style="color: #dc2626;"><i class="bx bx-user-x"></i> Denegar Solicitud Docente</h3>
+      <h3 class="admin-modal-title-danger"><i class="bx bx-user-x"></i> Denegar Solicitud Docente</h3>
       <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalDenegar()">&times;</button>
     </div>
     <div class="modal-editar-body">
-      <p id="denegar-docente-nombre" style="font-weight: 600; margin-bottom: 12px;"></p>
+      <p id="denegar-docente-nombre" class="admin-modal-sub"></p>
       <label class="form-label">Motivo del rechazo (se notificará al docente):</label>
       <textarea id="motivo-denegar-input" class="input-global" rows="3" placeholder="Ej: El carnet no está vigente o no es legible..."></textarea>
     </div>
@@ -502,13 +537,13 @@
 
 <!-- Modal: Banear Usuario con Motivo -->
 <div id="modal-banear-usuario" class="modal-carreras-overlay" style="display: none;">
-  <div class="modal-editar-perfil-content" style="max-width: 480px;">
+  <div class="modal-editar-perfil-content admin-modal-sm">
     <div class="modal-editar-header">
-      <h3 style="color: #dc2626;"><i class="bx bx-block"></i> Suspender / Banear Usuario</h3>
+      <h3 class="admin-modal-title-danger"><i class="bx bx-block"></i> Suspender / Banear Usuario</h3>
       <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalBanear()">&times;</button>
     </div>
     <div class="modal-editar-body">
-      <p id="banear-usuario-nombre" style="font-weight: 600; margin-bottom: 12px;"></p>
+      <p id="banear-usuario-nombre" class="admin-modal-sub"></p>
       <label class="form-label">Motivo de la suspensión:</label>
       <textarea id="motivo-banear-input" class="input-global" rows="3" placeholder="Ej: Infracción a los términos de convivencia o documentación falsa..."></textarea>
     </div>
@@ -521,13 +556,13 @@
 
 <!-- Modal: Eliminar Aporte con Motivo -->
 <div id="modal-eliminar-aporte" class="modal-carreras-overlay" style="display: none;">
-  <div class="modal-editar-perfil-content" style="max-width: 480px;">
+  <div class="modal-editar-perfil-content admin-modal-sm">
     <div class="modal-editar-header">
-      <h3 style="color: #dc2626;"><i class="bx bx-trash"></i> Eliminar Publicación / Aporte</h3>
+      <h3 class="admin-modal-title-danger"><i class="bx bx-trash"></i> Eliminar Publicación / Aporte</h3>
       <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalEliminarAporte()">&times;</button>
     </div>
     <div class="modal-editar-body">
-      <p id="eliminar-aporte-titulo" style="font-weight: 600; margin-bottom: 12px;"></p>
+      <p id="eliminar-aporte-titulo" class="admin-modal-sub"></p>
       <label class="form-label">Motivo de eliminación:</label>
       <textarea id="motivo-eliminar-aporte-input" class="input-global" rows="3" placeholder="Ej: Contenido inapropiado, documento erróneo o derechos de autor..."></textarea>
     </div>
@@ -543,11 +578,11 @@
 <!-- modal asignar materias a profe -->
 <div id="modal-asignar-secciones-docente" class="modal-carreras-overlay" style="display: none; padding: 15px; box-sizing: border-box; z-index: 100000;" onclick="if(event.target === this) cerrarModalAsignarSecciones()">
   <div class="modal-editar-perfil-content" style="max-width: 650px; width: 100%; border-radius: 18px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);">
-    <div class="modal-editar-header" style="padding: 16px 20px; background: #1e3a8a; color: white; display: flex; align-items: center; justify-content: space-between;">
-      <h3 style="margin: 0; font-size: 1.15rem; color: white; display: flex; align-items: center; gap: 8px;">
+    <div class="modal-editar-header admin-modal-header-azul">
+      <h3 class="admin-modal-header-azul-tit">
         <i class="bx bx-chalkboard"></i> Asignación de Secciones (Aulas)
       </h3>
-      <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalAsignarSecciones()" style="color: white; font-size: 1.5rem; background: none; border: none; cursor: pointer;">&times;</button>
+      <button type="button" class="btn-cerrar-carreras admin-btn-cerrar-blanco" onclick="cerrarModalAsignarSecciones()">&times;</button>
     </div>
 
     <div style="padding: 14px 20px; font-size: 0.9rem;" class="modal-docentes-info-banner">
@@ -586,7 +621,7 @@
           <i class="bx bx-calendar-event" style="color: #2563eb;"></i> Actualizar Horarios de Todas las Carreras
         </h3>
         <p style="font-size: 0.85rem; color: #64748b; margin: 4px 0 0 0;">
-          Sube el archivo PDF oficial (Formulario CGD-001) de cada carrera para procesar y reflejar automáticamente el día y la hora exacta de inicio y fin de todas las materias en el mapa.
+          Sube el archivo <code>.json</code> preprocesado localmente para cada carrera (recomendado en producción: actualización instantánea sin Python). En desarrollo local también acepta <code>.pdf</code> CGD-001.
         </p>
       </div>
       <button type="button" class="btn-cerrar-carreras" onclick="cerrarModalHorariosCarreras()">&times;</button>
@@ -600,7 +635,7 @@
       <div class="carreras-horarios-grid" style="display: flex; flex-direction: column; gap: 14px;">
         <?php if (!empty($carrerasHorarios)): ?>
           <?php foreach ($carrerasHorarios as $codCarrera => $cData): ?>
-            <div class="carrera-horario-card" id="card-horario-<?= $codCarrera ?>" style="border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; background: #ffffff; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; transition: all 0.2s ease;">
+            <div class="carrera-horario-card" id="card-horario-<?= $codCarrera ?>">
               <!-- Info de la carrera -->
               <div style="display: flex; align-items: center; gap: 14px; min-width: 260px;">
                 <div style="width: 48px; height: 48px; border-radius: 12px; background: <?= $cData['color'] ?>15; color: <?= $cData['color'] ?>; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
@@ -630,9 +665,9 @@
 
               <!-- Formulario de subida individual -->
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <input type="file" id="file-horario-<?= $codCarrera ?>" accept=".pdf" style="display: none;" onchange="onArchivoCarreraSeleccionado('<?= $codCarrera ?>', this)">
-                <button type="button" class="btn-seleccionar-pdf" onclick="document.getElementById('file-horario-<?= $codCarrera ?>').click()" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                  <i class="bx bx-upload"></i> <span id="label-file-<?= $codCarrera ?>">Seleccionar PDF</span>
+                <input type="file" id="file-horario-<?= $codCarrera ?>" accept=".json,.pdf" style="display: none;" onchange="onArchivoCarreraSeleccionado('<?= $codCarrera ?>', this)">
+                <button type="button" class="btn-seleccionar-pdf" onclick="document.getElementById('file-horario-<?= $codCarrera ?>').click()">
+                  <i class="bx bx-upload"></i> <span id="label-file-<?= $codCarrera ?>">Seleccionar JSON / PDF</span>
                 </button>
                 <button type="button" class="btn-subir-carrera-accion" id="btn-subir-<?= $codCarrera ?>" onclick="subirHorarioCarrera('<?= $codCarrera ?>')" style="background: <?= $cData['color'] ?>; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; opacity: 0.6;" disabled>
                   <i class="bx bx-sync"></i> Procesar
@@ -644,7 +679,7 @@
       </div>
     </div>
 
-    <div class="modal-editar-footer" style="padding: 14px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+    <div class="modal-editar-footer admin-modal-footer-horarios">
       <span style="font-size: 0.8rem; color: #64748b;">Los horarios sincronizados se reflejan automáticamente en el mapa y la disponibilidad de aulas.</span>
       <button type="button" class="btn-cancelar-modal" onclick="cerrarModalHorariosCarreras()">Cerrar Ventana</button>
     </div>

@@ -10,6 +10,8 @@ use App\Models\AulasModel;
 use App\Models\InscripcionModel;
 use App\Models\SeccionModel;
 use App\Services\AdminGestionService;
+use App\Services\BibliotecaService;
+use App\Services\HorarioSyncService;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -494,31 +496,48 @@ class AdminController extends BaseController
     // =========================================================================
 
     /**
-     * Lista todos los aportes registrados y escanea archivos en disco
+     * Lista aportes paginados con búsqueda SQL y opcionalmente escanea huérfanos en disco.
      */
     public function listarAportesBiblioteca()
     {
-        $categoria = $this->request->getGet('categoria');
+        $categoria    = $this->request->getGet('categoria');
+        $buscar       = trim((string) ($this->request->getGet('buscar') ?? ''));
+        $pagina       = max(1, (int) ($this->request->getGet('pagina') ?? 1));
+        $limite       = min(100, max(5, (int) ($this->request->getGet('limite') ?? 20)));
+        $sinHuerfanos = $this->request->getGet('sin_huerfanos') === '1';
+
         $aporteModel = new AporteBibliotecaModel();
-        
-        $aportes = [];
+        $pag = [
+            'aportes'      => [],
+            'total'        => 0,
+            'paginaActual' => $pagina,
+            'totalPaginas' => 1,
+            'porPagina'    => $limite,
+        ];
+
         try {
-            $aportes = $aporteModel->obtenerTodosConUsuario($categoria);
+            $pag = (new BibliotecaService($aporteModel))->obtenerAportesPaginados(
+                $categoria !== '' ? $categoria : null,
+                $buscar !== '' ? $buscar : null,
+                null,
+                $pagina,
+                $limite
+            );
         } catch (\Throwable $e) {}
 
-        // Verificar existencia física en disco de cada registro
+        $aportes = $pag['aportes'];
         foreach ($aportes as &$ap) {
-            $rutaFisica = WRITEPATH . $ap['ruta_archivo'];
-            $ap['archivo_existe_disco'] = file_exists($rutaFisica);
-            $ap['tamano_kb']            = round($ap['tamano_bytes'] / 1024, 2);
+            $rutaFisica = WRITEPATH . ($ap['ruta_archivo'] ?? '');
+            $ap['archivo_existe_disco'] = !empty($ap['ruta_archivo']) && file_exists($rutaFisica);
+            $ap['tamano_kb']            = round(((int) ($ap['tamano_bytes'] ?? 0)) / 1024, 2);
         }
         unset($ap);
 
-        // Escanear posibles archivos huérfanos en disco (ficheros que estén en WRITEPATH pero no en la BD)
+        // Escanear huérfanos solo cuando no es búsqueda AJAX rápida paginada
         $archivosHuerfanos = [];
         $baseBiblioteca = WRITEPATH . 'uploads/biblioteca/';
-        if (is_dir($baseBiblioteca)) {
-            $rutasRegistradas = array_column($aportes, 'ruta_archivo');
+        if (!$sinHuerfanos && $buscar === '' && $pagina === 1 && is_dir($baseBiblioteca)) {
+            $rutasRegistradas = array_column($aporteModel->select('ruta_archivo')->findAll(), 'ruta_archivo');
             $carpetas = ['guias', 'ejercicios', 'resumenes', 'otros'];
 
             foreach ($carpetas as $cat) {
@@ -529,11 +548,11 @@ class AdminController extends BaseController
                         $rutaRel = 'uploads/biblioteca/' . $cat . '/' . $arch;
                         if (!in_array($rutaRel, $rutasRegistradas, true)) {
                             $archivosHuerfanos[] = [
-                                'categoria'     => $cat,
-                                'nombre_guardado' => $arch,
-                                'ruta_relativa' => $rutaRel,
-                                'tamano_kb'     => round(filesize($dirCat . '/' . $arch) / 1024, 2),
-                                'fecha_modificado' => date('Y-m-d H:i:s', filemtime($dirCat . '/' . $arch))
+                                'categoria'        => $cat,
+                                'nombre_guardado'  => $arch,
+                                'ruta_relativa'    => $rutaRel,
+                                'tamano_kb'        => round(filesize($dirCat . '/' . $arch) / 1024, 2),
+                                'fecha_modificado' => date('Y-m-d H:i:s', filemtime($dirCat . '/' . $arch)),
                             ];
                         }
                     }
@@ -543,7 +562,11 @@ class AdminController extends BaseController
 
         return $this->response->setJSON([
             'success'            => true,
-            'total_aportes'      => count($aportes),
+            'pagina'             => $pag['paginaActual'],
+            'limite'             => $pag['porPagina'],
+            'total'              => $pag['total'],
+            'paginas'            => $pag['totalPaginas'],
+            'total_aportes'      => $pag['total'],
             'aportes'            => $aportes,
             'archivos_huerfanos' => $archivosHuerfanos,
         ]);
@@ -803,79 +826,28 @@ class AdminController extends BaseController
     }
 
     /**
-     * Permite al Administrador subir un nuevo archivo PDF oficial de horarios
-     * (por carrera individual o general) y re-sincronizar automáticamente la base de datos de aulas y clases para el mapa.
+     * Permite al Administrador subir el archivo .json de horarios procesados (óptimo sin Python en servidor)
+     * o .pdf oficial en entorno local, re-sincronizando en lote la base de datos del mapa.
      */
     public function actualizarHorarioPdf()
     {
-        @set_time_limit(300);
-        @ini_set('max_execution_time', '300');
+        $archivo = $this->request->getFile('horario_archivo') ?: $this->request->getFile('horario_pdf');
+        $carrera = (string) ($this->request->getPost('carrera') ?: 'ING-INF');
+        $esJsonRequest = $this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json';
 
-        $archivo = $this->request->getFile('horario_pdf');
-        $carrera = $this->request->getPost('carrera') ?: 'ING-INF';
-        $carrerasValidas = ['ING-INF', 'ING-MAR', 'ING-AMB', 'ADM', 'TUR'];
-
-        if (!in_array($carrera, $carrerasValidas, true)) {
-            $carrera = 'ING-INF';
-        }
-
-        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
-            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
-                return $this->response->setJSON(['success' => false, 'error' => 'Por favor selecciona un archivo PDF de horario oficial válido.']);
+        if (!$archivo) {
+            if ($esJsonRequest) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Por favor selecciona un archivo .json (o .pdf en local) de horario válido.']);
             }
-            return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo PDF de horario oficial válido.');
+            return redirect()->to(base_url('admin'))->with('error', 'Por favor selecciona un archivo de horario válido.');
         }
 
-        if ($archivo->getClientMimeType() !== 'application/pdf') {
-            if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
-                return $this->response->setJSON(['success' => false, 'error' => 'El formato del archivo debe ser exclusivamente PDF.']);
+        $res = (new HorarioSyncService())->sincronizarDesdeArchivo($archivo, $carrera);
+        if (!$res['ok']) {
+            if ($esJsonRequest) {
+                return $this->response->setJSON(['success' => false, 'error' => $res['error']]);
             }
-            return redirect()->to(base_url('admin'))->with('error', 'El formato del archivo debe ser exclusivamente PDF.');
-        }
-
-        $carpetaScripts = ROOTPATH . 'scripts_python';
-        $carpetaHorarios = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios';
-        if (!is_dir($carpetaHorarios)) {
-            mkdir($carpetaHorarios, 0777, true);
-        }
-
-        // Guardar archivo específico para la carrera
-        $nombreDestino = "horario_{$carrera}.pdf";
-        $archivo->move($carpetaHorarios, $nombreDestino, true);
-        $rutaCompletaPdf = $carpetaHorarios . DIRECTORY_SEPARATOR . $nombreDestino;
-
-        // Si es ING-INF, mantener también copia en horario.pdf
-        if ($carrera === 'ING-INF') {
-            @copy($rutaCompletaPdf, $carpetaScripts . DIRECTORY_SEPARATOR . 'horario.pdf');
-        }
-
-        // Limpiar caché JSON de esa carrera para forzar lectura actualizada
-        $rutaCacheJson = $carpetaScripts . DIRECTORY_SEPARATOR . "horarios_procesados_{$carrera}.json";
-        if (file_exists($rutaCacheJson)) {
-            @unlink($rutaCacheJson);
-        }
-        if ($carrera === 'ING-INF') {
-            $rutaCacheGen = $carpetaScripts . DIRECTORY_SEPARATOR . 'horarios_procesados.json';
-            if (file_exists($rutaCacheGen)) {
-                @unlink($rutaCacheGen);
-            }
-        }
-
-        // Ejecutar script Python especializado CGD-001
-        $pythonExec = file_exists($carpetaScripts . DIRECTORY_SEPARATOR . 'venv' . DIRECTORY_SEPARATOR . 'Scripts' . DIRECTORY_SEPARATOR . 'python.exe') 
-            ? '"venv\Scripts\python.exe"' 
-            : 'python';
-        
-        $comando = 'cd "' . $carpetaScripts . '" && ' . $pythonExec . ' procesar_horario_cgd001.py "' . $rutaCompletaPdf . '" ' . $carrera . ' 2>&1';
-        $salidaPython = shell_exec($comando);
-
-        // Re-sincronizar bloques de clases en la base de datos
-        $clasesCargadas = 0;
-        try {
-            $mapaController = new \App\Controllers\MapaController();
-            $clasesCargadas = $mapaController->importar_horarios_automaticamente(true, $carrera);
-        } catch (\Throwable $e) {
-            log_message('error', 'Error al sincronizar clases de ' . $carrera . ': ' . $e->getMessage());
+            return redirect()->to(base_url('admin'))->with('error', $res['error']);
         }
 
         $this->auditoriaModel->registrar(
@@ -883,22 +855,21 @@ class AdminController extends BaseController
             'actualizar_horario_carrera',
             'horario',
             null,
-            ['carrera' => $carrera, 'clases_cargadas' => $clasesCargadas, 'archivo' => $archivo->getClientName()]
+            ['carrera' => $res['carrera'], 'modo' => $res['modo'] ?? 'json', 'clases_cargadas' => $res['clases_cargadas'], 'archivo' => $archivo->getClientName()]
         );
 
-        $mensaje = "¡Horario de {$carrera} actualizado con éxito! Se sincronizaron {$clasesCargadas} bloques de clases con horas exactas en el mapa.";
-
-        if ($this->request->isAJAX() || $this->request->getHeaderLine('Accept') === 'application/json') {
+        if ($esJsonRequest) {
             return $this->response->setJSON([
                 'success'         => true,
-                'mensaje'         => $mensaje,
-                'carrera'         => $carrera,
-                'clases_cargadas' => $clasesCargadas,
-                'fecha'           => date('d/m/Y H:i')
+                'mensaje'         => $res['mensaje'],
+                'carrera'         => $res['carrera'],
+                'modo'            => $res['modo'] ?? 'json',
+                'clases_cargadas' => $res['clases_cargadas'],
+                'fecha'           => date('d/m/Y H:i'),
             ]);
         }
 
-        return redirect()->to(base_url('admin'))->with('mensaje', $mensaje);
+        return redirect()->to(base_url('admin'))->with('mensaje', $res['mensaje']);
     }
 
     /**

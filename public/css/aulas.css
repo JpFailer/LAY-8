@@ -47,9 +47,9 @@ body.dark-mode .btn-filtro-turno:hover {
 }
 
 /* scroll pa que no tape el boton de guardar */
-.modal-aulas-scroll {
-    overflow-y: auto !important;
-    max-height: calc(100vh - 60px) !important;
+.modal-contenido-aula.modal-aulas-scroll {
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
 }
 
 /* aviso toast */
@@ -310,8 +310,8 @@ body.dark-mode .btn-subnav-cargar.activo {
 }
 
 .combobox-trigger.combobox-error-glow {
-    border-color: #ef4444 !important;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
 }
 
 .combobox-selected-content {
@@ -598,4 +598,232 @@ body.dark-mode .btn-clear-combo:hover {
 
 body.dark-mode .combobox-empty {
     color: #94a3b8;
+}
+
+/* =========================================================================
+   ACTIVIDADES, ENTREGAS Y MODALES (EXTRACCION DE ESTILOS EN LINEA)
+   ========================================================================= */
+.aulas-toolbar-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.aulas-ico-refresh {
+    color: #2563eb;
+}
+
+.aulas-ico-trash {
+    color: #ef4444;
+}
+
+.aulas-col-bloque {
+    width: 130px;
+}
+
+.aulas-footer-acciones {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.aulas-actividad-estado-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.aulas-badge-entregada {
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.aulas-link-entrega {
+    font-size: 0.78rem;
+    color: #2563eb;
+    text-decoration: underline;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.aulas-badge-calificacion {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.aulas-ico-award {
+    color: #f59e0b;
+}
+
+.aulas-badge-evaluada {
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.aulas-feedback-docente {
+    font-size: 0.78rem;
+    color: #475569;
+    font-style: italic;
+}
+
+.aulas-badge-pendiente {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.aulas-btn-entregar {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.aulas-modal-form-pad {
+    padding: 20px;
+}
+
+.aulas-modal-sm {
+    max-width: 500px;
+}
+
+.aulas-modal-lg {
+    max-width: 650px;
+}
+
+.aulas-entrega-resumen-box {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.aulas-entrega-resumen-titulo {
+    display: block;
+    color: #1e40af;
+    font-size: 0.96rem;
+}
+
+.aulas-entrega-resumen-materia {
+    font-size: 0.8rem;
+    color: #3b82f6;
+}
+
+.aulas-input-file-pad {
+    padding: 8px;
+}
+
+.aulas-modal-subdesc {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 16px;
+}
+
+.aulas-ext-filtros-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.aulas-ext-buscador-col {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+}
+
+.aulas-ext-carrera-select {
+    width: auto;
+    min-width: 170px;
+}
+
+.aulas-ext-lista-box {
+    max-height: 340px;
+    overflow-y: auto;
+    border: 1px solid rgba(226, 232, 240, 0.15);
+    border-radius: 8px;
+    padding: 8px;
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.aulas-ext-empty-hint {
+    text-align: center;
+    padding: 24px 10px;
+    color: #94a3b8;
+    font-size: 0.86rem;
+}
+
+.aulas-ext-empty-hint i {
+    font-size: 1.8rem;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.aulas-modal-footer-end {
+    margin-top: 14px;
+    text-align: right;
+}
+
+body.dark-mode .aulas-feedback-docente {
+    color: #cbd5e1;
+}
+
+body.dark-mode .aulas-badge-calificacion {
+    background: rgba(30, 58, 138, 0.45);
+    color: #bfdbfe;
+    border-color: #1e40af;
+}
+
+body.dark-mode .aulas-badge-evaluada {
+    background: rgba(55, 48, 163, 0.45);
+    color: #c7d2fe;
+}
+
+body.dark-mode .aulas-link-entrega {
+    color: #93c5fd;
+}
+
+body.dark-mode .aulas-entrega-resumen-box {
+    background: #172554;
+    border-color: #1e40af;
+}
+
+body.dark-mode .aulas-entrega-resumen-titulo {
+    color: #bfdbfe;
+}
+
+body.dark-mode .aulas-entrega-resumen-materia {
+    color: #93c5fd;
 }

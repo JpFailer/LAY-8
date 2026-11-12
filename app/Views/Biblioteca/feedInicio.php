@@ -254,61 +254,8 @@
 
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const inputVivo = document.getElementById('buscador-vivo');
-        const tarjetas = document.querySelectorAll('.tarjeta-aporte');
+<?= $this->endSection() ?>
 
-        if (inputVivo && tarjetas.length > 0) {
-            inputVivo.addEventListener('input', function() {
-                const termino = this.value.toLowerCase().trim();
-
-                tarjetas.forEach(function(card) {
-                    const titulo  = card.getAttribute('data-titulo') || '';
-                    const autor   = card.getAttribute('data-autor') || '';
-                    const archivo = card.getAttribute('data-archivo') || '';
-
-                    if (titulo.includes(termino) || autor.includes(termino) || archivo.includes(termino)) {
-                        card.style.display = 'flex';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        }
-        actualizarBotonesDescargados();
-    });
-
-    function marcarAporteDescargado(event, id) {
-        try {
-            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
-            if (desc.includes(id)) {
-                if (event) event.preventDefault();
-                return false;
-            }
-            desc.push(id);
-            localStorage.setItem('lay8_descargados', JSON.stringify(desc));
-            setTimeout(actualizarBotonesDescargados, 80);
-        } catch(e) {}
-        return true;
-    }
-
-    function actualizarBotonesDescargados() {
-        try {
-            let desc = JSON.parse(localStorage.getItem('lay8_descargados') || '[]');
-            document.querySelectorAll('.btn-descarga-item').forEach(btn => {
-                const id = parseInt(btn.getAttribute('data-aporte-id'), 10);
-                if (desc.includes(id)) {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge-aporte-guardado';
-                    badge.setAttribute('data-aporte-id', id);
-                    badge.title = 'Ya tienes este archivo descargado en tu dispositivo';
-                    badge.innerHTML = '<i class="bx bx-check-double"></i> Guardado';
-                    btn.replaceWith(badge);
-                }
-            });
-        } catch(e) {}
-    }
-</script>
-
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/biblioteca.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -77,7 +77,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
-<body data-tema-default="light">
+<body data-tema-default="light" data-ir-paso2="<?= $irAPaso2 ? '1' : '0' ?>">
   <div class="top-header-registro">
 
     <div>
@@ -183,7 +183,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
 
         <!-- Comprobante Oficial de Inscripción UMC para Estudiantes -->
         <div id="div_inscripcion_estudiante" style="margin-bottom: 20px; display: <?= old('es_profesor') === 'si' ? 'none' : 'block' ?>;">
-          <label class="form-label" style="color: #1c53b0;"><i class="bx bx-file-blank"></i> Registro de Inscripción UMC (PDF)</label>
+          <label class="form-label form-label-azul"><i class="bx bx-file-blank"></i> Registro de Inscripción UMC (PDF)</label>
           <p style="font-size: 0.82rem; color: #64748b; margin-top: -3px; margin-bottom: 8px;">
             Sube el comprobante oficial (PDF) emitido por <code>campus.umc.edu.ve</code>. El sistema certificará tu carrera y te asignará automáticamente a tus aulas.
           </p>
@@ -220,7 +220,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
         </div>
 
         <div id="div_carnet" class="docente-col" style="display: <?= old('es_profesor') === 'si' ? 'block' : 'none' ?>;">
-          <label class="form-label" style="color: #1c53b0;">Verifique su rol. Subir Carnet</label>
+          <label class="form-label form-label-azul">Verifique su rol. Subir Carnet</label>
           <input type="file" name="carnet" accept=".png, .jpg, .jpeg, .pdf">
         </div>
       </div>
@@ -259,23 +259,23 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
 
         <!-- Casilla obligatoria de Términos y Condiciones con Modal Overlay -->
         <div class="form-row" style="margin-top: 12px; margin-bottom: 22px;">
-          <label class="checkbox-terminos-label" style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.84rem; color: #475569; cursor: pointer; line-height: 1.45;">
+          <label class="checkbox-terminos-label">
             <input type="checkbox" name="terminos" id="terminos" value="1" required style="width: 18px; height: 18px; margin-top: 2px; accent-color: #1e3a8a; cursor: pointer; flex-shrink: 0;" <?= old('terminos') ? 'checked' : '' ?>>
             <span>
-              He leído y acepto los <a href="javascript:void(0)" onclick="abrirModalTerminos()" style="color: #1e3a8a; font-weight: 700; text-decoration: underline;">Términos, Condiciones de Uso y Políticas de Privacidad</a> de LAY-8.
+              He leído y acepto los <a href="javascript:void(0)" onclick="abrirModalTerminos()">Términos, Condiciones de Uso y Políticas de Privacidad</a> de LAY-8.
             </span>
           </label>
         </div>
 
         <div class="botones-wizard">
           <button type="button" class="btn-atras btn-mitad" onclick="pasoAnterior()">Atrás</button>
-          <button type="submit" class="btn-primary btn-mitad" style="flex: 2;">Finalizar</button>
+          <button type="submit" class="btn-primary btn-mitad">Finalizar</button>
         </div>
       </div>
     </form>
 
     <div class="form-footer">
-      <span style="color: #64748b;">¿Ya tienes cuenta?</span> 
+      <span>¿Ya tienes cuenta?</span> 
       <a href="<?= base_url('login')?>" class="link-global">Inicia Sesión</a>
     </div>
   </div>
@@ -385,22 +385,5 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
 
   <script src="<?= asset_url('js/main.js') ?>"></script>
   <script src="<?= asset_url('js/registro.js') ?>"></script>
-
-  <?php if ($irAPaso2): ?>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const p1 = document.getElementById('paso1');
-        const p2 = document.getElementById('paso2');
-        const ind1 = document.getElementById('indicator-1');
-        const ind2 = document.getElementById('indicator-2');
-        if (p1 && p2 && ind1 && ind2) {
-          p1.style.display = 'none';
-          p2.style.display = 'block';
-          ind1.classList.remove('activo');
-          ind2.classList.add('activo');
-        }
-      });
-    </script>
-  <?php endif; ?>
 </body>
 </html>

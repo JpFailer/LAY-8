@@ -97,13 +97,19 @@
     </form>
 
     <div class="form-footer">
-      <span style="color: #64748b;">¿No tienes cuenta?</span> 
+      <span>¿No tienes cuenta?</span> 
       <a href="<?= base_url('registro')?>" class="link-global">Regístrate</a>
     </div>
   </div>
 
   <!-- Modal Recuperación de Contraseña Interactivo (Adaptable y con Scroll) -->
-  <div id="modal-recuperacion-login" class="modal-terminos-overlay" style="display: none; padding: 15px;" onclick="if(event.target === this) cerrarModalRecuperacionLogin()">
+  <div id="modal-recuperacion-login"
+       class="modal-terminos-overlay"
+       style="display: none; padding: 15px;"
+       data-url-verificar="<?= base_url('login/verificar-recuperacion') ?>"
+       data-url-restablecer="<?= base_url('login/restablecer-contrasena') ?>"
+       data-csrf-name="<?= csrf_token() ?>"
+       onclick="if(event.target === this) cerrarModalRecuperacionLogin()">
     <div class="modal-terminos-content" style="max-width: 530px; max-height: calc(100vh - 30px); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column;">
       <div class="modal-terminos-header" style="padding: 14px 20px;">
         <h3 style="font-size: 1.2rem;"><i class="bx bx-key"></i> Recuperar Contraseña</h3>
@@ -189,167 +195,6 @@
   </div>
 
   <script src="<?= asset_url('js/main.js') ?>"></script>
-  <script>
-    function abrirModalRecuperacionLogin() {
-      const m = document.getElementById('modal-recuperacion-login');
-      if (m) {
-        m.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        document.getElementById('recup-login-paso-1').style.display = 'block';
-        document.getElementById('recup-login-paso-2').style.display = 'none';
-        document.getElementById('recup-login-paso-3').style.display = 'none';
-        const a1 = document.getElementById('recup-login-alerta-1');
-        if (a1) a1.style.display = 'none';
-      }
-    }
-
-    function cerrarModalRecuperacionLogin() {
-      const m = document.getElementById('modal-recuperacion-login');
-      if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
-    }
-
-    function ejecutarVerificarCuentaLogin() {
-      const iden = document.getElementById('recup_login_identificador').value.trim();
-      const errBox = document.getElementById('recup-login-alerta-1');
-      const btn = document.getElementById('btn-login-recup-1');
-
-      if (!iden) {
-        errBox.textContent = 'Por favor ingresa tu usuario o correo.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      errBox.style.display = 'none';
-      btn.textContent = 'Verificando...';
-      btn.disabled = true;
-
-      const formData = new FormData();
-      formData.append('identificador', iden);
-      const csrfInput = document.querySelector('input[name="<?= csrf_token() ?>"]');
-      if (csrfInput) formData.append('<?= csrf_token() ?>', csrfInput.value);
-
-      fetch('<?= base_url('login/verificar-recuperacion') ?>', {
-        method: 'POST',
-        body: formData
-      })
-      .then(r => r.json())
-      .then(data => {
-        btn.textContent = 'Verificar Cuenta';
-        btn.disabled = false;
-        if (data.exito) {
-          const userEl = document.getElementById('recup-login-user-info');
-          if (userEl) userEl.textContent = data.nombre || data.usuario;
-          const correoEl = document.getElementById('recup-login-correo-destino');
-          if (correoEl) correoEl.textContent = data.correo_ofuscado;
-
-          const devCard = document.getElementById('recup-login-dev-card');
-          const devLink = document.getElementById('recup-login-dev-link');
-          if (data.enlace_directo && devCard && devLink) {
-            devLink.href = data.enlace_directo;
-            devCard.style.display = 'block';
-          } else if (devCard) {
-            devCard.style.display = 'none';
-          }
-
-          document.getElementById('recup-login-paso-1').style.display = 'none';
-          document.getElementById('recup-login-paso-2').style.display = 'block';
-        } else {
-          errBox.textContent = data.mensaje || 'Cuenta no encontrada.';
-          errBox.style.display = 'block';
-        }
-      })
-      .catch(err => {
-        btn.textContent = 'Verificar Cuenta';
-        btn.disabled = false;
-        errBox.textContent = 'Error al verificar la cuenta.';
-        errBox.style.display = 'block';
-      });
-    }
-
-    function actualizarFeedbackPdfLogin(input) {
-      const feedback = document.getElementById('recup-login-pdf-feedback');
-      const nombreSpan = document.getElementById('recup-login-pdf-nombre');
-      const tamanoSpan = document.getElementById('recup-login-pdf-tamano');
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        if (nombreSpan) nombreSpan.textContent = file.name;
-        if (tamanoSpan) {
-          const kb = (file.size / 1024).toFixed(1);
-          tamanoSpan.textContent = (kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB');
-        }
-        if (feedback) feedback.style.display = 'flex';
-      }
-    }
-
-    function volverAPaso1RecupLogin() {
-      document.getElementById('recup-login-paso-2').style.display = 'none';
-      document.getElementById('recup-login-paso-1').style.display = 'block';
-      const input = document.getElementById('recup_login_identificador');
-      if (input) {
-        input.focus();
-        input.select();
-      }
-    }
-
-    function ejecutarGuardarClaveLogin() {
-      const uid = document.getElementById('recup_login_uid').value;
-      const token = document.getElementById('recup_login_token') ? document.getElementById('recup_login_token').value : '';
-      const clave = document.getElementById('recup_login_clave').value;
-      const rep = document.getElementById('recup_login_rep').value;
-      const errBox = document.getElementById('recup-login-alerta-2');
-      const btn = document.getElementById('btn-login-recup-2');
-
-      if (!clave || clave.length < 8) {
-        errBox.textContent = 'La nueva contraseña debe tener al menos 8 caracteres.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      if (clave !== rep) {
-        errBox.textContent = 'Las contraseñas no coinciden.';
-        errBox.style.display = 'block';
-        return;
-      }
-
-      errBox.style.display = 'none';
-      btn.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Guardando...';
-      btn.disabled = true;
-
-      const formData = new FormData();
-      formData.append('usuario_id', uid);
-      const csrfInput2 = document.querySelector('input[name="<?= csrf_token() ?>"]');
-      if (csrfInput2) formData.append('<?= csrf_token() ?>', csrfInput2.value);
-      if (token) formData.append('token', token);
-      formData.append('nueva_contrasena', clave);
-      formData.append('repetir_contrasena', rep);
-
-      fetch('<?= base_url('login/restablecer-contrasena') ?>', {
-        method: 'POST',
-        body: formData
-      })
-      .then(r => r.json())
-      .then(data => {
-        btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-        btn.disabled = false;
-        if (data.exito) {
-          document.getElementById('recup-login-paso-2').style.display = 'none';
-          document.getElementById('recup-login-paso-3').style.display = 'block';
-        } else {
-          errBox.textContent = data.mensaje || 'Error al actualizar contraseña.';
-          errBox.style.display = 'block';
-        }
-      })
-      .catch(err => {
-        btn.innerHTML = '<i class="bx bx-save"></i> Guardar Nueva Contraseña';
-        btn.disabled = false;
-        errBox.textContent = 'Error en el servidor al actualizar contraseña.';
-        errBox.style.display = 'block';
-      });
-    }
-
-    window.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') cerrarModalRecuperacionLogin();
-    });
-  </script>
+  <script src="<?= asset_url('js/auth.js') ?>"></script>
 </body>
 </html>

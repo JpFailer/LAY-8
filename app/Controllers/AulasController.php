@@ -9,7 +9,9 @@ use App\Models\ClaseProgramadaModel;
 use App\Models\EstadoClaseModel;
 use App\Models\ActividadClaseModel;
 use App\Models\UsuarioModel;
+use App\Services\ActividadService;
 use App\Services\HorarioAulasService;
+use App\Services\HorarioSyncService;
 
 class AulasController extends BaseController 
 {
@@ -227,128 +229,33 @@ class AulasController extends BaseController
             return redirect()->to('/login')->with('error', 'Sesión expirada.');
         }
 
-        $actividadModel = new \App\Models\ActividadClaseModel();
-        $actividad = $actividadModel->find($actividadId);
-        if (!$actividad) {
-            if ($esAjax) return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Actividad no encontrada.']);
-            return redirect()->back()->with('error', 'Actividad no encontrada.');
-        }
+        $res = (new ActividadService())->registrarEntregaEstudiante(
+            $actividadId,
+            $usuarioId,
+            (string) (session('rol') ?? 'estudiante'),
+            $this->request->getFile('archivo_tarea'),
+            strip_tags(trim((string) $this->request->getPost('comentario')))
+        );
 
-        // Verificación de pertenencia a la materia / sección
-        $db = \Config\Database::connect();
-        if ((int)$actividad['es_personal'] === 1) {
-            if ((int)$actividad['creado_por'] !== $usuarioId) {
-                if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No autorizado.']);
-                return redirect()->back()->with('error', 'No autorizado.');
+        if (!$res['ok']) {
+            if ($esAjax) {
+                return $this->response->setStatusCode($res['status'])->setJSON(['success' => false, 'error' => $res['error']]);
             }
-        } else {
-            $estaInscrito = ($db->table('inscripciones')
-                ->where('estudiante_id', $usuarioId)
-                ->where('seccion_id', $actividad['seccion_id'])
-                ->countAllResults() > 0);
-            if (!$estaInscrito && !in_array(session('rol'), ['administrador', 'admin'], true)) {
-                if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.']);
-                return redirect()->back()->with('error', 'Solo puedes subir entregas en asignaturas donde estés formalmente inscrito.');
+            if ($res['status'] === 403 && str_contains((string) $res['error'], 'evaluada')) {
+                return redirect()->to(base_url('aulas?tab=actividades'))->with('error', $res['error']);
             }
+            return redirect()->back()->with('error', $res['error']);
         }
 
-        $entregaModel = new \App\Models\EntregaActividadModel();
-        $existente = $entregaModel->obtenerEntregaEstudiante($actividadId, $usuarioId);
-
-        if ($existente && isset($existente['calificacion']) && $existente['calificacion'] !== '' && $existente['calificacion'] !== null) {
-            $errCalificada = 'Esta tarea ya fue evaluada y calificada por el profesor; no se admiten cambios en la entrega.';
-            if ($esAjax) return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => $errCalificada]);
-            return redirect()->to(base_url('aulas?tab=actividades'))->with('error', $errCalificada);
-        }
-
-        $archivo = $this->request->getFile('archivo_tarea');
-        $comentario = strip_tags(trim((string)$this->request->getPost('comentario')));
-        $rutaDestino = null;
-        $nombreOriginal = null;
-
-        if ($archivo && $archivo->getError() !== UPLOAD_ERR_NO_FILE && !$archivo->isValid()) {
-            $errSubida = 'No se pudo procesar el archivo adjunto: ' . $archivo->getErrorString();
-            if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $errSubida]);
-            return redirect()->back()->with('error', $errSubida);
-        }
-
-        if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
-            $extPermitidas = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg'];
-            $ext = strtolower($archivo->getClientExtension());
-            if (!in_array($ext, $extPermitidas, true)) {
-                if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Tipo de archivo no permitido. Solo se aceptan documentos PDF, Office, imágenes o archivos comprimidos.']);
-                return redirect()->back()->with('error', 'Tipo de archivo no permitido. Solo se aceptan documentos PDF, Office, imágenes o archivos comprimidos.');
-            }
-            if ($archivo->getSize() > 20 * 1024 * 1024) {
-                if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'El archivo supera el tamaño máximo permitido de 20 MB.']);
-                return redirect()->back()->with('error', 'El archivo supera el tamaño máximo permitido de 20 MB.');
-            }
-
-            $nombreOriginal = $archivo->getClientName();
-            $nuevoNombre = 'entrega_' . $actividadId . '_' . $usuarioId . '_' . time() . '.' . $ext;
-            $uploadDir = WRITEPATH . 'uploads/entregas';
-            if (!is_dir($uploadDir)) {
-                @mkdir($uploadDir, 0777, true);
-            }
-            $archivo->move($uploadDir, $nuevoNombre);
-            $rutaDestino = 'uploads/entregas/' . $nuevoNombre;
-        }
-
-        if (!$existente && !$rutaDestino && $comentario === '') {
-            $errVacio = 'Debes adjuntar un archivo o escribir un comentario para enviar tu entrega.';
-            if ($esAjax) return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => $errVacio]);
-            return redirect()->back()->with('error', $errVacio);
-        }
-
-        $datosEntrega = [
-            'actividad_id'      => $actividadId,
-            'estudiante_id'     => $usuarioId,
-            'comentario_alumno' => $comentario,
-            'updated_at'        => date('Y-m-d H:i:s'),
-        ];
-        if ($rutaDestino) {
-            $datosEntrega['archivo_ruta']   = $rutaDestino;
-            $datosEntrega['archivo_nombre'] = $nombreOriginal;
-        }
-
-        if ($existente) {
-            $entregaModel->update($existente['id'], $datosEntrega);
-        } else {
-            $datosEntrega['created_at'] = date('Y-m-d H:i:s');
-            $entregaModel->insert($datosEntrega);
-        }
-
-        // Marcar la actividad como completada para el estudiante
-        $db = \Config\Database::connect();
-        $regEstado = $db->table('actividades_estudiante_estado')
-            ->where('actividad_id', $actividadId)
-            ->where('estudiante_id', $usuarioId)
-            ->get()
-            ->getRowArray();
-
-        if ($regEstado) {
-            $db->table('actividades_estudiante_estado')
-                ->where('id', $regEstado['id'])
-                ->update(['completada' => 1, 'fecha_completada' => date('Y-m-d H:i:s')]);
-        } else {
-            $db->table('actividades_estudiante_estado')->insert([
-                'actividad_id'     => $actividadId,
-                'estudiante_id'    => $usuarioId,
-                'completada'       => 1,
-                'fecha_completada' => date('Y-m-d H:i:s'),
-            ]);
-        }
-
-        $msg = '¡Entrega guardada exitosamente en el cronograma!';
         if ($esAjax) {
             return $this->response->setJSON([
                 'success' => true,
-                'mensaje' => $msg,
-                'archivo' => $nombreOriginal ?: ($existente['archivo_nombre'] ?? null)
+                'mensaje' => $res['mensaje'],
+                'archivo' => $res['archivo'],
             ]);
         }
 
-        return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', $msg);
+        return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', $res['mensaje']);
     }
 
     /**
@@ -384,56 +291,23 @@ class AulasController extends BaseController
             return redirect()->to('/login')->with('error', 'Sesión expirada.');
         }
 
-        $seccionId     = (int) $this->request->getPost('seccion_id');
-        $titulo        = strip_tags(trim((string)$this->request->getPost('titulo')));
-        $descripcion   = strip_tags(trim((string)$this->request->getPost('descripcion')));
-        $tipo          = trim((string)$this->request->getPost('tipo'));
-        $fechaEntrega  = trim((string)$this->request->getPost('fecha_entrega'));
-        $ponderacion   = (float) $this->request->getPost('ponderacion');
+        $res = (new ActividadService())->crearActividadEnSeccion(
+            $usuarioId,
+            (string) (session()->get('rol') ?? 'estudiante'),
+            [
+                'seccion_id'    => $this->request->getPost('seccion_id'),
+                'titulo'        => $this->request->getPost('titulo'),
+                'descripcion'   => $this->request->getPost('descripcion'),
+                'tipo'          => $this->request->getPost('tipo'),
+                'fecha_entrega' => $this->request->getPost('fecha_entrega'),
+                'ponderacion'   => $this->request->getPost('ponderacion'),
+            ],
+            false
+        );
 
-        if (empty($titulo) || empty($fechaEntrega) || $seccionId <= 0) {
-            return redirect()->back()->with('error', 'Por favor ingresa el título, la materia y la fecha de entrega de la actividad.');
+        if (!$res['ok']) {
+            return redirect()->back()->with('error', $res['error']);
         }
-
-        $tiposValidos = ['tarea', 'parcial', 'taller', 'proyecto', 'lectura'];
-        if (!in_array($tipo, $tiposValidos, true)) {
-            $tipo = 'tarea';
-        }
-
-        $rol = session()->get('rol') ?? 'estudiante';
-        $esProfesor = ($rol === 'profesor');
-
-        // Validar que el usuario pertenezca a la sección (inscrito o profesor asignado)
-        $db = \Config\Database::connect();
-        if ($esProfesor) {
-            $esProfesorSeccion = ($db->table('secciones')
-                ->where('id', $seccionId)
-                ->where('profesor_id', $usuarioId)
-                ->countAllResults() > 0);
-            if (!$esProfesorSeccion && $rol !== 'administrador') {
-                return redirect()->back()->with('error', 'Solo puedes crear actividades para tus secciones asignadas.');
-            }
-        } else {
-            $estaInscrito = ($db->table('inscripciones')
-                ->where('estudiante_id', $usuarioId)
-                ->where('seccion_id', $seccionId)
-                ->countAllResults() > 0);
-            if (!$estaInscrito && $rol !== 'administrador') {
-                return redirect()->back()->with('error', 'Solo puedes crear tareas en materias que tengas formalmente inscritas.');
-            }
-        }
-
-        $actividadModel = new ActividadClaseModel();
-        $actividadModel->insert([
-            'seccion_id'    => $seccionId,
-            'creado_por'    => $usuarioId,
-            'es_personal'   => $esProfesor ? 0 : 1,
-            'titulo'        => $titulo,
-            'descripcion'   => $descripcion ?: null,
-            'tipo'          => $tipo,
-            'fecha_entrega' => $fechaEntrega,
-            'ponderacion'   => $ponderacion ?: 0.00,
-        ]);
 
         return redirect()->to(base_url('aulas?tab=actividades'))->with('mensaje', '¡Actividad agregada al cronograma con éxito!');
     }
@@ -487,48 +361,14 @@ class AulasController extends BaseController
     /**
      * Importador de posiciones en JSON del campus (mantenido por compatibilidad)
      */
-    public function importar_json() 
+    public function importar_json()
     {
-        $aulasModel = new AulasModel();
-
-        $rutaJson = ROOTPATH . 'public/posiciones_aulas.json';
-        if (!file_exists($rutaJson)) {
-            return "Error: No se encontró el archivo de posiciones en " . $rutaJson;
+        $res = (new HorarioSyncService())->importarPosicionesAulasJson();
+        if (!$res['ok']) {
+            return 'Error: ' . $res['error'];
         }
 
-        $json_content = file_get_contents($rutaJson);
-        $aulas = json_decode($json_content, true);
-
-        if (!$aulas) {
-            return "Error: No se pudo decodificar el archivo JSON.";
-        }
-
-        $importadas = 0;
-        $actualizadas = 0;
-
-        foreach ($aulas as $aula) {
-            $nombre_json = $aula['aula'];
-            $partes = explode("(", $nombre_json);
-            $alias_pdf = trim($partes[0]);
-
-            $datos = [
-                'nombre_json' => $nombre_json,
-                'alias_pdf'   => $alias_pdf,
-                'coord_x'     => $aula['coord_x'],
-                'coord_y'     => $aula['coord_y']
-            ];
-
-            $existente = $aulasModel->where('nombre_json', $nombre_json)->first();
-            if ($existente) {
-                $aulasModel->update($existente['id'], $datos);
-                $actualizadas++;
-            } else {
-                $aulasModel->insert($datos);
-                $importadas++;
-            }
-        }
-
-        return "¡Proceso exitoso! Aulas nuevas: {$importadas}, Aulas actualizadas: {$actualizadas}. Ya puedes <a href='" . base_url('mapa') . "'>ver el mapa</a>.";
+        return "¡Proceso exitoso! Aulas nuevas: {$res['importadas']}, Aulas actualizadas: {$res['actualizadas']}. Ya puedes <a href='" . base_url('mapa') . "'>ver el mapa</a>.";
     }
 
     /**
