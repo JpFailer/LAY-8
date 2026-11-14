@@ -1162,4 +1162,117 @@ final class Lay8DomainTest extends CIUnitTestCase
         $this->assertContains('Domingo', $vistaRestaurada['diasSemana']);
         $this->assertCount(1, $aulasSvc->obtenerClasesDelDiaEstudiante(301, 'Lunes', '08:30:00'));
     }
+
+    /**
+     * Prueba que el servicio de Aulas mapea correctamente materias inscritas con códigos sin guion
+     * (CAL604 vs CAL-604) y discrimina secciones compartidas multicarrera (filtrando solo la carrera del alumno).
+     */
+    public function testHorarioAulasPuenteNormalizacionCodigosSinGuionYSeccionesMulticarrera(): void
+    {
+        $this->db->table('usuarios')->insert([
+            'id'                  => 401,
+            'primer_nombre'       => 'Abraham',
+            'apellidos'           => 'Angulo',
+            'nombre_usuario'      => 'abraham401',
+            'rol'                 => 'estudiante',
+            'carrera'             => 'ING-INF',
+            'estado_verificacion' => 'aprobado',
+        ]);
+
+        // Materias de inscripción (sin guion)
+        $this->db->table('materias')->insertBatch([
+            ['id' => 901, 'codigo_materia' => 'CAL604', 'nombre' => 'Cálculo Numérico'],
+            ['id' => 902, 'codigo_materia' => 'LAF422', 'nombre' => 'Laboratorio de Física II'],
+        ]);
+
+        // Secciones inscritas por el alumno
+        $this->db->table('secciones')->insertBatch([
+            ['id' => 911, 'materia_id' => 901, 'codigo_seccion' => 'SVC-A', 'carrera' => 'ING-INF', 'periodo_academico' => '2026-01'],
+            ['id' => 912, 'materia_id' => 902, 'codigo_seccion' => 'SVC-A', 'carrera' => 'ING-INF', 'periodo_academico' => '2026-01'],
+        ]);
+
+        $this->db->table('inscripciones')->insertBatch([
+            ['estudiante_id' => 401, 'seccion_id' => 911],
+            ['estudiante_id' => 401, 'seccion_id' => 912],
+        ]);
+
+        // Materias y secciones oficiales del horario UMC (con guion)
+        $this->db->table('materias')->insertBatch([
+            ['id' => 903, 'codigo_materia' => 'CAL-604', 'nombre' => 'Cálculo Numérico'],
+            ['id' => 904, 'codigo_materia' => 'LAF-422', 'nombre' => 'Lab. Física II'],
+        ]);
+
+        $this->db->table('secciones')->insertBatch([
+            ['id' => 921, 'materia_id' => 903, 'codigo_seccion' => 'A', 'carrera' => 'ING-INF', 'periodo_academico' => '2026-I'],
+            ['id' => 922, 'materia_id' => 904, 'codigo_seccion' => 'A', 'carrera' => 'ING-AMB', 'periodo_academico' => '2026-I'],
+        ]);
+
+        // Clases programadas oficiales:
+        // CAL-604 para ING-INF
+        // LAF-422 tiene bloques para ING-INF el viernes y para ING-AMB el sábado
+        $this->db->table('clases_programadas')->insertBatch([
+            [
+                'id'            => 951,
+                'seccion_id'    => 921,
+                'aula'          => 'Aula 50',
+                'dia_semana'    => 'Martes',
+                'hora_inicio'   => '07:15:00',
+                'hora_fin'      => '09:30:00',
+                'carrera'       => 'ING-INF',
+                'estudiante_id' => null,
+            ],
+            [
+                'id'            => 952,
+                'seccion_id'    => 922,
+                'aula'          => 'Lab F II 27',
+                'dia_semana'    => 'Viernes',
+                'hora_inicio'   => '13:30:00',
+                'hora_fin'      => '15:00:00',
+                'carrera'       => 'ING-INF',
+                'estudiante_id' => null,
+            ],
+            [
+                'id'            => 953,
+                'seccion_id'    => 922,
+                'aula'          => 'Lab F I 26',
+                'dia_semana'    => 'Sabado',
+                'hora_inicio'   => '08:00:00',
+                'hora_fin'      => '09:30:00',
+                'carrera'       => 'ING-AMB',
+                'estudiante_id' => null,
+            ],
+        ]);
+
+        $aulasSvc = new \App\Services\HorarioAulasService();
+        $bloquesOficiales = (new \ReflectionClass(\App\Controllers\AulasController::class))->getDefaultProperties()['bloquesOficiales'];
+
+        $datos = $aulasSvc->obtenerDatosVistaAulas(401, $bloquesOficiales);
+        $this->assertSame(2, $datos['totalMaterias']);
+        $this->assertCount(2, $datos['horarioSemanal']);
+
+        $diasBloques = array_column($datos['horarioSemanal'], 'dia_canon');
+        $this->assertContains('Martes', $diasBloques);
+        $this->assertContains('Viernes', $diasBloques);
+        $this->assertNotContains('Sabado', $diasBloques); // El bloque de ING-AMB queda descartado
+
+        // Limpiar y Restaurar
+        session()->set([
+            'usuario_id' => 401,
+            'rol'        => 'estudiante',
+        ]);
+        $req = \Config\Services::incomingrequest();
+        $req->setHeader('X-Requested-With', 'XMLHttpRequest');
+        $ctrl = new \App\Controllers\AulasController();
+        $ctrl->initController($req, \Config\Services::response(), \Config\Services::logger());
+
+        $ctrl->limpiarHorarioPersonal();
+        $datosLimpios = $aulasSvc->obtenerDatosVistaAulas(401, $bloquesOficiales);
+        $this->assertCount(0, $datosLimpios['horarioSemanal']);
+        $this->assertTrue($datosLimpios['tieneBloquesExcluidos']);
+
+        $ctrl->restaurarHorarioOficial();
+        $datosRestaurados = $aulasSvc->obtenerDatosVistaAulas(401, $bloquesOficiales);
+        $this->assertCount(2, $datosRestaurados['horarioSemanal']);
+        $this->assertFalse($datosRestaurados['tieneBloquesExcluidos']);
+    }
 }

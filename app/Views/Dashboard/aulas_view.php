@@ -220,7 +220,7 @@
                 </h3>
             </div>
             <div class="toolbar-botones">
-                <button type="button" class="btn-imprimir-horario" onclick="window.print()">
+                <button type="button" class="btn-imprimir-horario" onclick="imprimirHorarioAcademico()">
                     <i class="bx bx-printer"></i> Imprimir Horario
                 </button>
                 <button type="button" id="btn-restaurar-horario" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario(this)" title="Restaurar horario oficial asignado por la universidad">
@@ -229,6 +229,13 @@
                 <button type="button" id="btn-limpiar-horario" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario(this)" title="Vaciar todos los bloques de mi horario semanal">
                     <i class="bx bx-trash aulas-ico-trash"></i> Limpiar Mi Horario
                 </button>
+            </div>
+        </div>
+
+        <div class="print-only-header" style="display: none;">
+            <div style="text-align: center; margin-bottom: 14px; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">UNIVERSIDAD MARÍTIMA DEL CARIBE</h2>
+                <h4 style="margin: 4px 0 0; font-size: 0.95rem; font-weight: 600; color: #334155;">Horario Académico Semanal - <?= esc((session('primer_nombre') ?? '') . ' ' . (session('apellidos') ?? '')) ?> (<?= esc(session('carrera') ?? 'Estudiante') ?>)</h4>
             </div>
         </div>
 
@@ -274,6 +281,74 @@
                                 'Tarde'    => 'bx-brightness-half',
                                 default    => 'bx-moon',
                             };
+
+                            // Planificar celdas unificadas con rowspan para materias continuas
+                            $numFilas = count($filasTurno);
+                            $skipGrid = [];
+                            $cellPlan = [];
+
+                            for ($r = 0; $r < $numFilas; $r++) {
+                                foreach ($diasSemana as $dia) {
+                                    if (!empty($skipGrid[$dia][$r])) {
+                                        continue;
+                                    }
+
+                                    $clases = $filasTurno[$r]['celdas'][$dia] ?? [];
+                                    if (empty($clases)) {
+                                        $cellPlan[$r][$dia] = ['tipo' => 'vacio'];
+                                        continue;
+                                    }
+
+                                    $cBase = $clases[0];
+                                    $clave = ($cBase['codigo'] ?? '') . '|' . ($cBase['seccion'] ?? '');
+
+                                    $span = 1;
+                                    $allIds = [(int) $cBase['id']];
+                                    if (!empty($cBase['ids']) && is_array($cBase['ids'])) {
+                                        $allIds = array_merge($allIds, $cBase['ids']);
+                                    }
+                                    $horaFinReal = $cBase['hora_fin'] ?? ($filasTurno[$r]['fin'] ?? '');
+
+                                    for ($nextR = $r + 1; $nextR < $numFilas; $nextR++) {
+                                        $nextClases = $filasTurno[$nextR]['celdas'][$dia] ?? [];
+                                        if (empty($nextClases)) {
+                                            break;
+                                        }
+                                        $nextC = $nextClases[0];
+                                        $nextClave = ($nextC['codigo'] ?? '') . '|' . ($nextC['seccion'] ?? '');
+                                        if ($nextClave !== $clave) {
+                                            break;
+                                        }
+
+                                        $span++;
+                                        $skipGrid[$dia][$nextR] = true;
+                                        $allIds[] = (int) $nextC['id'];
+                                        if (!empty($nextC['ids']) && is_array($nextC['ids'])) {
+                                            $allIds = array_merge($allIds, $nextC['ids']);
+                                        }
+                                        if (!empty($nextC['hora_fin'])) {
+                                            $horaFinReal = $nextC['hora_fin'];
+                                        }
+                                    }
+
+                                    $allIds = array_values(array_unique($allIds));
+                                    $cMerged = $cBase;
+                                    $cMerged['all_ids'] = implode(',', $allIds);
+                                    $cMerged['hora_inicio_real'] = $cBase['hora_inicio'] ?? ($filasTurno[$r]['inicio'] ?? '');
+                                    $cMerged['hora_fin_real'] = $horaFinReal;
+
+                                    $iniFormato = \App\Services\HorarioNormalizer::formatearHoraCorta((string) $cMerged['hora_inicio_real']);
+                                    $finFormato = \App\Services\HorarioNormalizer::formatearHoraCorta((string) $cMerged['hora_fin_real']);
+                                    $cMerged['intervalo_completo'] = $iniFormato . ' - ' . $finFormato;
+
+                                    $cellPlan[$r][$dia] = [
+                                        'tipo'       => 'clase',
+                                        'rowspan'    => $span,
+                                        'item'       => $cMerged,
+                                        'conflictos' => array_slice($clases, 1),
+                                    ];
+                                }
+                            }
                         ?>
                         <tr class="fila-separador-turno">
                             <td colspan="<?= count($diasSemana) + 1 ?>">
@@ -281,34 +356,60 @@
                                 TURNO <?= esc(mb_strtoupper($turno, 'UTF-8')) ?>
                             </td>
                         </tr>
-                        <?php foreach ($filasTurno as $fila): ?>
+                        <?php foreach ($filasTurno as $rIdx => $fila): ?>
                             <tr>
                                 <td class="celda-hora-bloque">
                                     <b><?= esc($fila['etiqueta']) ?></b>
                                 </td>
                                 <?php foreach ($diasSemana as $dia): ?>
-                                    <td class="celda-clase-horario">
-                                        <?php $clasesEncontradas = $fila['celdas'][$dia] ?? []; ?>
-                                        <?php if (!empty($clasesEncontradas)): ?>
-                                            <?php foreach ($clasesEncontradas as $item): ?>
-                                                <div class="bloque-clase-card<?= !empty($item['es_continuacion']) ? ' bloque-continuacion' : '' ?>"
-                                                     id="bloque-card-<?= (int)$item['id'] ?>-<?= esc($fila['clave']) ?>"
-                                                     data-bloque-id="<?= (int)$item['id'] ?>">
-                                                    <div class="bloque-codigo"><?= esc($item['codigo']) ?> (<?= esc($item['seccion']) ?>)</div>
-                                                    <div class="bloque-materia"><?= esc($item['materia']) ?></div>
-                                                    <div class="bloque-horario-intervalo">
-                                                        <i class="bx bx-time-five"></i> <?= esc($item['intervalo']) ?>
-                                                    </div>
-                                                    <div class="bloque-aula">
-                                                        <a href="<?= base_url('mapa?aula=' . urlencode($item['aula'])) ?>" title="Ver aula en el plano del campus">
-                                                            <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>
-                                                        </a>
-                                                    </div>
-                                                    <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$item['id'] ?>, this)" title="Eliminar este bloque de mi horario">&times;</button>
+                                    <?php
+                                        // Si esta celda está cubierta por el rowspan de una fila anterior, no renderizar <td>
+                                        if (!empty($skipGrid[$dia][$rIdx])) {
+                                            continue;
+                                        }
+                                        $plan = $cellPlan[$rIdx][$dia] ?? ['tipo' => 'vacio'];
+                                    ?>
+                                    <?php if ($plan['tipo'] === 'vacio'): ?>
+                                        <td class="celda-clase-horario"></td>
+                                    <?php else: ?>
+                                        <?php
+                                            $item = $plan['item'];
+                                            $rowspanAttr = ($plan['rowspan'] > 1) ? ' rowspan="' . $plan['rowspan'] . '"' : '';
+                                        ?>
+                                        <td class="celda-clase-horario celda-clase-ocupada"<?= $rowspanAttr ?>>
+                                            <div class="bloque-clase-card<?= ($plan['rowspan'] > 1) ? ' bloque-clase-span' : '' ?>"
+                                                 id="bloque-card-<?= (int)$item['id'] ?>-<?= esc($fila['clave']) ?>"
+                                                 data-bloque-id="<?= (int)$item['id'] ?>"
+                                                 data-bloque-ids="<?= esc($item['all_ids'] ?? (string)$item['id']) ?>">
+                                                <div class="bloque-codigo"><?= esc($item['codigo']) ?> (<?= esc($item['seccion']) ?>)</div>
+                                                <div class="bloque-materia"><?= esc($item['materia']) ?></div>
+                                                <div class="bloque-horario-intervalo" title="Horario continuo de la sesión">
+                                                    <i class="bx bx-time-five"></i> <?= esc($item['intervalo_completo'] ?? $item['intervalo']) ?>
                                                 </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </td>
+                                                <div class="bloque-aula">
+                                                    <a href="<?= base_url('mapa?aula=' . urlencode($item['aula'])) ?>" title="Ver aula en el plano del campus">
+                                                        <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>
+                                                    </a>
+                                                </div>
+                                                <button type="button" class="btn-borrar-bloque"
+                                                        onclick="eliminarBloqueHorario('<?= esc($item['all_ids'] ?? (string)$item['id'], 'js') ?>', this)"
+                                                        title="Eliminar este bloque de mi horario">&times;</button>
+                                            </div>
+
+                                            <?php if (!empty($plan['conflictos'])): ?>
+                                                <?php foreach ($plan['conflictos'] as $conf): ?>
+                                                    <div class="bloque-clase-card bloque-clase-conflicto" style="margin-top: 4px;" data-bloque-id="<?= (int)$conf['id'] ?>">
+                                                        <div class="bloque-codigo"><?= esc($conf['codigo']) ?> (<?= esc($conf['seccion']) ?>)</div>
+                                                        <div class="bloque-materia"><?= esc($conf['materia']) ?></div>
+                                                        <div class="bloque-horario-intervalo">
+                                                            <i class="bx bx-time-five"></i> <?= esc($conf['intervalo']) ?>
+                                                        </div>
+                                                        <button type="button" class="btn-borrar-bloque" onclick="eliminarBloqueHorario(<?= (int)$conf['id'] ?>, this)">&times;</button>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </td>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </tr>
                         <?php endforeach; ?>

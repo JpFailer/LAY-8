@@ -47,6 +47,26 @@ function recargarVistaHorario() {
     }
 }
 
+/**
+ * Imprime el Horario Académico Personal suprimiendo barras de depuración y metadatos sensibles.
+ */
+function imprimirHorarioAcademico() {
+    const debugElements = document.querySelectorAll(
+        '#toolbarContainer, .ci-debugbar, [id^="debug-bar"], [id^="ci-"], #debugbar, .debug-bar-wrapper, .debug-bar-btn'
+    );
+    debugElements.forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
+    });
+
+    window.print();
+
+    setTimeout(() => {
+        debugElements.forEach(el => {
+            el.style.removeProperty('display');
+        });
+    }, 1500);
+}
+
 async function eliminarBloqueHorario(id, btnElem) {
     const ok = await window.Lay8UI.confirm('¿Deseas eliminar este bloque de clase de tu horario?', {
         title: 'Ocultar bloque de horario',
@@ -55,35 +75,46 @@ async function eliminarBloqueHorario(id, btnElem) {
     });
     if (!ok) return;
 
-    const cards = Array.from(document.querySelectorAll('.bloque-clase-card[data-bloque-id="' + id + '"]'));
-    if (cards.length === 0 && btnElem) {
-        const single = btnElem.closest('.bloque-clase-card');
-        if (single) cards.push(single);
+    const ids = String(id).split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+    const card = btnElem ? btnElem.closest('.bloque-clase-card') : null;
+    const parentTd = card ? card.closest('td') : null;
+
+    if (card) {
+        card.style.opacity = '0.35';
     }
-    cards.forEach(c => { c.style.opacity = '0.35'; });
 
     try {
-        await window.Lay8UI.apiFetch(BASE_URL + 'aulas/eliminar-bloque/' + id, { method: 'POST' });
-        cards.forEach(card => {
+        for (const subId of ids) {
+            await window.Lay8UI.apiFetch(BASE_URL + 'aulas/eliminar-bloque/' + subId, { method: 'POST' });
+        }
+
+        if (card) {
             card.style.transition = 'all 0.25s ease';
             card.style.transform = 'scale(0.85)';
             card.style.opacity = '0';
-        });
+        }
+
         setTimeout(() => {
-            cards.forEach(c => c.remove());
+            if (parentTd) {
+                // Si la celda tenía rowspan, revertir a celda vacía o recargar vista limpia
+                recargarVistaHorario();
+            } else if (card) {
+                card.remove();
+            }
+
             const badge = document.querySelector('#tabbtn-horario .badge-conteo');
             if (badge) {
                 const act = parseInt(badge.textContent || '0', 10);
-                badge.textContent = Math.max(0, act - 1);
+                badge.textContent = Math.max(0, act - ids.length);
             }
             const avisoVacio = document.getElementById('aviso-horario-vacio');
             if (avisoVacio && document.querySelectorAll('.bloque-clase-card').length === 0) {
                 avisoVacio.style.display = 'flex';
             }
         }, 250);
-        mostrarToastAulas('Bloque eliminado correctamente.', 'exito');
+        mostrarToastAulas('Clase removida de tu horario correctamente.', 'exito');
     } catch (e) {
-        cards.forEach(c => { c.style.opacity = '1'; });
+        if (card) card.style.opacity = '1';
         mostrarToastAulas(e.message || 'No se pudo eliminar el bloque.', 'error');
     }
 }

@@ -32,7 +32,7 @@ class HorarioAulasService
             ->findAll();
 
         $seccionesIds = !empty($secciones) ? array_map(static fn (array $s): int => (int) $s['id'], $secciones) : [];
-        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones);
+        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones, $usuarioId);
 
         // 2. Exclusiones personales actuales
         $bloquesExcluidos = $usuarioId > 0
@@ -164,7 +164,7 @@ class HorarioAulasService
             return [];
         }
 
-        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones);
+        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones, $usuarioId);
         $todos = $this->consultarBloquesSecciones($db, $usuarioId, $mapaSecciones);
 
         $ids = [];
@@ -188,7 +188,7 @@ class HorarioAulasService
 
         $db = \Config\Database::connect();
         $secciones = (new InscripcionModel())->obtenerSeccionesDeEstudiante($usuarioId);
-        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones);
+        $mapaSecciones = $this->resolverMapaSecciones($db, $secciones, $usuarioId);
 
         $excluidos = $db->table('estudiante_bloques_excluidos')
             ->select('clase_id')
@@ -240,13 +240,20 @@ class HorarioAulasService
     /**
      * Mapea cada sección inscrita hacia sí misma y, si no tiene bloques propios, hacia su sección
      * oficial equivalente (por ej. SVC-A/2026-01 -> A/2026-I en la misma materia y carrera).
+     * Tolera códigos de materia con/sin guion (CAL604 vs CAL-604) y variaciones de mención.
      *
      * @return array{todasIds: list<int>, efectivoToInscrito: array<int, int>}
      */
-    private function resolverMapaSecciones($db, array $secciones): array
+    private function resolverMapaSecciones($db, array $secciones, int $usuarioId = 0): array
     {
         if (empty($secciones)) {
             return ['todasIds' => [], 'efectivoToInscrito' => []];
+        }
+
+        $carreraEstudiante = '';
+        if ($usuarioId > 0) {
+            $uRow = $db->table('usuarios')->select('carrera')->where('id', $usuarioId)->get()->getRowArray();
+            $carreraEstudiante = strtoupper(trim((string) ($uRow['carrera'] ?? '')));
         }
 
         $inscritasIds = [];
@@ -271,62 +278,95 @@ class HorarioAulasService
 
         $sinClases = [];
         $materiasIds = [];
+        $codigosVariantes = [];
         foreach ($secciones as $s) {
             if (empty($conteos[(int) $s['id']])) {
                 $sinClases[] = $s;
                 $materiasIds[] = (int) $s['materia_id'];
+                if (!empty($s['codigo_materia'])) {
+                    foreach (HorarioNormalizer::variantesCodigoMateria((string) $s['codigo_materia']) as $v) {
+                        $codigosVariantes[] = $v;
+                    }
+                }
             }
         }
 
         if (!empty($sinClases)) {
             $materiasIds = array_values(array_unique(array_filter($materiasIds)));
+            $codigosVariantes = array_values(array_unique(array_filter($codigosVariantes)));
+
+            $builderMats = $db->table('materias');
+            $builderMats->groupStart();
             if (!empty($materiasIds)) {
+                $builderMats->whereIn('id', $materiasIds);
+            }
+            if (!empty($codigosVariantes)) {
+                $builderMats->orWhereIn('codigo_materia', $codigosVariantes);
+            }
+            $builderMats->groupEnd();
+            $materiasEncontradas = $builderMats->get()->getResultArray();
+
+            $todasMateriasIds = array_map(static fn (array $m): int => (int) $m['id'], $materiasEncontradas);
+
+            if (!empty($todasMateriasIds)) {
                 $candidatas = $db->table('secciones')
-                    ->whereIn('materia_id', $materiasIds)
+                    ->select('secciones.*, materias.codigo_materia, materias.nombre as materia_nombre')
+                    ->join('materias', 'materias.id = secciones.materia_id')
+                    ->whereIn('secciones.materia_id', $todasMateriasIds)
                     ->get()
                     ->getResultArray();
 
                 $candIds = array_map(static fn (array $c): int => (int) $c['id'], $candidatas);
-                $candConteos = [];
+                $candClases = [];
                 if (!empty($candIds)) {
                     $rows = $db->table('clases_programadas')
-                        ->select('seccion_id, COUNT(*) as total')
+                        ->select('seccion_id, carrera, COUNT(*) as total')
                         ->whereIn('seccion_id', $candIds)
                         ->where('estudiante_id', null)
-                        ->groupBy('seccion_id')
+                        ->groupBy('seccion_id, carrera')
                         ->get()
                         ->getResultArray();
                     foreach ($rows as $r) {
-                        $candConteos[(int) $r['seccion_id']] = (int) $r['total'];
-                    }
-                }
-
-                $porMateria = [];
-                foreach ($candidatas as $c) {
-                    if (!empty($candConteos[(int) $c['id']])) {
-                        $porMateria[(int) $c['materia_id']][] = $c;
+                        $cSecId = (int) $r['seccion_id'];
+                        $cCar = strtoupper(trim((string) ($r['carrera'] ?? '')));
+                        $candClases[$cSecId][$cCar] = (int) $r['total'];
                     }
                 }
 
                 foreach ($sinClases as $s) {
-                    $mId = (int) $s['materia_id'];
-                    if (empty($porMateria[$mId])) {
-                        continue;
+                    $sId = (int) $s['id'];
+                    $sMId = (int) $s['materia_id'];
+                    $sCanon = HorarioNormalizer::codigoMateriaCanonico((string) ($s['codigo_materia'] ?? ''));
+                    $sSecCod = (string) ($s['codigo_seccion'] ?? '');
+                    $sCar = strtoupper(trim((string) ($s['carrera'] ?? '')));
+                    if ($sCar === '' && $carreraEstudiante !== '') {
+                        $sCar = $carreraEstudiante;
                     }
-                    $tiers = HorarioNormalizer::variantesSeccionTiers((string) ($s['codigo_seccion'] ?? ''));
-                    $carSec = strtoupper(trim((string) ($s['carrera'] ?? '')));
-                    $carMencion = HorarioNormalizer::inferirCarreraPorSeccion((string) ($s['codigo_seccion'] ?? ''));
-                    $perFam = HorarioNormalizer::familiaPeriodo((string) ($s['periodo_academico'] ?? ''));
+                    $sPer = (string) ($s['periodo_academico'] ?? '');
+                    $perFam = HorarioNormalizer::familiaPeriodo($sPer);
+                    $tiers = HorarioNormalizer::variantesSeccionTiers($sSecCod);
+                    $carMencion = HorarioNormalizer::inferirCarreraPorSeccion($sSecCod);
 
                     $mejorId = null;
                     $mejorScore = null;
-                    foreach ($porMateria[$mId] as $c) {
+
+                    foreach ($candidatas as $c) {
+                        $cId = (int) $c['id'];
+                        if ($cId === $sId || empty($candClases[$cId])) {
+                            continue;
+                        }
+
+                        $cCanon = HorarioNormalizer::codigoMateriaCanonico((string) ($c['codigo_materia'] ?? ''));
+                        if ($cCanon !== $sCanon && (int) $c['materia_id'] !== $sMId) {
+                            continue;
+                        }
+
                         $cCod = strtoupper(trim((string) ($c['codigo_seccion'] ?? '')));
-                        $cCanon = HorarioNormalizer::normalizarSeccionCanonica($cCod);
+                        $cCanonSec = HorarioNormalizer::normalizarSeccionCanonica($cCod);
                         $tier = 0;
-                        if (in_array($cCod, $tiers['exactas'], true) || in_array($cCanon, $tiers['exactas'], true)) {
+                        if (in_array($cCod, $tiers['exactas'], true) || in_array($cCanonSec, $tiers['exactas'], true)) {
                             $tier = 2;
-                        } elseif (in_array($cCod, $tiers['base'], true) || in_array($cCanon, $tiers['base'], true)) {
+                        } elseif (in_array($cCod, $tiers['base'], true) || in_array($cCanonSec, $tiers['base'], true)) {
                             $tier = 1;
                         }
                         if ($tier === 0) {
@@ -334,25 +374,31 @@ class HorarioAulasService
                         }
 
                         $cCar = strtoupper(trim((string) ($c['carrera'] ?? '')));
-                        if ($carSec === '' || $cCar === '' || $cCar === $carSec) {
+                        $tieneClasesParaMiCarrera = isset($candClases[$cId][$sCar]) || ($carreraEstudiante !== '' && isset($candClases[$cId][$carreraEstudiante]));
+
+                        $carScore = 1;
+                        if ($cCar !== '' && ($cCar === $sCar || ($carreraEstudiante !== '' && $cCar === $carreraEstudiante))) {
+                            $carScore = 4;
+                        } elseif ($tieneClasesParaMiCarrera) {
                             $carScore = 3;
+                        } elseif ($cCar === '') {
+                            $carScore = 2;
                         } elseif ($carMencion !== null && $cCar === $carMencion) {
                             $carScore = 2;
-                        } else {
-                            continue;
                         }
 
                         $cPerFam = HorarioNormalizer::familiaPeriodo((string) ($c['periodo_academico'] ?? ''));
                         $perScore = ($perFam !== '' && $cPerFam === $perFam) ? 1 : 0;
-                        $score = [$carScore, $tier, $perScore, (int) $c['id']];
+
+                        $score = [$tier, $carScore, $perScore, $cId];
                         if ($mejorScore === null || $score > $mejorScore) {
                             $mejorScore = $score;
-                            $mejorId = (int) $c['id'];
+                            $mejorId = $cId;
                         }
                     }
 
                     if ($mejorId !== null) {
-                        $efectivoToInscrito[$mejorId] = (int) $s['id'];
+                        $efectivoToInscrito[$mejorId] = $sId;
                     }
                 }
             }
@@ -365,13 +411,19 @@ class HorarioAulasService
     }
 
     /**
-     * Consulta los bloques de `clases_programadas` con filtro de seguridad por carrera y orden cronológico.
+     * Consulta los bloques de `clases_programadas` con filtro inteligente de carrera por sección y orden cronológico.
      */
     private function consultarBloquesSecciones($db, int $usuarioId, array $mapaSecciones): array
     {
         $idsConsultar = $mapaSecciones['todasIds'];
         if (empty($idsConsultar)) {
             return [];
+        }
+
+        $carreraUsuario = '';
+        if ($usuarioId > 0) {
+            $uRow = $db->table('usuarios')->select('carrera')->where('id', $usuarioId)->get()->getRowArray();
+            $carreraUsuario = strtoupper(trim((string) ($uRow['carrera'] ?? '')));
         }
 
         $filas = $db->table('clases_programadas')
@@ -386,6 +438,16 @@ class HorarioAulasService
             ->get()
             ->getResultArray();
 
+        // Detectar si alguna sección compartida tiene bloques explícitamente etiquetados para la carrera del usuario
+        $seccionesConMiCarrera = [];
+        if ($carreraUsuario !== '') {
+            foreach ($filas as $f) {
+                if (empty($f['estudiante_id']) && strtoupper(trim((string) ($f['carrera'] ?? ''))) === $carreraUsuario) {
+                    $seccionesConMiCarrera[(int) $f['seccion_id']] = true;
+                }
+            }
+        }
+
         $resultado = [];
         $vistos = [];
 
@@ -398,9 +460,12 @@ class HorarioAulasService
 
             $esPersonal = !empty($b['estudiante_id']) && (int) $b['estudiante_id'] === $usuarioId;
             if (!$esPersonal) {
-                $secCar = strtoupper(trim((string) ($b['seccion_carrera'] ?? '')));
                 $clsCar = strtoupper(trim((string) ($b['carrera'] ?? '')));
-                if ($secCar !== '' && $clsCar !== '' && $secCar !== $clsCar) {
+                $secId = (int) $b['seccion_id'];
+
+                // Si esta sección tiene bloques específicos para la carrera del estudiante (p.ej. Lab Física II para ING-INF),
+                // descartar los bloques de esa misma sección programados para otras carreras (p.ej. ING-AMB en sábado).
+                if (!empty($seccionesConMiCarrera[$secId]) && $clsCar !== '' && $clsCar !== $carreraUsuario) {
                     continue;
                 }
             }

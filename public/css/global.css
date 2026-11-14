@@ -4129,6 +4129,48 @@ body.dark-mode .admin-empty-state p {
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
+.celda-clase-horario.celda-clase-ocupada {
+    padding: 3px !important;
+    vertical-align: top;
+    height: 1px;
+}
+
+.bloque-clase-card.bloque-clase-span {
+    height: calc(100% - 2px);
+    min-height: 85px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+    margin-bottom: 0;
+    padding: 8px 10px;
+}
+
+.bloque-clase-card.bloque-clase-span .bloque-codigo {
+    font-size: 0.74rem;
+    margin-bottom: 2px;
+}
+
+.bloque-clase-card.bloque-clase-span .bloque-materia {
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin: 2px 0 6px;
+    line-height: 1.25;
+}
+
+.bloque-clase-card.bloque-clase-span .bloque-horario-intervalo {
+    font-size: 0.74rem;
+    padding: 3px 8px;
+    margin-bottom: 6px;
+    align-self: flex-start;
+}
+
+.bloque-clase-card.bloque-clase-span .bloque-aula a {
+    font-size: 0.76rem;
+    padding: 3px 8px;
+    align-self: flex-start;
+}
+
 .bloque-codigo {
     font-size: 0.72rem;
     font-weight: 700;
@@ -4694,44 +4736,151 @@ body.dark-mode .campo-grupo label {
     color: #cbd5e1;
 }
 
-/* Reglas de impresiÃ³n para el Horario */
+/* Reglas de impresión para el Horario Académico Personal */
 @media print {
+    /* Ocultar barra de depuración de CodeIgniter 4 e información técnica sensible */
+    #toolbarContainer,
+    #toolbarContainer *,
+    [id^="debug-bar"],
+    [id^="ci-"],
+    .ci-debugbar,
+    .ci-debug-bar,
+    .ci-debugbar-toolbar,
+    .ci-history,
+    #debugbar,
+    .debug-bar-btn,
+    .debug-bar-wrapper,
+    #debug-icon,
+    #ci-history {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+
+    /* Ocultar elementos de navegación, acciones interactivas y modales */
     .barra-superior,
     .sidebar,
+    .topbar,
+    .navbar,
     .filtros-categorias,
     .horario-toolbar .toolbar-botones,
     .aulas-header-acciones,
-    .btn-borrar-bloque {
+    .btn-borrar-bloque,
+    .btn-imprimir-horario,
+    .btn-subir-cta,
+    .btn-agregar-materia-cta,
+    .modal-overlay,
+    .modal,
+    .alerta-notif,
+    .alerta-exito,
+    .alerta-error,
+    .aviso-horario-vacio {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }
+
+    .print-only-header {
+        display: block !important;
+    }
+
+    .tab-contenido-aulas:not(#tab-seccion-horario) {
+        display: none !important;
+    }
+
+    #tab-seccion-horario {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
 
     body {
         background: #ffffff !important;
         color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .layout-grid {
         display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .contenedor-tabla-horario {
         box-shadow: none !important;
-        border: 1px solid #000 !important;
+        border: 1px solid #334155 !important;
+        border-radius: 6px !important;
+        overflow: visible !important;
+    }
+
+    .tabla-horario-umc {
+        width: 100% !important;
+        border-collapse: collapse !important;
     }
 
     .tabla-horario-umc th {
         background: #f1f5f9 !important;
-        color: #000 !important;
-        border: 1px solid #000 !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 700 !important;
     }
 
     .tabla-horario-umc td {
-        border: 1px solid #000 !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    .fila-separador-turno td {
+        background: #e2e8f0 !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
     }
 
     .bloque-clase-card {
-        border-left: 2px solid #000 !important;
-        background: #fff !important;
+        border-left: 3px solid #1e40af !important;
+        background: #f8fafc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .bloque-clase-card.bloque-continuacion {
+        border-left-style: dashed !important;
+        background: #ffffff !important;
+    }
+
+    .bloque-codigo {
+        color: #1e40af !important;
+        font-weight: 700 !important;
+    }
+
+    .bloque-materia {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    .bloque-horario-intervalo {
+        background: transparent !important;
+        color: #1e3a8a !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+    }
+
+    .bloque-aula a {
+        background: transparent !important;
+        color: #047857 !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+    }
+
+    @page {
+        size: auto;
+        margin: 10mm;
     }
 }
 
