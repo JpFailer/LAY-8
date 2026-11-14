@@ -13,6 +13,12 @@ function mostrarTabAdmin(tabId) {
 
     if (paneActiva) paneActiva.classList.add('activa');
     if (btnActivo) btnActivo.classList.add('activa');
+
+    try {
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabId);
+        window.history.replaceState({}, '', url);
+    } catch (e) {}
 }
 
 function escHtmlAdmin(valor) {

@@ -77,8 +77,9 @@ class Home extends BaseController
                                 (cp.seccion_id IN (SELECT seccion_id FROM inscripciones WHERE estudiante_id = ?) AND cp.estudiante_id IS NULL)
                                 OR cp.estudiante_id = ?
                             )
+                            AND cp.id NOT IN (SELECT clase_id FROM estudiante_bloques_excluidos WHERE estudiante_id = ?)
                           ORDER BY cp.hora_inicio ASC";
-            $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId, $usuarioId])->getResultArray();
+            $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId, $usuarioId, $usuarioId])->getResultArray();
         }
 
         foreach ($clasesHoy as &$clase) {
