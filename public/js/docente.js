@@ -3,13 +3,14 @@
 const BASE_URL = window.BASE_URL || '/';
 
     function cambiarTabDocente(tabId) {
+        const seccionTarget = document.getElementById('tab-doc-' + tabId);
+        if (!seccionTarget) return;
+
         document.querySelectorAll('.tab-contenido-docente').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.filtros-categorias .btn-filtro').forEach(b => b.classList.remove('activo'));
 
-        const seccionTarget = document.getElementById('tab-doc-' + tabId);
-        const btnTarget     = document.getElementById('tabbtn-doc-' + tabId);
-
-        if (seccionTarget) seccionTarget.style.display = 'block';
+        const btnTarget = document.getElementById('tabbtn-doc-' + tabId);
+        seccionTarget.style.display = 'block';
         if (btnTarget) btnTarget.classList.add('activo');
     }
 
@@ -568,16 +569,16 @@ const BASE_URL = window.BASE_URL || '/';
             );
             if (!ok) return;
         } else {
-            const ok = await window.Lay8UI.confirm(
-                `¿Deseas rechazar la solicitud de ${nombreAlumno} para cursar ${materia}?`,
-                { title: 'Rechazar Solicitud', confirmText: 'Rechazar', danger: true }
+            motivo = await window.Lay8UI.prompt(
+                `¿Deseas rechazar la solicitud de ${nombreAlumno} para cursar ${materia}? Puedes indicar un motivo opcional:`,
+                {
+                    title: 'Rechazar Solicitud',
+                    placeholder: 'Ej: Sección sin cupos disponibles o no cumple prerrequisitos...',
+                    confirmText: 'Rechazar Solicitud',
+                    maxLength: 255,
+                    danger: true
+                }
             );
-            if (!ok) return;
-
-            motivo = await window.Lay8UI.prompt('Indica un motivo explicativo para el estudiante (opcional):', {
-                title: 'Motivo del Rechazo',
-                placeholder: 'Ej: Sección sin cupos disponibles o no cumple prerrequisitos...'
-            });
             if (motivo === null) return;
         }
 
@@ -610,6 +611,14 @@ const BASE_URL = window.BASE_URL || '/';
                             badge.classList.remove('badge-conteo-alerta');
                         }
                     }
+
+                    const tbody = document.getElementById('tbody-solicitudes-extemporaneas');
+                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                        const tablaWrap = document.getElementById('contenedor-tabla-solicitudes');
+                        const vacioEl = document.getElementById('estado-vacio-solicitudes');
+                        if (tablaWrap) tablaWrap.style.display = 'none';
+                        if (vacioEl) vacioEl.style.display = '';
+                    }
                 }, 300);
             }
         } catch (err) {
@@ -620,6 +629,17 @@ const BASE_URL = window.BASE_URL || '/';
     document.addEventListener('DOMContentLoaded', () => {
         asegurarModalesEnBodyDocente();
         inicializarBuscadorDocente();
+
+        document.querySelectorAll('.btn-responder-solicitud-ext').forEach(btn => {
+            btn.addEventListener('click', () => {
+                responderSolicitudExtemporaneaDocente(
+                    parseInt(btn.dataset.solicitudId, 10),
+                    btn.dataset.accion || '',
+                    btn.dataset.alumno || '',
+                    btn.dataset.materia || ''
+                );
+            });
+        });
 
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');

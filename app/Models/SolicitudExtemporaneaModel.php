@@ -42,6 +42,20 @@ class SolicitudExtemporaneaModel extends Model
     }
 
     /**
+     * Filtra las solicitudes visibles para un docente según el titular actual de la sección.
+     */
+    private function aplicarFiltroDocente($builder, int $profesorId): void
+    {
+        $builder->groupStart()
+            ->where('secciones.profesor_id', $profesorId)
+            ->orGroupStart()
+                ->where('secciones.profesor_id', null)
+                ->where('solicitudes_extemporaneas.profesor_id', $profesorId)
+            ->groupEnd()
+            ->groupEnd();
+    }
+
+    /**
      * Obtiene las solicitudes pendientes para las secciones asignadas al profesor (o todas si es admin).
      */
     public function obtenerPendientesParaDocente(int $profesorId, bool $esAdmin = false): array
@@ -58,10 +72,7 @@ class SolicitudExtemporaneaModel extends Model
             ->orderBy('solicitudes_extemporaneas.created_at', 'DESC');
 
         if (!$esAdmin) {
-            $builder->groupStart()
-                ->where('secciones.profesor_id', $profesorId)
-                ->orWhere('solicitudes_extemporaneas.profesor_id', $profesorId)
-                ->groupEnd();
+            $this->aplicarFiltroDocente($builder, $profesorId);
         }
 
         return $builder->get()->getResultArray();
@@ -77,10 +88,7 @@ class SolicitudExtemporaneaModel extends Model
             ->where('solicitudes_extemporaneas.estado', 'pendiente');
 
         if (!$esAdmin) {
-            $builder->groupStart()
-                ->where('secciones.profesor_id', $profesorId)
-                ->orWhere('solicitudes_extemporaneas.profesor_id', $profesorId)
-                ->groupEnd();
+            $this->aplicarFiltroDocente($builder, $profesorId);
         }
 
         return $builder->countAllResults();

@@ -475,7 +475,23 @@
                 </div>
             </div>
 
+            <div class="campo-grupo">
+                <label for="act_fecha_entrega"><i class="bx bx-calendar-event"></i> Fecha y Hora de Entrega:</label>
+                <input type="datetime-local" name="fecha_entrega" id="act_fecha_entrega" required class="input-lay8">
+            </div>
 
+            <div class="campo-grupo">
+                <label for="act_descripcion"><i class="bx bx-align-left"></i> Instrucciones o Detalles:</label>
+                <textarea name="descripcion" id="act_descripcion" rows="3" placeholder="Instrucciones, capítulos del libro o temas que cubre la actividad..." class="input-lay8 textarea-lay8"></textarea>
+            </div>
+
+            <button type="submit" class="btn-cta-submit">
+                <i class="bx bx-save"></i> Guardar en Cronograma
+            </button>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
 <div id="modalEntregarTarea" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalEntregarTarea()">

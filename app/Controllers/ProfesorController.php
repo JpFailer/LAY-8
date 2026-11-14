@@ -491,7 +491,7 @@ class ProfesorController extends BaseController
 
         $solicitudId = (int) $this->request->getPost('solicitud_id');
         $accion      = trim((string) $this->request->getPost('accion')); // 'aprobar' o 'rechazar'
-        $motivo      = strip_tags(trim((string) $this->request->getPost('motivo')));
+        $motivo      = mb_substr(strip_tags(trim((string) $this->request->getPost('motivo'))), 0, 255, 'UTF-8');
 
         if ($solicitudId <= 0 || !in_array($accion, ['aprobar', 'rechazar'], true)) {
             return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Parámetros de solicitud inválidos.']);
@@ -519,8 +519,12 @@ class ProfesorController extends BaseController
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => "Esta solicitud ya fue procesada anteriormente ({$solicitud['estado']})."]);
         }
 
-        // Validar propiedad de la sección o rol admin
-        if (!$esAdmin && (int)$solicitud['seccion_profesor_id'] !== $profesorId && (int)$solicitud['profesor_id'] !== $profesorId) {
+        // Validar propiedad vigente de la sección (evita que un ex-docente reasignado apruebe solicitudes)
+        $duenoActualId = !empty($solicitud['seccion_profesor_id'])
+            ? (int) $solicitud['seccion_profesor_id']
+            : (int) $solicitud['profesor_id'];
+
+        if (!$esAdmin && $duenoActualId !== $profesorId) {
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para autorizar inscripciones en esta sección.']);
         }
 
@@ -528,8 +532,27 @@ class ProfesorController extends BaseController
         $notifModel = new \App\Models\NotificacionModel();
         $profNombre = trim((session()->get('primer_nombre') ?? '') . ' ' . (session()->get('apellidos') ?? ''));
 
+        $db->transBegin();
+
+        $datosEstado = [
+            'estado'     => $accion === 'aprobar' ? 'aprobada' : 'rechazada',
+            'updated_at' => $ahora,
+        ];
+        if ($accion === 'rechazar') {
+            $datosEstado['motivo_rechazo'] = $motivo !== '' ? $motivo : null;
+        }
+
+        $db->table('solicitudes_extemporaneas')
+            ->where('id', $solicitudId)
+            ->where('estado', 'pendiente')
+            ->update($datosEstado);
+
+        if ($db->affectedRows() !== 1) {
+            $db->transRollback();
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Esta solicitud ya fue procesada anteriormente.']);
+        }
+
         if ($accion === 'aprobar') {
-            // Inscribir al alumno en la sección si no estaba ya inscrito
             $yaInscrito = $db->table('inscripciones')
                 ->where('estudiante_id', (int)$solicitud['estudiante_id'])
                 ->where('seccion_id', (int)$solicitud['seccion_id'])
@@ -542,15 +565,6 @@ class ProfesorController extends BaseController
                 ]);
             }
 
-            // Actualizar estado de la solicitud
-            $db->table('solicitudes_extemporaneas')
-                ->where('id', $solicitudId)
-                ->update([
-                    'estado'     => 'aprobada',
-                    'updated_at' => $ahora,
-                ]);
-
-            // Notificar al estudiante
             $notifModel->insert([
                 'estudiante_id'  => (int)$solicitud['estudiante_id'],
                 'profesor_id'    => $profesorId,
@@ -564,20 +578,17 @@ class ProfesorController extends BaseController
                 'created_at'     => $ahora,
             ]);
 
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+                return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'No se pudo completar la aprobación de la solicitud.']);
+            }
+            $db->transCommit();
+
             return $this->response->setJSON([
                 'success' => true,
                 'mensaje' => "Solicitud aprobada con éxito. El estudiante {$solicitud['primer_nombre']} {$solicitud['apellidos']} ha sido formalmente inscrito.",
             ]);
         }
-
-        // Rechazar
-        $db->table('solicitudes_extemporaneas')
-            ->where('id', $solicitudId)
-            ->update([
-                'estado'         => 'rechazada',
-                'motivo_rechazo' => $motivo ?: null,
-                'updated_at'     => $ahora,
-            ]);
 
         $mensajeEstudiante = "Tu solicitud de inscripción extemporánea para {$solicitud['materia']} (Secc. {$solicitud['codigo_seccion']}) fue rechazada por el docente.";
         if ($motivo !== '') {
@@ -596,6 +607,12 @@ class ProfesorController extends BaseController
             'leido'          => 0,
             'created_at'     => $ahora,
         ]);
+
+        if ($db->transStatus() === false) {
+            $db->transRollback();
+            return $this->response->setStatusCode(500)->setJSON(['success' => false, 'error' => 'No se pudo completar el rechazo de la solicitud.']);
+        }
+        $db->transCommit();
 
         return $this->response->setJSON([
             'success' => true,

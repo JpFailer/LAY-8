@@ -365,10 +365,8 @@ async function ejecutarBusquedaExtemporanea(termino) {
                                 <i class="bx bx-time-five"></i> Solicitud Pendiente
                             </span>
                         ` : `
-                            <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="inscribirMateriaExtemporanea(${sec.id}, '${materiaEscapada}')">
-                                <i class="bx bx-send"></i> Solicitar Inscripción
                             <button type="button" class="btn-subir-cta btn-inscribir-ext" data-seccion-id="${secId}" data-materia="${esc(sec.materia || '')}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="bx bx-plus"></i> Inscribir
+                                <i class="bx bx-send"></i> Solicitar Inscripción
                             </button>
                         `)}
                     </div>
@@ -411,6 +409,6 @@ async function inscribirMateriaExtemporanea(seccionId, nombreMateria) {
         const buscador = document.getElementById('buscador-modal-extemporanea');
         ejecutarBusquedaExtemporanea(buscador ? buscador.value : '');
     } catch (err) {
-        mostrarToastAulas(err.message || 'No se pudo inscribir la asignatura.', 'error');
+        mostrarToastAulas(err.message || 'No se pudo enviar la solicitud de inscripción.', 'error');
     }
 }

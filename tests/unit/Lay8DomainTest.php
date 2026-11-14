@@ -614,6 +614,89 @@ final class Lay8DomainTest extends CIUnitTestCase
         $pendientesDespues = $solModel->obtenerIdsSolicitudesPendientesEstudiante(99);
         $this->assertNotContains(10, $pendientesDespues);
         $this->assertSame(0, $solModel->contarPendientesParaDocente(20, false));
+    }
+
+    public function testExtemporaneaControllersAutorizacionReasignacionYConcurrencia(): void
+    {
+        $this->db->table('usuarios')->insertBatch([
+            ['id' => 20, 'primer_nombre' => 'Prof', 'apellidos' => 'Original', 'cedula' => null, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado'],
+            ['id' => 21, 'primer_nombre' => 'Prof', 'apellidos' => 'Nuevo', 'cedula' => null, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado'],
+            ['id' => 99, 'primer_nombre' => 'Carlos', 'apellidos' => 'Pérez', 'cedula' => 'V-29000111', 'rol' => 'estudiante', 'estado_verificacion' => 'no_aplica'],
+        ]);
+        $this->db->table('materias')->insert(['id' => 5, 'nombre' => 'Física II', 'codigo_materia' => 'FIS-200']);
+        $this->db->table('secciones')->insertBatch([
+            ['id' => 10, 'materia_id' => 5, 'profesor_id' => 20, 'codigo_seccion' => 'A', 'carrera' => 'ING-INF'],
+            ['id' => 11, 'materia_id' => 5, 'profesor_id' => 21, 'codigo_seccion' => 'B', 'carrera' => 'ING-INF'],
+        ]);
+
+        // 1. Profesor no puede enviar solicitudes estudiantiles
+        $reqEst = \Config\Services::incomingrequest(null, false);
+        $reqEst->setGlobal('post', ['seccion_id' => '10']);
+        session()->set(['usuario_id' => 20, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado']);
+        $aulasCtrl = new \App\Controllers\AulasController();
+        $aulasCtrl->initController($reqEst, \Config\Services::response(null, false), \Config\Services::logger());
+        $respProfBlocked = $aulasCtrl->inscribirExtemporanea();
+        $this->assertSame(403, $respProfBlocked->getStatusCode());
+
+        // 2. Estudiante envía solicitud a sección 10 (Prof 20) y se notifica al docente
+        session()->set(['usuario_id' => 99, 'rol' => 'estudiante', 'estado_verificacion' => 'no_aplica']);
+        $aulasCtrl->initController($reqEst, \Config\Services::response(null, false), \Config\Services::logger());
+        $respCreate = $aulasCtrl->inscribirExtemporanea();
+        $this->assertSame(200, $respCreate->getStatusCode());
+        $sol = $this->db->table('solicitudes_extemporaneas')->where('estudiante_id', 99)->where('seccion_id', 10)->get()->getRowArray();
+        $this->assertNotNull($sol);
+        $this->assertSame('pendiente', $sol['estado']);
+        $this->assertSame(1, $this->db->table('notificaciones')->where('estudiante_id', 20)->countAllResults());
+
+        // Solicitud duplicada debe rechazarse con 422
+        $aulasCtrl->initController($reqEst, \Config\Services::response(null, false), \Config\Services::logger());
+        $respDup = $aulasCtrl->inscribirExtemporanea();
+        $this->assertSame(422, $respDup->getStatusCode());
+
+        // 3. Reasignar la sección 10 a Prof 21: el ex-docente (20) ya no debe verla ni poder aprobarla
+        $this->db->table('secciones')->where('id', 10)->update(['profesor_id' => 21]);
+        $solModel = new \App\Models\SolicitudExtemporaneaModel();
+        $this->assertSame(0, $solModel->contarPendientesParaDocente(20, false));
+        $this->assertSame(1, $solModel->contarPendientesParaDocente(21, false));
+
+        $reqOldProf = \Config\Services::incomingrequest(null, false);
+        $reqOldProf->setGlobal('post', ['solicitud_id' => (string) $sol['id'], 'accion' => 'aprobar', 'motivo' => '']);
+        session()->set(['usuario_id' => 20, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado', 'primer_nombre' => 'Prof', 'apellidos' => 'Original']);
+        $profCtrl = new \App\Controllers\ProfesorController();
+        $profCtrl->initController($reqOldProf, \Config\Services::response(null, false), \Config\Services::logger());
+        $this->assertSame(403, $profCtrl->responderSolicitudExtemporanea()->getStatusCode());
+
+        // 4. Nuevo titular (21) aprueba; segundo intento recibe 422 y no duplica inscripción ni notificación
+        session()->set(['usuario_id' => 21, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado', 'primer_nombre' => 'Prof', 'apellidos' => 'Nuevo']);
+        $profCtrl->initController($reqOldProf, \Config\Services::response(null, false), \Config\Services::logger());
+        $this->assertSame(200, $profCtrl->responderSolicitudExtemporanea()->getStatusCode());
+        $this->assertSame(1, $this->db->table('inscripciones')->where('estudiante_id', 99)->where('seccion_id', 10)->countAllResults());
+        $this->assertSame(1, $this->db->table('notificaciones')->where('estudiante_id', 99)->countAllResults());
+        $profCtrl->initController($reqOldProf, \Config\Services::response(null, false), \Config\Services::logger());
+        $this->assertSame(422, $profCtrl->responderSolicitudExtemporanea()->getStatusCode());
+
+        // 5. Rechazo con motivo > 255 caracteres debe truncarse de forma segura sin desbordar VARCHAR(255)
+        $reqSolB = \Config\Services::incomingrequest(null, false);
+        $reqSolB->setGlobal('post', ['seccion_id' => '11']);
+        session()->set(['usuario_id' => 99, 'rol' => 'estudiante', 'estado_verificacion' => 'no_aplica']);
+        $aulasCtrl->initController($reqSolB, \Config\Services::response(null, false), \Config\Services::logger());
+        $this->assertSame(200, $aulasCtrl->inscribirExtemporanea()->getStatusCode());
+        $solB = $this->db->table('solicitudes_extemporaneas')->where('estudiante_id', 99)->where('seccion_id', 11)->get()->getRowArray();
+
+        $reqRech = \Config\Services::incomingrequest(null, false);
+        $reqRech->setGlobal('post', [
+            'solicitud_id' => (string) $solB['id'],
+            'accion'       => 'rechazar',
+            'motivo'       => str_repeat('a', 320),
+        ]);
+        session()->set(['usuario_id' => 21, 'rol' => 'profesor', 'estado_verificacion' => 'aprobado', 'primer_nombre' => 'Prof', 'apellidos' => 'Nuevo']);
+        $profCtrl->initController($reqRech, \Config\Services::response(null, false), \Config\Services::logger());
+        $this->assertSame(200, $profCtrl->responderSolicitudExtemporanea()->getStatusCode());
+        $solBAfter = $this->db->table('solicitudes_extemporaneas')->where('id', $solB['id'])->get()->getRowArray();
+        $this->assertSame('rechazada', $solBAfter['estado']);
+        $this->assertSame(255, mb_strlen((string) $solBAfter['motivo_rechazo'], 'UTF-8'));
+    }
+
     public function testNoticiaComentarioModelValidaParentYEvitaDobleEscapadoYNotifDuplicada(): void
     {
         $this->db->table('usuarios')->insertBatch([

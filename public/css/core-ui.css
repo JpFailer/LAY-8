@@ -194,3 +194,21 @@
 .lay8-btn-pri:hover {
     opacity: 0.92;
 }
+
+.lay8-prompt-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1.5px solid var(--lay8-border-strong);
+    background: var(--lay8-bg-subtle);
+    color: var(--lay8-text-primary);
+    font-size: 0.9rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lay8-prompt-input:focus {
+    border-color: var(--lay8-primary-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}

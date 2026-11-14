@@ -44,7 +44,8 @@ class ProfesorFilter implements FilterInterface
             str_contains($path, 'docente/entregas') ||
             str_contains($path, 'docente/calificar') ||
             str_contains($path, 'docente/crear-tarea') ||
-            str_contains($path, 'docente/actualizar-estado')
+            str_contains($path, 'docente/actualizar-estado') ||
+            str_contains($path, 'docente/responder-solicitud-extemporanea')
         );
 
         // sistema de control de acceso por roles (RBAC) antidayanas (permite profes verificados y admins)

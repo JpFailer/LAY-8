@@ -224,6 +224,93 @@
         return false;
     }
 
+    function promptModal(mensaje, opts = {}) {
+        return new Promise(resolve => {
+            if (!document.body) {
+                resolve(window.prompt(mensaje, opts.defaultValue || ''));
+                return;
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'lay8-confirm-overlay';
+
+            const box = document.createElement('div');
+            box.className = 'lay8-confirm-box';
+            box.setAttribute('role', 'dialog');
+            box.setAttribute('aria-modal', 'true');
+
+            const header = document.createElement('div');
+            header.className = 'lay8-confirm-header';
+            const headerIcon = document.createElement('i');
+            headerIcon.className = 'bx ' + (opts.danger ? 'bx-error-circle' : 'bx-edit');
+            headerIcon.style.color = opts.danger ? '#dc2626' : '#2563eb';
+            headerIcon.style.fontSize = '1.3rem';
+            const titleEl = document.createElement('span');
+            titleEl.textContent = opts.title || 'Ingresar información';
+            header.appendChild(headerIcon);
+            header.appendChild(titleEl);
+
+            const body = document.createElement('div');
+            body.className = 'lay8-confirm-body';
+            const msgEl = document.createElement('p');
+            msgEl.style.margin = '0 0 12px 0';
+            msgEl.textContent = String(mensaje || '');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'lay8-prompt-input';
+            input.placeholder = opts.placeholder || '';
+            input.value = opts.defaultValue || '';
+            if (opts.maxLength) input.maxLength = opts.maxLength;
+            body.appendChild(msgEl);
+            body.appendChild(input);
+
+            const actions = document.createElement('div');
+            actions.className = 'lay8-confirm-actions';
+
+            const btnCancel = document.createElement('button');
+            btnCancel.type = 'button';
+            btnCancel.className = 'lay8-btn-sec';
+            btnCancel.textContent = opts.cancelText || 'Cancelar';
+
+            const btnOk = document.createElement('button');
+            btnOk.type = 'button';
+            btnOk.className = 'lay8-btn-pri' + (opts.danger ? ' danger' : '');
+            btnOk.textContent = opts.confirmText || 'Aceptar';
+
+            const cleanup = (result) => {
+                document.removeEventListener('keydown', onKey);
+                overlay.remove();
+                resolve(result);
+            };
+
+            const onKey = (e) => {
+                if (e.key === 'Escape') cleanup(null);
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    cleanup(input.value);
+                }
+            });
+            btnCancel.addEventListener('click', () => cleanup(null));
+            btnOk.addEventListener('click', () => cleanup(input.value));
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) cleanup(null);
+            });
+            document.addEventListener('keydown', onKey);
+
+            actions.appendChild(btnCancel);
+            actions.appendChild(btnOk);
+            box.appendChild(header);
+            box.appendChild(body);
+            box.appendChild(actions);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            input.focus();
+        });
+    }
+
     function escapeHtml(str) {
         return String(str ?? '')
             .replace(/&/g, '&amp;')
@@ -239,6 +326,7 @@
         apiFetch,
         toast,
         confirm: confirmModal,
+        prompt: promptModal,
         confirmSubmit,
         escapeHtml
     };

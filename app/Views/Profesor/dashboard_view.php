@@ -105,7 +105,8 @@
 
             <button type="button" class="btn-filtro" id="tabbtn-doc-solicitudes" onclick="cambiarTabDocente('solicitudes')">
                 <i class="bx bx-user-plus"></i> Solicitudes Extemporáneas
-                <span class="badge-conteo <?= $totalSolicitudesExtemporaneas > 0 ? 'badge-conteo-alerta' : '' ?>" id="badge-conteo-solicitudes"><?= (int) $totalSolicitudesExtemporaneas ?></span>
+                <?php $totalSolExt = (int) ($totalSolicitudesExtemporaneas ?? 0); ?>
+                <span class="badge-conteo <?= $totalSolExt > 0 ? 'badge-conteo-alerta' : '' ?>" id="badge-conteo-solicitudes"><?= $totalSolExt ?></span>
             </button>
         </nav>
 
@@ -299,9 +300,10 @@
             </div>
         </div>
 
-        <?php if (!empty($solicitudesExtemporaneas) && count($solicitudesExtemporaneas) > 0): ?>
-            <div class="tabla-contenedor" style="background: transparent; border: none; padding: 0;">
-                <table class="tabla-lay8">
+        <?php $listaSolExt = $solicitudesExtemporaneas ?? []; ?>
+        <?php if (!empty($listaSolExt)): ?>
+            <div class="contenedor-tabla-horario docente-tabla-mt" id="contenedor-tabla-solicitudes">
+                <table class="tabla-horario-umc">
                     <thead>
                         <tr>
                             <th>Estudiante</th>
@@ -312,11 +314,12 @@
                             <th style="text-align: center;">Decisión</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php foreach ($solicitudesExtemporaneas as $sol): ?>
+                    <tbody id="tbody-solicitudes-extemporaneas">
+                        <?php foreach ($listaSolExt as $sol): ?>
+                            <?php $nombreCompletoEst = trim(($sol['primer_nombre'] ?? '') . ' ' . ($sol['apellidos'] ?? '')); ?>
                             <tr id="fila-solicitud-<?= (int)$sol['id'] ?>">
                                 <td>
-                                    <strong><?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos']) ?></strong>
+                                    <strong><?= esc($nombreCompletoEst) ?></strong>
                                     <?php if (!empty($sol['estudiante_email'])): ?>
                                         <div class="docente-tabla-sub"><i class="bx bx-envelope"></i> <?= esc($sol['estudiante_email']) ?></div>
                                     <?php endif; ?>
@@ -336,10 +339,10 @@
                                 </td>
                                 <td style="text-align: center;">
                                     <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: center;">
-                                        <button type="button" class="btn-subir-cta" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border-color: #10b981;" onclick="responderSolicitudExtemporaneaDocente(<?= (int)$sol['id'] ?>, 'aprobar', '<?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos'], 'js') ?>', '<?= esc($sol['materia'], 'js') ?>')">
+                                        <button type="button" class="btn-subir-cta btn-responder-solicitud-ext" data-solicitud-id="<?= (int)$sol['id'] ?>" data-accion="aprobar" data-alumno="<?= esc($nombreCompletoEst, 'attr') ?>" data-materia="<?= esc($sol['materia'], 'attr') ?>" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border-color: #10b981;">
                                             <i class="bx bx-check"></i> Aprobar
                                         </button>
-                                        <button type="button" class="btn-eliminar-actividad" style="padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="responderSolicitudExtemporaneaDocente(<?= (int)$sol['id'] ?>, 'rechazar', '<?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos'], 'js') ?>', '<?= esc($sol['materia'], 'js') ?>')">
+                                        <button type="button" class="btn-eliminar-actividad btn-responder-solicitud-ext" data-solicitud-id="<?= (int)$sol['id'] ?>" data-accion="rechazar" data-alumno="<?= esc($nombreCompletoEst, 'attr') ?>" data-materia="<?= esc($sol['materia'], 'attr') ?>" style="padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                                             <i class="bx bx-x"></i> Rechazar
                                         </button>
                                     </div>
@@ -349,13 +352,13 @@
                     </tbody>
                 </table>
             </div>
-        <?php else: ?>
-            <div class="estado-vacio">
-                <i class="bx bx-check-shield icono-vacio"></i>
-                <h3>¡Al día! No hay solicitudes extemporáneas pendientes</h3>
-                <p>Cuando un estudiante envíe una solicitud para cursar tus asignaturas extemporáneamente, aparecerá en esta lista para tu autorización.</p>
-            </div>
         <?php endif; ?>
+
+        <div id="estado-vacio-solicitudes" class="estado-vacio" style="<?= !empty($listaSolExt) ? 'display: none;' : '' ?>">
+            <i class="bx bx-check-shield icono-vacio"></i>
+            <h3>¡Al día! No hay solicitudes extemporáneas pendientes</h3>
+            <p>Cuando un estudiante envíe una solicitud para cursar tus asignaturas extemporáneamente, aparecerá en esta lista para tu autorización.</p>
+        </div>
     </div>
 
 </div>
