@@ -322,6 +322,11 @@ body.dark-mode .docente-pag-indicador {
     color: #2563eb;
 }
 
+.btn-filtro .badge-conteo.badge-conteo-alerta {
+    background: #ef4444;
+    color: #ffffff;
+}
+
 .docente-prof-muted {
     color: #64748b;
 }

@@ -468,4 +468,131 @@ class ProfesorController extends BaseController
 
         return $this->response->download($rutaAbs, null)->setFileName($entrega['archivo_nombre'] ?: 'entrega.pdf');
     }
+
+    /**
+     * Responde (aprueba o rechaza) una solicitud de inscripción extemporánea
+     */
+    public function responderSolicitudExtemporanea()
+    {
+        if (!$this->usuarioEsDocenteAutorizado()) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'Acceso denegado: Se requiere rol docente autorizado.']);
+        }
+
+        $profesorId = (int) session()->get('usuario_id');
+        $rol = (string) session()->get('rol');
+        $esAdmin = in_array($rol, ['administrador', 'admin'], true);
+
+        $solicitudId = (int) $this->request->getPost('solicitud_id');
+        $accion      = trim((string) $this->request->getPost('accion')); // 'aprobar' o 'rechazar'
+        $motivo      = strip_tags(trim((string) $this->request->getPost('motivo')));
+
+        if ($solicitudId <= 0 || !in_array($accion, ['aprobar', 'rechazar'], true)) {
+            return $this->response->setStatusCode(400)->setJSON(['success' => false, 'error' => 'Parámetros de solicitud inválidos.']);
+        }
+
+        $db = \Config\Database::connect();
+
+        $solicitud = $db->table('solicitudes_extemporaneas')
+            ->select('solicitudes_extemporaneas.*, 
+                      secciones.profesor_id as seccion_profesor_id, secciones.codigo_seccion,
+                      materias.nombre as materia, materias.codigo_materia,
+                      usuarios.primer_nombre, usuarios.apellidos, usuarios.cedula')
+            ->join('secciones', 'secciones.id = solicitudes_extemporaneas.seccion_id')
+            ->join('materias', 'materias.id = secciones.materia_id')
+            ->join('usuarios', 'usuarios.id = solicitudes_extemporaneas.estudiante_id')
+            ->where('solicitudes_extemporaneas.id', $solicitudId)
+            ->get()
+            ->getRowArray();
+
+        if (!$solicitud) {
+            return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Solicitud extemporánea no encontrada.']);
+        }
+
+        if ($solicitud['estado'] !== 'pendiente') {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => "Esta solicitud ya fue procesada anteriormente ({$solicitud['estado']})."]);
+        }
+
+        // Validar propiedad de la sección o rol admin
+        if (!$esAdmin && (int)$solicitud['seccion_profesor_id'] !== $profesorId && (int)$solicitud['profesor_id'] !== $profesorId) {
+            return $this->response->setStatusCode(403)->setJSON(['success' => false, 'error' => 'No tienes permisos para autorizar inscripciones en esta sección.']);
+        }
+
+        $ahora = date('Y-m-d H:i:s');
+        $notifModel = new \App\Models\NotificacionModel();
+        $profNombre = trim((session()->get('primer_nombre') ?? '') . ' ' . (session()->get('apellidos') ?? ''));
+
+        if ($accion === 'aprobar') {
+            // Inscribir al alumno en la sección si no estaba ya inscrito
+            $yaInscrito = $db->table('inscripciones')
+                ->where('estudiante_id', (int)$solicitud['estudiante_id'])
+                ->where('seccion_id', (int)$solicitud['seccion_id'])
+                ->countAllResults() > 0;
+
+            if (!$yaInscrito) {
+                $db->table('inscripciones')->insert([
+                    'estudiante_id' => (int)$solicitud['estudiante_id'],
+                    'seccion_id'    => (int)$solicitud['seccion_id'],
+                ]);
+            }
+
+            // Actualizar estado de la solicitud
+            $db->table('solicitudes_extemporaneas')
+                ->where('id', $solicitudId)
+                ->update([
+                    'estado'     => 'aprobada',
+                    'updated_at' => $ahora,
+                ]);
+
+            // Notificar al estudiante
+            $notifModel->insert([
+                'estudiante_id'  => (int)$solicitud['estudiante_id'],
+                'profesor_id'    => $profesorId,
+                'seccion_id'     => (int)$solicitud['seccion_id'],
+                'tipo'           => 'general',
+                'titulo'         => '¡Solicitud Extemporánea Aprobada!',
+                'mensaje'        => "El docente {$profNombre} ha autorizado tu inscripción extemporánea en {$solicitud['materia']} (Secc. {$solicitud['codigo_seccion']}). Ya puedes acceder a su contenido y cronograma.",
+                'modalidad'      => 'presencial',
+                'enlace_accion'  => 'aulas',
+                'leido'          => 0,
+                'created_at'     => $ahora,
+            ]);
+
+            return $this->response->setJSON([
+                'success' => true,
+                'mensaje' => "Solicitud aprobada con éxito. El estudiante {$solicitud['primer_nombre']} {$solicitud['apellidos']} ha sido formalmente inscrito.",
+            ]);
+        }
+
+        // Rechazar
+        $db->table('solicitudes_extemporaneas')
+            ->where('id', $solicitudId)
+            ->update([
+                'estado'         => 'rechazada',
+                'motivo_rechazo' => $motivo ?: null,
+                'updated_at'     => $ahora,
+            ]);
+
+        $mensajeEstudiante = "Tu solicitud de inscripción extemporánea para {$solicitud['materia']} (Secc. {$solicitud['codigo_seccion']}) fue rechazada por el docente.";
+        if ($motivo !== '') {
+            $mensajeEstudiante .= " Motivo: {$motivo}";
+        }
+
+        $notifModel->insert([
+            'estudiante_id'  => (int)$solicitud['estudiante_id'],
+            'profesor_id'    => $profesorId,
+            'seccion_id'     => (int)$solicitud['seccion_id'],
+            'tipo'           => 'general',
+            'titulo'         => 'Solicitud Extemporánea no aprobada',
+            'mensaje'        => $mensajeEstudiante,
+            'modalidad'      => 'presencial',
+            'enlace_accion'  => 'aulas',
+            'leido'          => 0,
+            'created_at'     => $ahora,
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'mensaje' => "Solicitud rechazada. Se ha notificado al estudiante.",
+        ]);
+    }
 }

@@ -30,6 +30,7 @@ final class Lay8DomainTest extends CIUnitTestCase
     {
         $p = $this->db->getPrefix();
         $ddl = [
+            "DROP TABLE IF EXISTS {$p}solicitudes_extemporaneas",
             "DROP TABLE IF EXISTS {$p}notificaciones",
             "DROP TABLE IF EXISTS {$p}entregas_actividades",
             "DROP TABLE IF EXISTS {$p}actividades_estudiante_estado",
@@ -127,6 +128,16 @@ final class Lay8DomainTest extends CIUnitTestCase
                 feedback_profesor TEXT,
                 calificado_por INTEGER,
                 calificado_en DATETIME,
+                created_at DATETIME,
+                updated_at DATETIME
+            )",
+            "CREATE TABLE {$p}solicitudes_extemporaneas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                estudiante_id INTEGER NOT NULL,
+                seccion_id INTEGER NOT NULL,
+                profesor_id INTEGER,
+                estado VARCHAR(30) DEFAULT 'pendiente',
+                motivo_rechazo VARCHAR(255),
                 created_at DATETIME,
                 updated_at DATETIME
             )",
@@ -506,5 +517,71 @@ final class Lay8DomainTest extends CIUnitTestCase
         };
         $resArchivoBad = $sync->sincronizarDesdeArchivo($fakeBadFile, 'ING-INF');
         $this->assertFalse($resArchivoBad['ok']);
+    }
+
+    /**
+     * Prueba el flujo de solicitud de asignaturas extemporáneas y su control por parte del docente.
+     */
+    public function testSolicitudExtemporaneaWorkflow(): void
+    {
+        // 0. Registrar materia, sección asignada al docente 20 y estudiante 99
+        $this->db->table('materias')->insert([
+            'id'             => 5,
+            'nombre'         => 'Cálculo Avanzado',
+            'codigo_materia' => 'CAL-500',
+        ]);
+        $this->db->table('secciones')->insert([
+            'id'             => 10,
+            'materia_id'     => 5,
+            'profesor_id'    => 20,
+            'codigo_seccion' => 'SVC-A',
+            'carrera'        => 'ING-INF',
+        ]);
+        $this->db->table('usuarios')->insert([
+            'id'             => 99,
+            'primer_nombre'  => 'Carlos',
+            'apellidos'      => 'Pérez',
+            'cedula'         => 'V-29000111',
+            'correo'         => 'carlos@umc.edu.ve',
+            'rol'            => 'estudiante',
+        ]);
+
+        $solModel = new \App\Models\SolicitudExtemporaneaModel();
+
+        // 1. Crear una solicitud de un estudiante a la sección 10 (Profesor 20)
+        $solId = $solModel->insert([
+            'estudiante_id' => 99,
+            'seccion_id'    => 10,
+            'profesor_id'   => 20,
+            'estado'        => 'pendiente',
+            'created_at'    => date('Y-m-d H:i:s'),
+            'updated_at'    => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->assertGreaterThan(0, $solId);
+
+        // 2. Verificar que el estudiante tiene la sección en lista de pendientes
+        $pendientes = $solModel->obtenerIdsSolicitudesPendientesEstudiante(99);
+        $this->assertContains(10, $pendientes);
+
+        // 3. Verificar que el profesor tiene 1 solicitud pendiente
+        $conteoProf = $solModel->contarPendientesParaDocente(20, false);
+        $this->assertSame(1, $conteoProf);
+
+        // Otro profesor no debe verla
+        $conteoOtroProf = $solModel->contarPendientesParaDocente(999, false);
+        $this->assertSame(0, $conteoOtroProf);
+
+        // 4. Simular aprobación: se inscribe al alumno y se actualiza estado
+        $this->db->table('inscripciones')->insert([
+            'estudiante_id' => 99,
+            'seccion_id'    => 10,
+        ]);
+        $solModel->update($solId, ['estado' => 'aprobada']);
+
+        // Ahora no debe estar pendiente
+        $pendientesDespues = $solModel->obtenerIdsSolicitudesPendientesEstudiante(99);
+        $this->assertNotContains(10, $pendientesDespues);
+        $this->assertSame(0, $solModel->contarPendientesParaDocente(20, false));
     }
 }

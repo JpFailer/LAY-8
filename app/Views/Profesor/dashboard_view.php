@@ -102,6 +102,11 @@
                 <i class="bx bx-list-check"></i> Evaluaciones y Tareas (Classroom)
                 <span class="badge-conteo"><?= (int) $totalActividades ?></span>
             </button>
+
+            <button type="button" class="btn-filtro" id="tabbtn-doc-solicitudes" onclick="cambiarTabDocente('solicitudes')">
+                <i class="bx bx-user-plus"></i> Solicitudes Extemporáneas
+                <span class="badge-conteo <?= $totalSolicitudesExtemporaneas > 0 ? 'badge-conteo-alerta' : '' ?>" id="badge-conteo-solicitudes"><?= (int) $totalSolicitudesExtemporaneas ?></span>
+            </button>
         </nav>
 
         <div class="docente-search-container">
@@ -277,6 +282,78 @@
                 <button type="button" class="btn-subir-cta docente-btn-empty-cta" onclick="abrirModalCrearTareaDocente()">
                     <i class="bx bx-plus-circle"></i> Crear Primera Evaluación
                 </button>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- PESTAÑA 3: SOLICITUDES DE MATERIAS EXTEMPORÁNEAS                         -->
+    <div id="tab-doc-solicitudes" class="tab-contenido-docente" style="display: none;">
+        <div class="actividades-toolbar" style="margin-bottom: 20px;">
+            <div class="toolbar-info">
+                <h3 class="aulas-toolbar-titulo">
+                    <i class="bx bx-user-plus"></i> Solicitudes de Inscripción Extemporánea
+                </h3>
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #64748b;">
+                    Estudiantes que solicitan cursar tus asignaturas fuera del registro regular. Al aprobar, el alumno queda formalmente inscrito en la sección.
+                </p>
+            </div>
+        </div>
+
+        <?php if (!empty($solicitudesExtemporaneas) && count($solicitudesExtemporaneas) > 0): ?>
+            <div class="tabla-contenedor" style="background: transparent; border: none; padding: 0;">
+                <table class="tabla-lay8">
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Cédula</th>
+                            <th>Carrera</th>
+                            <th>Materia y Sección</th>
+                            <th>Fecha Solicitud</th>
+                            <th style="text-align: center;">Decisión</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($solicitudesExtemporaneas as $sol): ?>
+                            <tr id="fila-solicitud-<?= (int)$sol['id'] ?>">
+                                <td>
+                                    <strong><?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos']) ?></strong>
+                                    <?php if (!empty($sol['estudiante_email'])): ?>
+                                        <div class="docente-tabla-sub"><i class="bx bx-envelope"></i> <?= esc($sol['estudiante_email']) ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="badge-codigo-materia"><?= esc($sol['cedula'] ?? 'N/A') ?></span>
+                                </td>
+                                <td>
+                                    <span class="badge-conteo"><?= esc($sol['estudiante_carrera'] ?? $sol['seccion_carrera'] ?? 'N/A') ?></span>
+                                </td>
+                                <td>
+                                    <strong><?= esc($sol['materia']) ?></strong>
+                                    <div class="docente-tabla-sub">Secc. <?= esc($sol['codigo_seccion']) ?> (<?= esc($sol['codigo_materia']) ?>)</div>
+                                </td>
+                                <td class="docente-td-fecha">
+                                    <i class="bx bx-calendar"></i> <?= date('d/m/Y h:i A', strtotime($sol['created_at'])) ?>
+                                </td>
+                                <td style="text-align: center;">
+                                    <div style="display: inline-flex; gap: 8px; align-items: center; justify-content: center;">
+                                        <button type="button" class="btn-subir-cta" style="padding: 6px 14px; font-size: 0.82rem; background: #10b981; border-color: #10b981;" onclick="responderSolicitudExtemporaneaDocente(<?= (int)$sol['id'] ?>, 'aprobar', '<?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos'], 'js') ?>', '<?= esc($sol['materia'], 'js') ?>')">
+                                            <i class="bx bx-check"></i> Aprobar
+                                        </button>
+                                        <button type="button" class="btn-eliminar-actividad" style="padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;" onclick="responderSolicitudExtemporaneaDocente(<?= (int)$sol['id'] ?>, 'rechazar', '<?= esc($sol['primer_nombre'] . ' ' . $sol['apellidos'], 'js') ?>', '<?= esc($sol['materia'], 'js') ?>')">
+                                            <i class="bx bx-x"></i> Rechazar
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="estado-vacio">
+                <i class="bx bx-check-shield icono-vacio"></i>
+                <h3>¡Al día! No hay solicitudes extemporáneas pendientes</h3>
+                <p>Cuando un estudiante envíe una solicitud para cursar tus asignaturas extemporáneamente, aparecerá en esta lista para tu autorización.</p>
             </div>
         <?php endif; ?>
     </div>

@@ -393,8 +393,11 @@ class AulasController extends BaseController
         $inscritasRows = $db->table('inscripciones')->select('seccion_id')->where('estudiante_id', $usuarioId)->get()->getResultArray();
         $inscritasIds = !empty($inscritasRows) ? array_map('intval', array_column($inscritasRows, 'seccion_id')) : [];
 
+        // Solicitudes pendientes de aprobación enviadas por el alumno
+        $solicitudesPendientes = (new \App\Models\SolicitudExtemporaneaModel())->obtenerIdsSolicitudesPendientesEstudiante($usuarioId);
+
         $builder = $db->table('secciones')
-            ->select('secciones.id, secciones.codigo_seccion, secciones.carrera, materias.nombre as materia, materias.codigo_materia, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
+            ->select('secciones.id, secciones.codigo_seccion, secciones.carrera, secciones.profesor_id, materias.nombre as materia, materias.codigo_materia, materias.semestre_trayecto, usuarios.primer_nombre as prof_nombre, usuarios.apellidos as prof_apellido')
             ->join('materias', 'materias.id = secciones.materia_id')
             ->join('usuarios', 'usuarios.id = secciones.profesor_id', 'left');
 
@@ -414,6 +417,7 @@ class AulasController extends BaseController
 
         foreach ($secciones as &$s) {
             $s['ya_inscrita'] = in_array((int)$s['id'], $inscritasIds, true);
+            $s['solicitud_pendiente'] = in_array((int)$s['id'], $solicitudesPendientes, true);
         }
 
         return $this->response->setJSON([
@@ -423,7 +427,7 @@ class AulasController extends BaseController
     }
 
     /**
-     * Inscribe una materia extemporánea al registro del estudiante
+     * Envía una solicitud formal de inscripción extemporánea al docente encargado de la materia
      */
     public function inscribirExtemporanea()
     {
@@ -454,25 +458,70 @@ class AulasController extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Sección académica no encontrada.']);
         }
 
-        // Verificar si ya está inscrita
+        // 1. Verificar si ya está inscrita formalmente
         $existe = $db->table('inscripciones')
             ->where('estudiante_id', $usuarioId)
             ->where('seccion_id', $seccionId)
             ->countAllResults();
 
         if ($existe > 0) {
-            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Ya te encuentras inscrito en esta sección.']);
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Ya te encuentras formalmente inscrito en esta sección.']);
         }
 
-        // Inscribir en base de datos
-        $db->table('inscripciones')->insert([
+        // 2. Verificar si ya existe una solicitud en estado pendiente
+        $solicitudPendiente = $db->table('solicitudes_extemporaneas')
+            ->where('estudiante_id', $usuarioId)
+            ->where('seccion_id', $seccionId)
+            ->where('estado', 'pendiente')
+            ->countAllResults();
+
+        if ($solicitudPendiente > 0) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'success' => false, 
+                'error' => 'Ya enviaste una solicitud de inscripción para esta materia que está en espera de aprobación del docente.'
+            ]);
+        }
+
+        $profesorId = !empty($seccion['profesor_id']) ? (int) $seccion['profesor_id'] : null;
+        $ahora = date('Y-m-d H:i:s');
+
+        // 3. Registrar la solicitud en la tabla de control
+        $db->table('solicitudes_extemporaneas')->insert([
             'estudiante_id' => $usuarioId,
             'seccion_id'    => $seccionId,
+            'profesor_id'   => $profesorId,
+            'estado'        => 'pendiente',
+            'created_at'    => $ahora,
+            'updated_at'    => $ahora,
         ]);
+
+        // 4. Notificar al docente encargado si ya está asignado a la sección
+        if ($profesorId) {
+            $estudiante = $db->table('usuarios')->where('id', $usuarioId)->get()->getRowArray();
+            $nombreEst = trim(($estudiante['primer_nombre'] ?? '') . ' ' . ($estudiante['apellidos'] ?? ''));
+            $cedulaEst = !empty($estudiante['cedula']) ? $estudiante['cedula'] : 'N/A';
+
+            (new \App\Models\NotificacionModel())->insert([
+                'estudiante_id'  => $profesorId, // El receptor es el docente
+                'profesor_id'    => $usuarioId,
+                'seccion_id'     => $seccionId,
+                'tipo'           => 'general',
+                'titulo'         => 'Nueva Solicitud de Materia Extemporánea',
+                'mensaje'        => "El alumno {$nombreEst} (C.I. {$cedulaEst}) solicita autorización para cursar tu sección de {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}).",
+                'modalidad'      => 'presencial',
+                'enlace_accion'  => 'docente?tab=solicitudes',
+                'leido'          => 0,
+                'created_at'     => $ahora,
+            ]);
+        }
+
+        $mensajeExito = $profesorId
+            ? "Solicitud enviada exitosamente al docente encargado de {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}). Recibirás una notificación cuando sea revisada."
+            : "Solicitud registrada para {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}). Quedará en espera de asignación y autorización docente.";
 
         return $this->response->setJSON([
             'success' => true,
-            'mensaje' => "Asignatura {$seccion['materia']} (Secc. {$seccion['codigo_seccion']}) inscrita exitosamente como extemporánea."
+            'mensaje' => $mensajeExito
         ]);
     }
 }

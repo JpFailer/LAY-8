@@ -554,7 +554,74 @@ const BASE_URL = window.BASE_URL || '/';
         aplicarFiltrosYRenderizarDocente(false);
     }
 
+    async function responderSolicitudExtemporaneaDocente(solicitudId, accion, nombreAlumno, materia) {
+        let motivo = '';
+        if (accion === 'aprobar') {
+            const ok = await window.Lay8UI.confirm(
+                `¿Deseas autorizar la inscripción extemporánea del alumno ${nombreAlumno} en la asignatura ${materia}?`,
+                { title: 'Aprobar Solicitud Extemporánea', confirmText: 'Aprobar Alumno' }
+            );
+            if (!ok) return;
+        } else {
+            const ok = await window.Lay8UI.confirm(
+                `¿Deseas rechazar la solicitud de ${nombreAlumno} para cursar ${materia}?`,
+                { title: 'Rechazar Solicitud', confirmText: 'Rechazar', danger: true }
+            );
+            if (!ok) return;
+
+            motivo = await window.Lay8UI.prompt('Indica un motivo explicativo para el estudiante (opcional):', {
+                title: 'Motivo del Rechazo',
+                placeholder: 'Ej: Sección sin cupos disponibles o no cumple prerrequisitos...'
+            });
+            if (motivo === null) return;
+        }
+
+        const formData = new FormData();
+        formData.append('solicitud_id', solicitudId);
+        formData.append('accion', accion);
+        formData.append('motivo', motivo || '');
+
+        try {
+            const data = await window.Lay8UI.apiFetch(BASE_URL + 'docente/responder-solicitud-extemporanea', {
+                method: 'POST',
+                body: formData
+            });
+
+            window.Lay8UI.toast(data.mensaje || 'Solicitud procesada correctamente.', accion === 'aprobar' ? 'exito' : 'info');
+
+            const fila = document.getElementById('fila-solicitud-' + solicitudId);
+            if (fila) {
+                fila.style.transition = 'all 0.3s ease';
+                fila.style.opacity = '0';
+                fila.style.transform = 'scale(0.96)';
+                setTimeout(() => {
+                    fila.remove();
+                    const badge = document.getElementById('badge-conteo-solicitudes');
+                    if (badge) {
+                        const actual = parseInt(badge.textContent || '0', 10);
+                        const nuevo = Math.max(0, actual - 1);
+                        badge.textContent = nuevo;
+                        if (nuevo === 0) {
+                            badge.classList.remove('badge-conteo-alerta');
+                        }
+                    }
+                }, 300);
+            }
+        } catch (err) {
+            window.Lay8UI.toast(err.message || 'Error al procesar la solicitud.', 'error');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         asegurarModalesEnBodyDocente();
         inicializarBuscadorDocente();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab) {
+            cambiarTabDocente(tab);
+        }
     });
+
+    window.cambiarTabDocente = cambiarTabDocente;
+    window.responderSolicitudExtemporaneaDocente = responderSolicitudExtemporaneaDocente;

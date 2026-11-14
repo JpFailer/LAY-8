@@ -118,12 +118,17 @@ class DocentePanelService
             unset($act);
         }
 
+        // 6. Solicitudes de inscripción extemporánea pendientes de autorización
+        $solicitudExtModel = new \App\Models\SolicitudExtemporaneaModel();
+        $solicitudesExtemporaneas = $solicitudExtModel->obtenerPendientesParaDocente($usuarioId, $esAdmin);
+        $totalSolicitudesExtemporaneas = count($solicitudesExtemporaneas);
+
         return [
-            'secciones'                 => $resultadoSec['secciones'],
-            'seccionesSelect'           => $seccionesSelect,
-            'carrerasPresentesDoc'      => $carrerasPresentesDoc,
-            'esModoServidor'            => $esAdmin,
-            'paginacion'                => [
+            'secciones'                     => $resultadoSec['secciones'],
+            'seccionesSelect'               => $seccionesSelect,
+            'carrerasPresentesDoc'          => $carrerasPresentesDoc,
+            'esModoServidor'                => $esAdmin,
+            'paginacion'                    => [
                 'totalFiltradas' => $resultadoSec['totalFiltradas'],
                 'paginaActual'   => $resultadoSec['paginaActual'],
                 'totalPaginas'   => $resultadoSec['totalPaginas'],
@@ -131,11 +136,13 @@ class DocentePanelService
                 'carreraActiva'  => $resultadoSec['carreraActiva'],
                 'terminoActivo'  => $resultadoSec['terminoActivo'],
             ],
-            'actividades'               => $actividades,
-            'totalSecciones'            => $totalSecciones,
-            'totalAlumnos'              => $totalAlumnos,
-            'totalActividades'          => count($actividades),
-            'totalEntregasSinCalificar' => $totalEntregasSinCalificar,
+            'actividades'                   => $actividades,
+            'solicitudesExtemporaneas'      => $solicitudesExtemporaneas,
+            'totalSolicitudesExtemporaneas' => $totalSolicitudesExtemporaneas,
+            'totalSecciones'                => $totalSecciones,
+            'totalAlumnos'                  => $totalAlumnos,
+            'totalActividades'              => count($actividades),
+            'totalEntregasSinCalificar'     => $totalEntregasSinCalificar,
         ];
     }
 

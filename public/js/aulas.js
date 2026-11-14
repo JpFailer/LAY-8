@@ -359,11 +359,15 @@ async function ejecutarBusquedaExtemporanea(termino) {
                             <span style="font-size: 0.78rem; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(16, 185, 129, 0.1); border-radius: 6px;">
                                 <i class="bx bx-check"></i> Inscrita
                             </span>
+                        ` : (sec.solicitud_pendiente ? `
+                            <span style="font-size: 0.78rem; color: #f59e0b; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(245, 158, 11, 0.12); border-radius: 6px;">
+                                <i class="bx bx-time-five"></i> Solicitud Pendiente
+                            </span>
                         ` : `
                             <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="inscribirMateriaExtemporanea(${sec.id}, '${materiaEscapada}')">
-                                <i class="bx bx-plus"></i> Inscribir
+                                <i class="bx bx-send"></i> Solicitar Inscripción
                             </button>
-                        `}
+                        `)}
                     </div>
                 </div>
             `;
@@ -382,8 +386,8 @@ async function ejecutarBusquedaExtemporanea(termino) {
 
 async function inscribirMateriaExtemporanea(seccionId, nombreMateria) {
     const ok = await window.Lay8UI.confirm(
-        '¿Deseas formalizar la inscripción extemporánea de la asignatura ' + nombreMateria + '?',
-        { title: 'Inscripción extemporánea', confirmText: 'Inscribir' }
+        '¿Deseas enviar una solicitud formal de inscripción extemporánea al docente encargado de ' + nombreMateria + '?',
+        { title: 'Solicitar Materia Extemporánea', confirmText: 'Enviar Solicitud' }
     );
     if (!ok) return;
 
@@ -395,8 +399,9 @@ async function inscribirMateriaExtemporanea(seccionId, nombreMateria) {
             method: 'POST',
             body: formData
         });
-        mostrarToastAulas(data.mensaje || 'Asignatura inscrita correctamente.', 'exito');
-        setTimeout(() => window.location.reload(), 650);
+        mostrarToastAulas(data.mensaje || 'Solicitud enviada correctamente al docente.', 'exito');
+        const buscador = document.getElementById('buscador-modal-extemporanea');
+        ejecutarBusquedaExtemporanea(buscador ? buscador.value : '');
     } catch (err) {
         mostrarToastAulas(err.message || 'No se pudo inscribir la asignatura.', 'error');
     }

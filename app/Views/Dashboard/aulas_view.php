@@ -188,17 +188,10 @@
                         <?php endif; ?>
 
                         <!-- Pie de la Tarjeta con Actividades -->
-                        <div class="tarjeta-meta meta-aula-footer">
-                            <span class="total-actividades-badge">
+                        <div class="meta-aula-footer">
+                            <span class="total-actividades-badge" onclick="cambiarTabAulas('actividades')" title="Ver actividades en el cronograma">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
-                                <div class="aulas-footer-acciones">
-                                    <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
-                                        <i class="bx bx-plus"></i> Tarea
-                                    </button>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -426,65 +419,7 @@
 
 </div>
 
-<?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
-<!-- Modal para Crear Nueva Actividad o Tarea -->
-<div id="modalNuevaActividad" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalNuevaActividad()">
-    <div class="modal-contenido-aula modal-actividad-ancho">
-        <div class="modal-aula-header">
-            <h3><i class="bx bx-task"></i> Nueva Actividad / Evaluación</h3>
-            <span onclick="cerrarModalNuevaActividad()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
-        </div>
-        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8 aulas-modal-form-pad">
-            <?= csrf_field() ?>
-            <div class="campo-grupo">
-                <label for="act_seccion_id"><i class="bx bx-book-open"></i> Materia:</label>
-                <select name="seccion_id" id="act_seccion_id" required class="select-lay8">
-                    <option value="" disabled selected>-- Selecciona la materia --</option>
-                    <?php foreach ($secciones as $sec): ?>
-                        <option value="<?= (int)$sec['id'] ?>"><?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)</option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
 
-            <div class="campo-grupo">
-                <label for="act_titulo"><i class="bx bx-edit"></i> Título de la Actividad:</label>
-                <input type="text" name="titulo" id="act_titulo" required placeholder="Ej: Taller 1: Ecuaciones Diferenciales" class="input-lay8">
-            </div>
-
-            <div class="campo-fila-doble">
-                <div class="campo-grupo">
-                    <label for="act_tipo"><i class="bx bx-tag"></i> Tipo:</label>
-                    <select name="tipo" id="act_tipo" required class="select-lay8">
-                        <option value="tarea">Tarea</option>
-                        <option value="parcial">Parcial / Examen</option>
-                        <option value="taller">Taller</option>
-                        <option value="proyecto">Proyecto</option>
-                        <option value="lectura">Lectura</option>
-                    </select>
-                </div>
-                <div class="campo-grupo">
-                    <label for="act_ponderacion"><i class="bx bx-pie-chart"></i> Ponderación (%):</label>
-                    <input type="number" step="0.5" min="0" max="100" name="ponderacion" id="act_ponderacion" placeholder="Ej: 20" class="input-lay8">
-                </div>
-            </div>
-
-            <div class="campo-grupo">
-                <label for="act_fecha_entrega"><i class="bx bx-calendar-event"></i> Fecha y Hora de Entrega:</label>
-                <input type="datetime-local" name="fecha_entrega" id="act_fecha_entrega" required class="input-lay8">
-            </div>
-
-            <div class="campo-grupo">
-                <label for="act_descripcion"><i class="bx bx-align-left"></i> Instrucciones o Detalles:</label>
-                <textarea name="descripcion" id="act_descripcion" rows="3" placeholder="Instrucciones, capítulos del libro o temas que cubre la actividad..." class="input-lay8 textarea-lay8"></textarea>
-            </div>
-
-            <button type="submit" class="btn-cta-submit">
-                <i class="bx bx-save"></i> Guardar en Cronograma
-            </button>
-        </form>
-    </div>
-</div>
-<?php endif; ?>
 
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
@@ -526,7 +461,7 @@
             <span onclick="cerrarModalExtemporanea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
         <p class="aulas-modal-subdesc">
-            Permite agregar asignaturas autorizadas por la coordinación docente o inscripciones extemporáneas fuera del registro oficial UPE-002.
+            Envía una solicitud formal de inscripción al docente encargado de la asignatura. Una vez autorizada por el profesor, la materia se incorporará automáticamente a tus aulas y horario.
         </p>
 
         <!-- Filtros y buscador del modal -->

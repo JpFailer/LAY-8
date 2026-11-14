@@ -628,6 +628,32 @@ body.dark-mode .combobox-empty {
     align-items: center;
 }
 
+.meta-aula-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 10px;
+    margin-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+body.dark-mode .meta-aula-footer {
+    border-top-color: #334155;
+}
+
+.total-actividades-badge {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.total-actividades-badge:hover {
+    color: #0284c7;
+}
+
+body.dark-mode .total-actividades-badge:hover {
+    color: #38bdf8;
+}
+
 .aulas-actividad-estado-row {
     margin-top: 8px;
     display: flex;

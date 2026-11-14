@@ -87,6 +87,7 @@ $routes->group('', ['filter' => 'auth'], static function ($routes) {
         $routes->get('/docente/entregas/(:num)', 'ProfesorController::obtenerEntregasAjax/$1');
         $routes->post('/docente/calificar', 'ProfesorController::calificarEntrega');
         $routes->get('/docente/descargar-entrega/(:num)', 'ProfesorController::descargarEntrega/$1');
+        $routes->post('/docente/responder-solicitud-extemporanea', 'ProfesorController::responderSolicitudExtemporanea');
         
         // Panel de profesor & estados rápidos
         $routes->get('/api/profesor/clases', 'ProfesorController::misClases');
