@@ -117,13 +117,13 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
 
     <?php if(session()->getFlashdata('error')): ?>
       <div class="error-msg">
-        <?= session()->getFlashdata('error') ?>
+        <?= esc(session()->getFlashdata('error')) ?>
       </div>
     <?php endif;?>
 
     <?php if(session()->getFlashdata('exito')): ?>
       <div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;">
-        <?= session()->getFlashdata('exito') ?>
+        <?= esc(session()->getFlashdata('exito')) ?>
       </div>
     <?php endif;?>
 
@@ -140,29 +140,29 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
         <div class="form-row">
           <div class="form-col">
             <label class="form-label">Primer Nombre</label>
-            <input type="text" name="primer_nombre" class="input-global" value="<?= old('primer_nombre') ?>" required>
+            <input type="text" name="primer_nombre" class="input-global" value="<?= esc(old('primer_nombre')) ?>" required>
           </div>
           <div class="form-col">
             <label class="form-label">Apellidos</label>
-            <input type="text" name="apellidos" class="input-global" value="<?= old('apellidos') ?>" required>
+            <input type="text" name="apellidos" class="input-global" value="<?= esc(old('apellidos')) ?>" required>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-col">
             <label class="form-label">Cédula de Identidad *</label>
-            <input type="text" name="cedula" class="input-global" placeholder="Ej: 30101010" value="<?= old('cedula') ?>" required pattern="[0-9]{6,10}" title="Ingresa entre 6 y 10 dígitos numéricos">
+            <input type="text" name="cedula" class="input-global" placeholder="Ej: 30101010" value="<?= esc(old('cedula')) ?>" required pattern="[0-9]{6,10}" title="Ingresa entre 6 y 10 dígitos numéricos">
           </div>
           <div class="form-col">
             <label class="form-label">Correo Electrónico *</label>
-            <input type="email" name="correo" class="input-global" value="<?= old('correo') ?>" required>
+            <input type="email" name="correo" class="input-global" value="<?= esc(old('correo')) ?>" required>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-col">
             <label class="form-label">Teléfono (Opc.)</label>
-            <input type="text" name="telefono" class="input-global" value="<?= old('telefono') ?>" placeholder="Ej: 04121234567">
+            <input type="text" name="telefono" class="input-global" value="<?= esc(old('telefono')) ?>" placeholder="Ej: 04121234567">
           </div>
         </div>
 
@@ -235,7 +235,7 @@ if (!empty($erroresFlash) && is_array($erroresFlash)) {
       <div id="paso2" style="display: none;">
         <div style="margin-bottom: 20px;">
           <label class="form-label">Nombre de Usuario</label>
-          <input type="text" name="nombre_usuario" class="input-global" value="<?= old('nombre_usuario') ?>" required>
+          <input type="text" name="nombre_usuario" class="input-global" value="<?= esc(old('nombre_usuario')) ?>" required>
         </div>
         
         <div class="form-row" style="margin-bottom: 35px;">

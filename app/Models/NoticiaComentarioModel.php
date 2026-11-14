@@ -82,10 +82,20 @@ class NoticiaComentarioModel extends Model
             return ['error' => 'La noticia no existe.'];
         }
 
+        $comentarioPadre = null;
+        if ($parentId !== null && $parentId > 0) {
+            $comentarioPadre = $this->find($parentId);
+            if (!$comentarioPadre || (int) $comentarioPadre['noticia_id'] !== $noticiaId) {
+                return ['error' => 'El comentario padre especificado no pertenece a esta publicación.'];
+            }
+        } else {
+            $parentId = null;
+        }
+
         $comentarioId = $this->insert([
             'noticia_id' => $noticiaId,
             'usuario_id' => $usuarioId,
-            'parent_id'  => ($parentId && $parentId > 0) ? $parentId : null,
+            'parent_id'  => $parentId,
             'contenido'  => $contenido,
         ], true);
 
@@ -103,30 +113,30 @@ class NoticiaComentarioModel extends Model
         $nombreComentarista = $comentarista ? trim($comentarista['primer_nombre'] . ' ' . $comentarista['apellidos']) : 'Un usuario';
 
         $notifModel = new NotificacionModel();
+        $destinatarioRespuestaNotificado = null;
 
         // Notificación 1: Si es una respuesta a otro comentario (Reddit-style reply)
-        if ($parentId && $parentId > 0) {
-            $comentarioPadre = $this->find($parentId);
-            if ($comentarioPadre && (int)$comentarioPadre['usuario_id'] !== $usuarioId) {
-                $notifModel->insert([
-                    'estudiante_id'  => (int)$comentarioPadre['usuario_id'],
-                    'profesor_id'    => $usuarioId,
-                    'seccion_id'     => null,
-                    'tipo'           => 'respuesta',
-                    'titulo'         => 'Nueva respuesta a tu comentario',
-                    'mensaje'        => "{$nombreComentarista} respondió a tu comentario en: \"{$noticia['titulo']}\".",
-                    'modalidad'      => 'presencial',
-                    'enlace_accion'  => 'dashboard#noticia-' . $noticiaId,
-                    'leido'          => 0,
-                    'created_at'     => date('Y-m-d H:i:s')
-                ]);
-            }
-        } 
-        
-        // Notificación 2: Notificar al autor de la publicación si no es él mismo
-        if ((int)$noticia['autor_id'] !== $usuarioId) {
+        if ($comentarioPadre && (int) $comentarioPadre['usuario_id'] !== $usuarioId) {
+            $destinatarioRespuestaNotificado = (int) $comentarioPadre['usuario_id'];
             $notifModel->insert([
-                'estudiante_id'  => (int)$noticia['autor_id'],
+                'estudiante_id'  => $destinatarioRespuestaNotificado,
+                'profesor_id'    => $usuarioId,
+                'seccion_id'     => null,
+                'tipo'           => 'respuesta',
+                'titulo'         => 'Nueva respuesta a tu comentario',
+                'mensaje'        => "{$nombreComentarista} respondió a tu comentario en: \"{$noticia['titulo']}\".",
+                'modalidad'      => 'presencial',
+                'enlace_accion'  => 'dashboard#noticia-' . $noticiaId,
+                'leido'          => 0,
+                'created_at'     => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        // Notificación 2: Notificar al autor de la publicación (evitando duplicado si ya se le notificó la respuesta)
+        $autorNoticiaId = (int) $noticia['autor_id'];
+        if ($autorNoticiaId !== $usuarioId && $autorNoticiaId !== $destinatarioRespuestaNotificado) {
+            $notifModel->insert([
+                'estudiante_id'  => $autorNoticiaId,
                 'profesor_id'    => $usuarioId,
                 'seccion_id'     => null,
                 'tipo'           => 'comentario',
@@ -150,7 +160,7 @@ class NoticiaComentarioModel extends Model
                 'noticia_id'    => $noticiaId,
                 'usuario_id'    => $usuarioId,
                 'parent_id'     => $parentId,
-                'contenido'     => esc($contenido),
+                'contenido'     => $contenido,
                 'primer_nombre' => $comentarista['primer_nombre'] ?? 'Usuario',
                 'apellidos'     => $comentarista['apellidos'] ?? '',
                 'rol'           => $comentarista['rol'] ?? 'estudiante',

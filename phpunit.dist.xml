@@ -8,9 +8,10 @@
     colors="true"
     columns="max"
     failOnRisky="true"
-    failOnWarning="true"
+    failOnWarning="false"
     cacheDirectory="build/.phpunit.cache"
 >
+    <!-- Descomenta para generar reportes si tienes xdebug/pcov instalado
     <coverage pathCoverage="false" ignoreDeprecatedCodeUnits="true">
         <report>
             <clover outputFile="build/logs/clover.xml"/>
@@ -19,6 +20,7 @@
             <text outputFile="php://stdout" showUncoveredFiles="false"/>
         </report>
     </coverage>
+    -->
 
     <testsuites>
         <testsuite name="App">

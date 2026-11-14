@@ -24,14 +24,14 @@
   <?php if(session()->getFlashdata('mensaje')): ?>
     <div class="alerta-notif alerta-exito" style="margin-bottom: 20px;">
       <i class="bx bx-check-circle" style="font-size: 1.3rem;"></i>
-      <span><?= session()->getFlashdata('mensaje') ?></span>
+      <span><?= esc(session()->getFlashdata('mensaje')) ?></span>
     </div>
   <?php endif; ?>
 
   <?php if(session()->getFlashdata('error')): ?>
     <div class="alerta-notif alerta-error" style="margin-bottom: 20px;">
       <i class="bx bx-error-circle" style="font-size: 1.3rem;"></i>
-      <span><?= session()->getFlashdata('error') ?></span>
+      <span><?= esc(session()->getFlashdata('error')) ?></span>
     </div>
   <?php endif; ?>
 

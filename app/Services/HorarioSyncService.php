@@ -607,8 +607,10 @@ class HorarioSyncService
                         }
                     }
 
-                    $codigoSeccion    = isset($fila['Seccion']) ? trim((string) $fila['Seccion']) : 'Desconocida';
-                    $periodoAcademico = isset($fila['Periodo']) ? trim((string) $fila['Periodo']) : 'Desconocido';
+                    $codigoSeccionRaw = isset($fila['Seccion']) ? trim((string) $fila['Seccion']) : '';
+                    $codigoSeccion    = $codigoSeccionRaw !== '' ? mb_substr($codigoSeccionRaw, 0, 10, 'UTF-8') : 'N/D';
+                    $periodoRaw       = isset($fila['Periodo']) ? trim((string) $fila['Periodo']) : '';
+                    $periodoAcademico = $periodoRaw !== '' ? mb_substr($periodoRaw, 0, 20, 'UTF-8') : 'N/D';
 
                     $seccionDb = $seccionModel->where('materia_id', $materiaId)
                         ->where('codigo_seccion', $codigoSeccion)

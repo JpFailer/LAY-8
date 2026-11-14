@@ -5,6 +5,12 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<?php
+    $rolUsuarioAulas = session('rol') ?? 'estudiante';
+    $estadoVerifAulas = session('estado_verificacion') ?? 'no_aplica';
+    $puedeGestionarActividades = in_array($rolUsuarioAulas, ['admin', 'administrador'], true)
+        || ($rolUsuarioAulas === 'profesor' && $estadoVerifAulas === 'aprobado');
+?>
 <div class="biblioteca-dashboard-contenedor aulas-contenedor">
 
     <!-- header aulas -->
@@ -95,7 +101,8 @@
                     <?php
                         $estadoHoy = $sec['estado_hoy'];
                         $esOnline = ($estadoHoy && $estadoHoy['modalidad'] === 'online');
-                        $enlaceVirtual = ($estadoHoy && !empty($estadoHoy['enlace_virtual'])) ? $estadoHoy['enlace_virtual'] : null;
+                        $rawEnlaceVirtual = ($estadoHoy && !empty($estadoHoy['enlace_virtual'])) ? trim((string) $estadoHoy['enlace_virtual']) : null;
+                        $enlaceVirtual = ($rawEnlaceVirtual && preg_match('#^https?://#i', $rawEnlaceVirtual)) ? $rawEnlaceVirtual : null;
                         
                         // Extraer aulas asociadas a esta materia
                         $aulasAsignadas = [];
@@ -192,6 +199,13 @@
                             <span class="total-actividades-badge" onclick="cambiarTabAulas('actividades')" title="Ver actividades en el cronograma">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
+                            <?php if ($puedeGestionarActividades): ?>
+                                <div class="aulas-footer-acciones">
+                                    <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
+                                        <i class="bx bx-plus"></i> Tarea
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -246,7 +260,7 @@
                         <tr class="fila-separador-turno">
                             <td colspan="7">
                                 <i class="bx <?= $turno === 'Mañana' ? 'bx-sun' : ($turno === 'Tarde' ? 'bx-brightness-half' : 'bx-moon') ?>"></i>
-                                TURNO <?= strtoupper($turno) ?>
+                                TURNO <?= esc(mb_strtoupper($turno, 'UTF-8')) ?>
                             </td>
                         </tr>
                         <?php foreach ($bloques as $b): ?>
@@ -396,7 +410,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="acciones-columna">
-                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array(session('rol'), ['admin', 'administrador', 'profesor'], true)): ?>
+                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array($rolUsuarioAulas, ['admin', 'administrador'], true)): ?>
                                 <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return Lay8UI.confirmSubmit(event, '¿Deseas eliminar esta actividad del cronograma?', { title: 'Eliminar actividad', confirmText: 'Eliminar', danger: true })">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
@@ -419,6 +433,47 @@
 
 </div>
 
+<?php if ($puedeGestionarActividades): ?>
+<!-- Modal para Crear Nueva Actividad o Tarea -->
+<div id="modalNuevaActividad" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalNuevaActividad()">
+    <div class="modal-contenido-aula modal-actividad-ancho">
+        <div class="modal-aula-header">
+            <h3><i class="bx bx-task"></i> Nueva Actividad / Evaluación</h3>
+            <span onclick="cerrarModalNuevaActividad()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
+        </div>
+        <form action="<?= base_url('aulas/crear-actividad') ?>" method="post" class="formulario-estilo-lay8 aulas-modal-form-pad">
+            <?= csrf_field() ?>
+            <div class="campo-grupo">
+                <label for="act_seccion_id"><i class="bx bx-book-open"></i> Materia:</label>
+                <select name="seccion_id" id="act_seccion_id" required class="select-lay8">
+                    <option value="" disabled selected>-- Selecciona la materia --</option>
+                    <?php foreach ($secciones as $sec): ?>
+                        <option value="<?= (int)$sec['id'] ?>"><?= esc($sec['materia']) ?> (Secc. <?= esc($sec['codigo_seccion']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="campo-grupo">
+                <label for="act_titulo"><i class="bx bx-edit"></i> Título de la Actividad:</label>
+                <input type="text" name="titulo" id="act_titulo" required placeholder="Ej: Taller 1: Ecuaciones Diferenciales" class="input-lay8">
+            </div>
+
+            <div class="campo-fila-doble">
+                <div class="campo-grupo">
+                    <label for="act_tipo"><i class="bx bx-tag"></i> Tipo:</label>
+                    <select name="tipo" id="act_tipo" required class="select-lay8">
+                        <option value="tarea">Tarea</option>
+                        <option value="parcial">Parcial / Examen</option>
+                        <option value="taller">Taller</option>
+                        <option value="proyecto">Proyecto</option>
+                        <option value="lectura">Lectura</option>
+                    </select>
+                </div>
+                <div class="campo-grupo">
+                    <label for="act_ponderacion"><i class="bx bx-pie-chart"></i> Ponderación (%):</label>
+                    <input type="number" step="0.5" min="0" max="100" name="ponderacion" id="act_ponderacion" placeholder="Ej: 20" class="input-lay8">
+                </div>
+            </div>
 
 
 
@@ -495,10 +550,8 @@
     </div>
 </div>
 
-<?= $this->section('scripts') ?>
-<script src="<?= asset_url('js/aulas.js') ?>"></script>
 <?= $this->endSection() ?>
 
-
-
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/aulas.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -76,7 +76,7 @@ body.landing-body {
     transition: color 0.2s ease;
 }
 
-.boton-login-text:hover {
+.btn-login-text:hover {
     color: #1e40af;
 }
 
@@ -182,7 +182,7 @@ body.landing-body {
     font-weight: 500;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3 ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .btn-service.activo, .btn-service:hover {
@@ -227,7 +227,7 @@ body.landing-body {
     border-radius: 20px;
     display: flex;
     overflow: hidden;
-    box-shadow: 0 20px 40 px rgba(0,0,0,0.25);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
     transform: scale(1);
     transition: transform 0.2s cubic-bezier(0.175,0.885,0.32,1.275);
     will-change: transform;

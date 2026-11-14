@@ -510,7 +510,7 @@
 }
 
 .btn-publicar-comunicado:hover {
-    transform: translateY(-2px);;
+    transform: translateY(-2px);
 }
 
 /* --------------------------------------------------------------------------
@@ -1465,6 +1465,14 @@ body.dark-mode .notif-item-row {
     border-color: #334155;
 }
 
+body.dark-mode .notif-item-row:hover {
+    background: #334155;
+}
+
+body.dark-mode .notif-item-row.no-leida:hover {
+    background: rgba(37, 99, 235, 0.25);
+}
+
 /* Animación de entrada genérica */
 @keyframes fadeInUp {
     from {
@@ -1525,14 +1533,24 @@ body.dark-mode .btn-empty-jornada-secondary {
 }
 
 .feed-alerta-info {
-    background: rgba(37, 99, 235, 0.12);
+    background: rgba(37, 99, 235, 0.1);
     border: 1px solid rgba(59, 130, 246, 0.35);
-    color: #93c5fd;
+    color: #1e40af;
 }
 
 .feed-alerta-aviso {
     background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #92400e;
+}
+
+body.dark-mode .feed-alerta-info {
+    background: rgba(37, 99, 235, 0.16);
+    color: #93c5fd;
+}
+
+body.dark-mode .feed-alerta-aviso {
+    background: rgba(245, 158, 11, 0.14);
     color: #fcd34d;
 }
 

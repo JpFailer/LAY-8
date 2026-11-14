@@ -299,36 +299,42 @@
     });
 
     function abrirModalAula(nombreAula) {
-        document.getElementById('tituloAula').innerHTML = '<i class="bx bx-calendar"></i> Aula: ' + nombreAula;
+        const esc = window.Lay8UI.escapeHtml;
+        const safeBx = (cls, fallback) => /^[a-z0-9-]+$/i.test(String(cls || '')) ? cls : fallback;
+
+        document.getElementById('tituloAula').innerHTML = '<i class="bx bx-calendar"></i> Aula: ' + esc(nombreAula);
         document.getElementById('cuerpoHorario').innerHTML = '<p style="color:#64748b; padding:15px 0; text-align:center;"><i class="bx bx-loader-alt bx-spin" style="font-size:1.5rem;"></i><br>Cargando programación...</p>';
         document.getElementById('modalAula').style.display = 'flex';
 
         fetch(BASE_URL + 'mapa/info_aula/' + encodeURIComponent(nombreAula))
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
             .then(data => {
                 let html = '';
 
                 if (data.hay_clase_activa && data.clase_activa) {
                     const c = data.clase_activa;
-                    const iconoCarrera = c.carrera_icono || 'bx-book-open';
+                    const iconoCarrera = safeBx(c.carrera_icono, 'bx-book-open');
                     html += `<div class="banner-clase-activa" style="border-left: 4px solid #ef4444;">
                                 <div class="banner-estado-titulo" style="color: #ef4444;">
                                     <i class="bx bx-radio-circle-marked"></i> CLASE EN CURSO AHORA
-                                    ${c.carrera_nombre ? `<span style="margin-left:auto; font-size:0.75rem; background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px;"><i class="bx ${iconoCarrera}"></i> ${c.carrera_nombre}</span>` : ''}
+                                    ${c.carrera_nombre ? `<span style="margin-left:auto; font-size:0.75rem; background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px;"><i class="bx ${iconoCarrera}"></i> ${esc(c.carrera_nombre)}</span>` : ''}
                                 </div>
-                                <div class="banner-materia-nombre">${c.materia} <span class="seccion-tag">[Secc. ${c.seccion}]</span></div>
-                                <div class="banner-tiempo-detalle">Intervalo: <b>${c.intervalo}</b> (${c.duracion}) &bull; Quedan ~${c.minutos_restantes} min</div>
+                                <div class="banner-materia-nombre">${esc(c.materia)} <span class="seccion-tag">[Secc. ${esc(c.seccion)}]</span></div>
+                                <div class="banner-tiempo-detalle">Intervalo: <b>${esc(c.intervalo)}</b> (${esc(c.duracion)}) &bull; Quedan ~${esc(c.minutos_restantes)} min</div>
                              </div>`;
                 } else if (data.proxima_clase_hoy) {
                     const p = data.proxima_clase_hoy;
-                    const iconoCarrera = p.carrera_icono || 'bx-time-five';
+                    const iconoCarrera = safeBx(p.carrera_icono, 'bx-time-five');
                     html += `<div class="banner-clase-proxima" style="border-left: 4px solid #f59e0b;">
                                 <div class="banner-estado-titulo" style="color: #b45309;">
                                     <i class="bx bx-time"></i> Próxima clase hoy:
-                                    ${p.carrera_nombre ? `<span style="margin-left:auto; font-size:0.75rem; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:10px;"><i class="bx ${iconoCarrera}"></i> ${p.carrera_nombre}</span>` : ''}
+                                    ${p.carrera_nombre ? `<span style="margin-left:auto; font-size:0.75rem; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:10px;"><i class="bx ${iconoCarrera}"></i> ${esc(p.carrera_nombre)}</span>` : ''}
                                 </div>
-                                <div class="banner-materia-nombre">${p.materia} <span class="seccion-tag">[Secc. ${p.seccion}]</span></div>
-                                <div class="banner-tiempo-detalle">Intervalo: <b>${p.intervalo}</b> &bull; Inicia en ~${p.inicia_en_minutos} min</div>
+                                <div class="banner-materia-nombre">${esc(p.materia)} <span class="seccion-tag">[Secc. ${esc(p.seccion)}]</span></div>
+                                <div class="banner-tiempo-detalle">Intervalo: <b>${esc(p.intervalo)}</b> &bull; Inicia en ~${esc(p.inicia_en_minutos)} min</div>
                              </div>`;
                 }
 
@@ -337,11 +343,11 @@
                 for (const [dia, sesiones] of Object.entries(dias)) {
                     if (sesiones && sesiones.length > 0) {
                         tieneHorarios = true;
-                        html += `<div class="dia-horario-bloque"><h4>${dia}</h4><ul class="lista-sesiones">`;
+                        html += `<div class="dia-horario-bloque"><h4>${esc(dia)}</h4><ul class="lista-sesiones">`;
                         sesiones.forEach(s => {
                             const badge = s.es_activa_ahora ? ' <span class="badge-en-curso">EN CURSO</span>' : '';
-                            const tagCarrera = s.carrera ? `<span style="font-size:0.72rem; font-weight:600; color:#2563eb; background:#eff6ff; padding:1px 6px; border-radius:6px; margin-right:4px;">${s.carrera}</span>` : '';
-                            html += `<li><span>${tagCarrera}<b>${s.intervalo}</b> (${s.duracion_texto}) &bull; ${s.materia} <span class="sub-seccion">[${s.seccion}]</span></span>${badge}</li>`;
+                            const tagCarrera = s.carrera ? `<span style="font-size:0.72rem; font-weight:600; color:#2563eb; background:#eff6ff; padding:1px 6px; border-radius:6px; margin-right:4px;">${esc(s.carrera)}</span>` : '';
+                            html += `<li><span>${tagCarrera}<b>${esc(s.intervalo)}</b> (${esc(s.duracion_texto)}) &bull; ${esc(s.materia)} <span class="sub-seccion">[${esc(s.seccion)}]</span></span>${badge}</li>`;
                         });
                         html += '</ul></div>';
                     }
@@ -393,8 +399,10 @@
                         if (icono) icono.className = `bx ${iconoClase}`;
 
                         if (tagTooltip) {
-                            tagTooltip.className = `pin-tooltip-badge tag-${color}`;
-                            tagTooltip.innerHTML = `<i class="bx ${iconoClase}"></i> ${info.texto_estado || 'Disponible'}`;
+                            const safeColor = ['verde', 'roja', 'amarilla', 'azul'].includes(color) ? color : 'verde';
+                            const safeIcono = /^[a-z0-9-]+$/i.test(String(iconoClase || '')) ? iconoClase : 'bx-door-open';
+                            tagTooltip.className = `pin-tooltip-badge tag-${safeColor}`;
+                            tagTooltip.innerHTML = `<i class="bx ${safeIcono}"></i> ${window.Lay8UI.escapeHtml(info.texto_estado || 'Disponible')}`;
                         }
                         if (matTooltip) {
                             if (info.materia) {

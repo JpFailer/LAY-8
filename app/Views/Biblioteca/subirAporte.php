@@ -41,7 +41,7 @@
 
             <div class="grupo-campo">
                 <label for="titulo">Título descriptivo del aporte <span class="opcional">(Opcional)</span></label>
-                <input type="text" name="titulo" id="titulo" placeholder="Ej: Guía de Ejercicios - Cálculo Vectorial Tema 2" maxlength="150" value="<?= old('titulo') ?>">
+                <input type="text" name="titulo" id="titulo" placeholder="Ej: Guía de Ejercicios - Cálculo Vectorial Tema 2" maxlength="150" value="<?= esc(old('titulo')) ?>">
             </div>
 
             <div class="grupo-campo">

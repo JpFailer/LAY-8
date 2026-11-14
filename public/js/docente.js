@@ -101,9 +101,13 @@ const BASE_URL = window.BASE_URL || '/';
         document.getElementById('sin_entregas_msg').style.display = 'none';
 
         try {
-            const resp = await fetch(BASE_URL + 'docente/entregas/' + actividadId, {
+            const esc = window.Lay8UI.escapeHtml;
+            const resp = await fetch(BASE_URL + 'docente/entregas/' + parseInt(actividadId, 10), {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!resp.ok) {
+                throw new Error('HTTP ' + resp.status);
+            }
             const res = await resp.json();
             document.getElementById('cargando_entregas').style.display = 'none';
 
@@ -117,42 +121,43 @@ const BASE_URL = window.BASE_URL || '/';
             contenedor.innerHTML = '';
 
             res.entregas.forEach(ent => {
-                const nombreEst = (ent.primer_nombre + ' ' + (ent.segundo_nombre ? ent.segundo_nombre + ' ' : '') + ent.apellidos).trim();
+                const entId = parseInt(ent.id, 10);
+                const nombreEst = esc((ent.primer_nombre + ' ' + (ent.segundo_nombre ? ent.segundo_nombre + ' ' : '') + ent.apellidos).trim());
                 const calificada = ent.calificacion !== null && ent.calificacion !== undefined;
+                const notaSegura = calificada && !Number.isNaN(Number(ent.calificacion)) ? Number(ent.calificacion) : '';
 
                 const card = document.createElement('div');
-                card.className = 'card-solicitud-docente-item';
-                card.style.cssText = 'border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px;';
+                card.className = 'card-solicitud-docente-item docente-entrega-card';
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap;">
                         <div>
                             <div style="font-weight: 700; font-size: 0.96rem; display: flex; align-items: center; gap: 6px;">
                                 <i class="bx bx-user" style="color: #2563eb;"></i> ${nombreEst}
-                                <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">(C.I: ${ent.cedula || 'N/A'})</span>
+                                <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">(C.I: ${esc(ent.cedula || 'N/A')})</span>
                             </div>
                             <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">
-                                <i class="bx bx-calendar"></i> Entregado: ${ent.created_at || 'Reciente'}
+                                <i class="bx bx-calendar"></i> Entregado: ${esc(ent.created_at || 'Reciente')}
                             </div>
-                            ${ent.comentario_alumno ? `<div style="font-size: 0.84rem; color: #334155; margin-top: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 6px; font-style: italic;">"${ent.comentario_alumno}"</div>` : ''}
+                            ${ent.comentario_alumno ? `<div class="docente-entrega-comentario">"${esc(ent.comentario_alumno)}"</div>` : ''}
                         </div>
                         <div>
                             ${ent.archivo_ruta ? `
-                                <a href="${BASE_URL}docente/descargar-entrega/${ent.id}" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                    <i class="bx bx-download"></i> Descargar Trabajo (${ent.archivo_nombre || 'archivo'})
+                                <a href="${BASE_URL}docente/descargar-entrega/${entId}" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                    <i class="bx bx-download"></i> Descargar Trabajo (${esc(ent.archivo_nombre || 'archivo')})
                                 </a>
                             ` : `<span style="font-size: 0.8rem; color: #94a3b8;">Sin archivo adjunto</span>`}
                         </div>
                     </div>
 
-                    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div class="docente-entrega-calif-row">
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <label style="font-size: 0.82rem; font-weight: 700;">Calificación:</label>
-                            <input type="number" step="0.5" min="0" max="100" id="nota_entrega_${ent.id}" value="${calificada ? ent.calificacion : ''}" placeholder="0-20" class="input-lay8" style="width: 80px; padding: 6px 8px; font-weight: 700;">
+                            <input type="number" step="0.5" min="0" max="100" id="nota_entrega_${entId}" value="${esc(notaSegura)}" placeholder="0-20" class="input-lay8" style="width: 80px; padding: 6px 8px; font-weight: 700;">
                         </div>
                         <div style="flex: 1; min-width: 180px;">
-                            <input type="text" id="feedback_entrega_${ent.id}" value="${ent.feedback_profesor || ''}" placeholder="Retroalimentación para el alumno..." class="input-lay8" style="width: 100%; padding: 6px 10px;">
+                            <input type="text" id="feedback_entrega_${entId}" value="${esc(ent.feedback_profesor || '')}" placeholder="Retroalimentación para el alumno..." class="input-lay8" style="width: 100%; padding: 6px 10px;">
                         </div>
-                        <button type="button" class="btn-subir-cta" id="btn_calificar_entrega_${ent.id}" onclick="guardarCalificacionEntrega(${ent.id}, this)" style="padding: 6px 14px; font-size: 0.82rem;">
+                        <button type="button" class="btn-subir-cta" id="btn_calificar_entrega_${entId}" onclick="guardarCalificacionEntrega(${entId}, this)" style="padding: 6px 14px; font-size: 0.82rem;">
                             <i class="bx bx-save"></i> ${calificada ? 'Actualizar Nota' : 'Calificar'}
                         </button>
                     </div>
@@ -305,7 +310,7 @@ const BASE_URL = window.BASE_URL || '/';
                     sinResultados.style.display = 'block';
                     if (txtTermino) {
                         if (terminoActivoDocente) {
-                            const escaped = terminoActivoDocente.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                            const escaped = window.Lay8UI.escapeHtml(terminoActivoDocente);
                             txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${escaped}</b>".`;
                         } else {
                             txtTermino.textContent = 'No hay secciones registradas para este filtro.';
@@ -478,7 +483,7 @@ const BASE_URL = window.BASE_URL || '/';
                 sinResultados.style.display = 'block';
                 if (txtTermino) {
                     if (terminoActivoDocente) {
-                        const escaped = terminoActivoDocente.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const escaped = window.Lay8UI.escapeHtml(terminoActivoDocente);
                         txtTermino.innerHTML = `No hay secciones que coincidan con "<b>${escaped}</b>".`;
                     } else {
                         txtTermino.textContent = 'No hay secciones registradas para este filtro.';

@@ -569,3 +569,73 @@ body.dark-mode .docente-badge-conteo-azul {
 body.dark-mode .docente-enlace-sala {
     color: #93c5fd;
 }
+
+.docente-entrega-card {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+}
+
+.docente-entrega-comentario {
+    font-size: 0.84rem;
+    color: #334155;
+    margin-top: 6px;
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-style: italic;
+}
+
+.docente-entrega-calif-row {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+body.dark-mode .docente-badge-entregas-pend {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
+body.dark-mode .docente-badge-entregas-ok {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+body.dark-mode .docente-modal-banner {
+    background: rgba(30, 58, 138, 0.35);
+    border-color: #1e40af;
+}
+
+body.dark-mode .docente-modal-banner-tit {
+    color: #bfdbfe;
+}
+
+body.dark-mode .docente-modal-banner-sub {
+    color: #93c5fd;
+}
+
+body.dark-mode .docente-tabla-sub,
+body.dark-mode .docente-tabla-desc,
+body.dark-mode .docente-sin-res-txt,
+body.dark-mode .docente-label-tamano {
+    color: #94a3b8;
+}
+
+body.dark-mode .docente-entrega-card {
+    border-color: #334155;
+}
+
+body.dark-mode .docente-entrega-comentario {
+    color: #cbd5e1;
+    background: #0f172a;
+}
+
+body.dark-mode .docente-entrega-calif-row {
+    border-top-color: #334155;
+}
