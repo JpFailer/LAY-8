@@ -195,8 +195,8 @@
                         <?php endif; ?>
 
                         <!-- Pie de la Tarjeta con Actividades -->
-                        <div class="tarjeta-meta meta-aula-footer">
-                            <span class="total-actividades-badge">
+                        <div class="meta-aula-footer">
+                            <span class="total-actividades-badge" onclick="cambiarTabAulas('actividades')" title="Ver actividades en el cronograma">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
                             <?php if ($puedeGestionarActividades): ?>
@@ -475,23 +475,6 @@
                 </div>
             </div>
 
-            <div class="campo-grupo">
-                <label for="act_fecha_entrega"><i class="bx bx-calendar-event"></i> Fecha y Hora de Entrega:</label>
-                <input type="datetime-local" name="fecha_entrega" id="act_fecha_entrega" required class="input-lay8">
-            </div>
-
-            <div class="campo-grupo">
-                <label for="act_descripcion"><i class="bx bx-align-left"></i> Instrucciones o Detalles:</label>
-                <textarea name="descripcion" id="act_descripcion" rows="3" placeholder="Instrucciones, capítulos del libro o temas que cubre la actividad..." class="input-lay8 textarea-lay8"></textarea>
-            </div>
-
-            <button type="submit" class="btn-cta-submit">
-                <i class="bx bx-save"></i> Guardar en Cronograma
-            </button>
-        </form>
-    </div>
-</div>
-<?php endif; ?>
 
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
@@ -533,7 +516,7 @@
             <span onclick="cerrarModalExtemporanea()" class="btn-cerrar-modal-aula" title="Cerrar">&times;</span>
         </div>
         <p class="aulas-modal-subdesc">
-            Permite agregar asignaturas autorizadas por la coordinación docente o inscripciones extemporáneas fuera del registro oficial UPE-002.
+            Envía una solicitud formal de inscripción al docente encargado de la asignatura. Una vez autorizada por el profesor, la materia se incorporará automáticamente a tus aulas y horario.
         </p>
 
         <!-- Filtros y buscador del modal -->
