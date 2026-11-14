@@ -193,11 +193,13 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <div class="aulas-footer-acciones">
-                                <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
-                                    <i class="bx bx-plus"></i> Tarea
-                                </button>
-                            </div>
+                            <?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
+                                <div class="aulas-footer-acciones">
+                                    <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
+                                        <i class="bx bx-plus"></i> Tarea
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -418,16 +420,14 @@
             <div class="panel-vacio-aulas">
                 <div class="icono-vacio"><i class="bx bx-task-x"></i></div>
                 <h3>No hay actividades programadas</h3>
-                <p>Agrega recordatorios de tus tareas, exámenes, talleres y proyectos para mantener tu cronograma al día.</p>
-                <button type="button" class="btn-subir-cta" onclick="abrirModalNuevaActividad()">
-                    <i class="bx bx-plus-circle"></i> Crear Primera Tarea o Evaluación
-                </button>
+                <p>Aquí se reflejarán las tareas, talleres, proyectos y evaluaciones asignadas por tus profesores en cada una de tus materias. Actualmente te encuentras al día y no tienes actividades pendientes.</p>
             </div>
         <?php endif; ?>
     </div>
 
 </div>
 
+<?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
 <!-- Modal para Crear Nueva Actividad o Tarea -->
 <div id="modalNuevaActividad" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalNuevaActividad()">
     <div class="modal-contenido-aula modal-actividad-ancho">
@@ -485,6 +485,7 @@
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 
 <!-- Modal: Entregar Tarea / Subir Archivo de Evaluación (Classroom) -->
