@@ -86,9 +86,10 @@ class AulasController extends BaseController
      */
     public function eliminarBloqueManual(int $id)
     {
-        $usuarioId = (int) session()->get('usuario_id');
-        $rol       = session()->get('rol') ?? 'estudiante';
-        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+        $usuarioId   = (int) session()->get('usuario_id');
+        $rol         = session()->get('rol') ?? 'estudiante';
+        $estadoVerif = session()->get('estado_verificacion') ?? 'no_aplica';
+        $esAjax      = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
 
         if (!$usuarioId) {
             if ($esAjax) {
@@ -108,8 +109,8 @@ class AulasController extends BaseController
 
         $db = \Config\Database::connect();
 
-        // Si es admin, profesor o es bloque personal propio, se elimina directamente de la tabla
-        if ($rol === 'administrador' || $rol === 'profesor') {
+        // Solo administradores o docentes verificados pueden eliminar bloques oficiales directamente
+        if (in_array($rol, ['administrador', 'admin'], true) || ($rol === 'profesor' && $estadoVerif === 'aprobado')) {
             $claseModel->delete($id);
         } elseif (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) {
             $claseModel->delete($id);
@@ -156,7 +157,7 @@ class AulasController extends BaseController
 
         // 2. Excluir todos los bloques oficiales de las secciones del estudiante para dejar la grilla totalmente vacía
         $inscripcionModel = new \App\Models\InscripcionModel();
-        $seccionesInscritas = $inscripcionModel->obtenerSeccionesEstudiante($usuarioId);
+        $seccionesInscritas = $inscripcionModel->obtenerSeccionesDeEstudiante($usuarioId);
         $seccionesIds = !empty($seccionesInscritas) ? array_column($seccionesInscritas, 'id') : [];
 
         if (!empty($seccionesIds)) {
@@ -167,12 +168,17 @@ class AulasController extends BaseController
                 ->get()
                 ->getResultArray();
 
-            foreach ($bloquesOficiales as $bo) {
-                $db->table('estudiante_bloques_excluidos')->ignore(true)->insert([
-                    'estudiante_id' => $usuarioId,
-                    'clase_id'      => (int)$bo['id'],
-                    'created_at'    => date('Y-m-d H:i:s'),
-                ]);
+            if (!empty($bloquesOficiales)) {
+                $ahora = date('Y-m-d H:i:s');
+                $filasExcluir = [];
+                foreach ($bloquesOficiales as $bo) {
+                    $filasExcluir[] = [
+                        'estudiante_id' => $usuarioId,
+                        'clase_id'      => (int) $bo['id'],
+                        'created_at'    => $ahora,
+                    ];
+                }
+                $db->table('estudiante_bloques_excluidos')->ignore(true)->insertBatch($filasExcluir);
             }
         }
 

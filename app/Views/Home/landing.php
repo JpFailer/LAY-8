@@ -240,10 +240,10 @@
 
            <?php if(session()->getFlashdata('error')): ?>
               <div class="error-msg">
-                <?= session()->getFlashdata('error')?>
+                <?= esc(session()->getFlashdata('error')) ?>
               </div>
             <?php endif; ?>
-            <?php if(session()->getFlashdata('mensaje')): ?><div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px;"><?= session()->getFlashdata('mensaje') ?></div><?php endif; ?>
+            <?php if(session()->getFlashdata('mensaje')): ?><div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px;"><?= esc(session()->getFlashdata('mensaje')) ?></div><?php endif; ?>
 
           <form action="<?= base_url('login/autenticar') ?>" method="POST" class="form-login"> <?= csrf_field() ?>
 

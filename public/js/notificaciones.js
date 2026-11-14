@@ -47,7 +47,7 @@ function toggleDropdownNotificaciones(e) {
   box.style.display = isHidden ? 'flex' : 'none';
 
   const menuPerfil = document.getElementById('dropdown-perfil');
-  if (menuPerfil) menuPerfil.classList.remove('mostrar');
+  if (menuPerfil) menuPerfil.classList.remove('show');
 
   if (isHidden) {
     cargarNotificacionesTop();

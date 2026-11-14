@@ -4,9 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restablecer Contraseña - LAY-8 UMC</title>
-    <link rel="icon" type="image/png" href="<?= base_url('img/logo.png') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/global.css') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/login.css') ?>">
+    <script>
+      (function() {
+        try {
+          if (localStorage.getItem('lay8_theme') === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+            document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('dark-mode'); });
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="icon" type="image/png" href="<?= base_url('img/lay8_logo.png') ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/global.css') ?>">
+    <link rel="stylesheet" href="<?= asset_url('css/registro.css') ?>">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -15,7 +25,7 @@
         <div class="card-global" style="max-width: 460px; margin: 40px auto; padding: 32px 28px;">
             <div style="text-align: center; margin-bottom: 24px;">
                 <a href="<?= base_url('/') ?>" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                    <img src="<?= base_url('img/logo.png') ?>" alt="Logo LAY-8" style="height: 48px; width: auto;">
+                    <img src="<?= base_url('img/lay8_logo.png') ?>" alt="Logo LAY-8" style="height: 48px; width: auto;">
                     <span style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.6rem; color: #1e3a8a;">LAY-8</span>
                 </a>
                 <h2 class="form-titulo" style="font-size: 1.35rem; margin-top: 14px;">Restablecer Contraseña</h2>
@@ -76,6 +86,6 @@
             </div>
         </div>
     </div>
-    <script src="<?= base_url('js/main.js') ?>"></script>
+    <script src="<?= asset_url('js/main.js') ?>"></script>
 </body>
 </html>

@@ -31,6 +31,9 @@ final class Lay8DomainTest extends CIUnitTestCase
         $p = $this->db->getPrefix();
         $ddl = [
             "DROP TABLE IF EXISTS {$p}notificaciones",
+            "DROP TABLE IF EXISTS {$p}noticias_comentarios",
+            "DROP TABLE IF EXISTS {$p}noticias_muro",
+            "DROP TABLE IF EXISTS {$p}estudiante_bloques_excluidos",
             "DROP TABLE IF EXISTS {$p}entregas_actividades",
             "DROP TABLE IF EXISTS {$p}actividades_estudiante_estado",
             "DROP TABLE IF EXISTS {$p}actividades_clase",
@@ -182,6 +185,34 @@ final class Lay8DomainTest extends CIUnitTestCase
                 modalidad VARCHAR(30),
                 enlace_virtual VARCHAR(255),
                 updated_at DATETIME
+            )",
+            "CREATE TABLE {$p}noticias_muro (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                autor_id INTEGER NOT NULL,
+                titulo VARCHAR(200),
+                contenido TEXT,
+                categoria VARCHAR(50),
+                fijado INTEGER DEFAULT 0,
+                total_likes INTEGER DEFAULT 0,
+                total_comentarios INTEGER DEFAULT 0,
+                created_at DATETIME,
+                updated_at DATETIME
+            )",
+            "CREATE TABLE {$p}noticias_comentarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                noticia_id INTEGER NOT NULL,
+                usuario_id INTEGER NOT NULL,
+                parent_id INTEGER,
+                contenido TEXT,
+                created_at DATETIME,
+                updated_at DATETIME
+            )",
+            "CREATE TABLE {$p}estudiante_bloques_excluidos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                estudiante_id INTEGER NOT NULL,
+                clase_id INTEGER NOT NULL,
+                created_at DATETIME,
+                UNIQUE(estudiante_id, clase_id)
             )",
         ];
 
@@ -506,5 +537,102 @@ final class Lay8DomainTest extends CIUnitTestCase
         };
         $resArchivoBad = $sync->sincronizarDesdeArchivo($fakeBadFile, 'ING-INF');
         $this->assertFalse($resArchivoBad['ok']);
+    }
+
+    public function testNoticiaComentarioModelValidaParentYEvitaDobleEscapadoYNotifDuplicada(): void
+    {
+        $this->db->table('usuarios')->insertBatch([
+            ['id' => 1, 'primer_nombre' => 'Ana', 'apellidos' => 'Autora', 'nombre_usuario' => 'ana', 'rol' => 'profesor'],
+            ['id' => 2, 'primer_nombre' => 'Luis', 'apellidos' => 'Alumno', 'nombre_usuario' => 'luis', 'rol' => 'estudiante'],
+        ]);
+
+        $this->db->table('noticias_muro')->insertBatch([
+            ['id' => 10, 'autor_id' => 1, 'titulo' => 'Aviso 1', 'contenido' => 'Contenido', 'total_comentarios' => 0],
+            ['id' => 20, 'autor_id' => 1, 'titulo' => 'Aviso 2', 'contenido' => 'Otro', 'total_comentarios' => 0],
+        ]);
+
+        $modelo = new \App\Models\NoticiaComentarioModel();
+
+        // Comentario inicial del propio autor de la noticia en Aviso 1
+        $cPadre = $modelo->agregarComentario(10, 1, 'Duda con "comillas" & apostrofe \'simple\'');
+        $this->assertTrue($cPadre['success']);
+        $this->assertSame('Duda con "comillas" & apostrofe \'simple\'', $cPadre['comentario']['contenido']);
+        $comentarioPadreId = (int) $cPadre['comentario_id'];
+
+        // Responder a ese parent_id desde Aviso 2 debe rechazarse
+        $cCruzado = $modelo->agregarComentario(20, 2, 'Respuesta cruzada', $comentarioPadreId);
+        $this->assertArrayHasKey('error', $cCruzado);
+
+        // Responder en Aviso 1 al comentario del autor de la noticia debe generar 1 sola notificación al autor (no 2)
+        $cResp = $modelo->agregarComentario(10, 2, 'Respuesta válida', $comentarioPadreId);
+        $this->assertTrue($cResp['success']);
+        $notifsAutor = $this->db->table('notificaciones')->where('estudiante_id', 1)->get()->getResultArray();
+        $this->assertCount(1, $notifsAutor);
+        $this->assertSame('respuesta', $notifsAutor[0]['tipo']);
+    }
+
+    public function testHorarioSyncLegacyUsaFallbackCortoParaSeccionYPeriodo(): void
+    {
+        $tmpJson = tempnam(sys_get_temp_dir(), 'lay8_legacy_') . '.json';
+        file_put_contents($tmpJson, json_encode([
+            [
+                'Hora'  => "07:15\n08:00",
+                'Lunes' => "INF-101\nAlgoritmos\nAula 4",
+            ],
+        ]));
+
+        try {
+            $sync = new HorarioSyncService();
+            $ref = new \ReflectionMethod($sync, 'insertarBloquesLegacy');
+            $ref->setAccessible(true);
+            $insertados = $ref->invoke($sync, json_decode(file_get_contents($tmpJson), true));
+
+            $this->assertSame(1, $insertados);
+            $sec = $this->db->table('secciones')->get()->getRowArray();
+            $this->assertNotNull($sec);
+            $this->assertSame('N/D', $sec['codigo_seccion']);
+            $this->assertLessThanOrEqual(10, strlen((string) $sec['codigo_seccion']));
+        } finally {
+            @unlink($tmpJson);
+        }
+    }
+
+    public function testAulasControllerLimpiarHorarioYEliminarBloqueRbac(): void
+    {
+        $this->db->table('materias')->insert(['id' => 1, 'codigo_materia' => 'CAL-101', 'nombre' => 'Cálculo I']);
+        $this->db->table('secciones')->insert(['id' => 5, 'materia_id' => 1, 'codigo_seccion' => 'A']);
+        $this->db->table('inscripciones')->insert(['estudiante_id' => 99, 'seccion_id' => 5]);
+        $this->db->table('clases_programadas')->insert([
+            'id'            => 50,
+            'seccion_id'    => 5,
+            'estudiante_id' => null,
+            'aula'          => 'Aula 2',
+            'dia_semana'    => 'Lunes',
+            'hora_inicio'   => '07:15:00',
+            'hora_fin'      => '08:00:00',
+        ]);
+
+        // Un docente pendiente de aprobación NO puede borrar bloques oficiales directamente
+        session()->set([
+            'usuario_id'          => 99,
+            'rol'                 => 'profesor',
+            'estado_verificacion' => 'pendiente',
+        ]);
+
+        $req = \Config\Services::incomingrequest();
+        $req->setHeader('X-Requested-With', 'XMLHttpRequest');
+        $ctrl = new \App\Controllers\AulasController();
+        $ctrl->initController($req, \Config\Services::response(), \Config\Services::logger());
+
+        $respDel = $ctrl->eliminarBloqueManual(50);
+        $this->assertSame(200, $respDel->getStatusCode());
+        $this->assertSame(1, $this->db->table('clases_programadas')->where('id', 50)->countAllResults());
+        $this->assertSame(1, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 99)->where('clase_id', 50)->countAllResults());
+
+        // Limpiar horario personal debe usar obtenerSeccionesDeEstudiante() e insertar exclusiones sin fallar
+        $this->db->table('estudiante_bloques_excluidos')->truncate();
+        $respClean = $ctrl->limpiarHorarioPersonal();
+        $this->assertSame(200, $respClean->getStatusCode());
+        $this->assertSame(1, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 99)->where('clase_id', 50)->countAllResults());
     }
 }

@@ -15,7 +15,7 @@
 
     <?php if (session()->getFlashdata('error')) : ?>
         <div class="alerta-error">
-            <strong>¡Error!</strong> <?= session()->getFlashdata('error') ?>
+            <strong>¡Error!</strong> <?= esc(session()->getFlashdata('error')) ?>
         </div>
     <?php endif; ?>
 

@@ -332,26 +332,27 @@ async function ejecutarBusquedaExtemporanea(termino) {
             return;
         }
 
+        const esc = window.Lay8UI.escapeHtml;
         let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
         data.secciones.forEach(sec => {
+            const secId = parseInt(sec.id, 10);
             const prof = (sec.prof_nombre || sec.prof_apellido) ? `${sec.prof_nombre || ''} ${sec.prof_apellido || ''}`.trim() : 'Docente UMC por asignar';
             const yaInscrita = !!sec.ya_inscrita;
-            const materiaEscapada = (sec.materia || '').replace(/'/g, "\\'");
 
             html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(30, 41, 59, 0.6); border-radius: 8px; border: 1px solid rgba(226, 232, 240, 0.08); gap: 10px;">
+                <div class="aulas-ext-item-card">
                     <div style="flex: 1; min-width: 0;">
                         <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap;">
-                            <span style="font-size: 0.72rem; padding: 2px 6px; background: #2563eb; color: #fff; border-radius: 4px; font-weight: 600;">${sec.codigo_materia || ''}</span>
-                            <span style="font-size: 0.72rem; padding: 2px 6px; background: rgba(226, 232, 240, 0.1); color: #cbd5e1; border-radius: 4px;">Secc. ${sec.codigo_seccion || ''}</span>
-                            <span style="font-size: 0.72rem; padding: 2px 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-radius: 4px;">${sec.carrera || ''}</span>
-                            ${sec.semestre_trayecto ? `<span style="font-size: 0.72rem; color: #94a3b8;">Semestre ${sec.semestre_trayecto}</span>` : ''}
+                            <span style="font-size: 0.72rem; padding: 2px 6px; background: #2563eb; color: #fff; border-radius: 4px; font-weight: 600;">${esc(sec.codigo_materia || '')}</span>
+                            <span class="aulas-ext-item-secc">Secc. ${esc(sec.codigo_seccion || '')}</span>
+                            <span class="aulas-ext-item-carrera">${esc(sec.carrera || '')}</span>
+                            ${sec.semestre_trayecto ? `<span class="aulas-ext-item-meta">Semestre ${esc(sec.semestre_trayecto)}</span>` : ''}
                         </div>
-                        <div style="font-size: 0.92rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            ${sec.materia || ''}
+                        <div class="aulas-ext-item-title">
+                            ${esc(sec.materia || '')}
                         </div>
-                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">
-                            <i class="bx bx-user"></i> ${prof}
+                        <div class="aulas-ext-item-meta" style="margin-top: 2px;">
+                            <i class="bx bx-user"></i> ${esc(prof)}
                         </div>
                     </div>
                     <div>
@@ -360,7 +361,7 @@ async function ejecutarBusquedaExtemporanea(termino) {
                                 <i class="bx bx-check"></i> Inscrita
                             </span>
                         ` : `
-                            <button type="button" class="btn-subir-cta" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" onclick="inscribirMateriaExtemporanea(${sec.id}, '${materiaEscapada}')">
+                            <button type="button" class="btn-subir-cta btn-inscribir-ext" data-seccion-id="${secId}" data-materia="${esc(sec.materia || '')}" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                                 <i class="bx bx-plus"></i> Inscribir
                             </button>
                         `}
@@ -370,6 +371,11 @@ async function ejecutarBusquedaExtemporanea(termino) {
         });
         html += '</div>';
         contenedor.innerHTML = html;
+        contenedor.querySelectorAll('.btn-inscribir-ext').forEach(btn => {
+            btn.addEventListener('click', () => {
+                inscribirMateriaExtemporanea(parseInt(btn.dataset.seccionId, 10), btn.dataset.materia || '');
+            });
+        });
     } catch (e) {
         contenedor.innerHTML = `
             <div style="text-align: center; padding: 20px; color: #ef4444; font-size: 0.86rem;">

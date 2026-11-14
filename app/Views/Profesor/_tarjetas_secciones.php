@@ -42,9 +42,12 @@
                 <div class="docente-estado-txt">
                     <?= $est ? esc($est['estado_rapido']) : 'Sin estado reportado hoy' ?>
                 </div>
-                <?php if ($est && !empty($est['enlace_virtual'])): ?>
+                <?php
+                    $enlaceSala = ($est && !empty($est['enlace_virtual'])) ? trim((string) $est['enlace_virtual']) : null;
+                    if ($enlaceSala && preg_match('#^https?://#i', $enlaceSala)):
+                ?>
                     <div class="docente-enlace-wrap">
-                        <a href="<?= esc($est['enlace_virtual']) ?>" target="_blank" class="docente-enlace-sala">
+                        <a href="<?= esc($enlaceSala) ?>" target="_blank" rel="noopener noreferrer" class="docente-enlace-sala">
                             <i class="bx bx-link-external"></i> Ir a sala virtual
                         </a>
                     </div>

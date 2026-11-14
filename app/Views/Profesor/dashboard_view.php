@@ -425,8 +425,8 @@
     </div>
 </div>
 
-<?= $this->section('scripts') ?>
-<script src="<?= asset_url('js/docente.js') ?>"></script>
 <?= $this->endSection() ?>
 
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/docente.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -276,7 +276,7 @@ document.addEventListener('click', function (e) {
 function actualizarNombreHorario(input) {
     const contenedor = document.getElementById('nombre-archivo-horario');
     if (input.files && input.files[0]) {
-        contenedor.innerHTML = '<i class="bx bxs-file-pdf" style="color:#ef4444;"></i> ' + input.files[0].name;
+        contenedor.innerHTML = '<i class="bx bxs-file-pdf" style="color:#ef4444;"></i> ' + window.Lay8UI.escapeHtml(input.files[0].name);
     } else {
         contenedor.innerHTML = '';
     }
@@ -564,32 +564,34 @@ function cerrarModalAsignarSecciones() {
 }
 
 async function cargarSeccionesDocente(profId) {
+    const esc = window.Lay8UI.escapeHtml;
     const cont = document.getElementById('lista-secciones-asignadas');
     cont.innerHTML = '<div style="text-align: center; padding: 15px; color: #64748b;"><i class="bx bx-loader-alt bx-spin"></i> Cargando secciones...</div>';
     try {
-        const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/profesor-secciones/' + profId);
+        const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/profesor-secciones/' + parseInt(profId, 10));
         if (data.secciones && data.secciones.length > 0) {
             cont.innerHTML = data.secciones.map(s => `
                 <div class="item-seccion-asignada">
                     <div>
-                        <strong>${s.materia}</strong> <span style="font-size: 0.82rem; color: #2563eb; font-weight: 600;">[${s.codigo_materia} - Secc. ${s.codigo_seccion}]</span>
-                        <div style="font-size: 0.78rem; color: #64748b;">Carrera: ${s.carrera || 'UMC'}</div>
+                        <strong>${esc(s.materia)}</strong> <span style="font-size: 0.82rem; color: #2563eb; font-weight: 600;">[${esc(s.codigo_materia)} - Secc. ${esc(s.codigo_seccion)}]</span>
+                        <div style="font-size: 0.78rem; color: #64748b;">Carrera: ${esc(s.carrera || 'UMC')}</div>
                     </div>
-                    <button type="button" class="btn-accion-admin btn-rechazar" style="padding: 5px 12px; font-size: 0.8rem;" onclick="desasignarSeccion(${s.id})">
+                    <button type="button" class="btn-accion-admin btn-rechazar" style="padding: 5px 12px; font-size: 0.8rem;" onclick="desasignarSeccion(${parseInt(s.id, 10)})">
                         <i class="bx bx-trash"></i> Quitar
                     </button>
                 </div>
             `).join('');
         } else {
-            cont.innerHTML = '<p style="font-size: 0.85rem; color: #94a3b8; margin: 0; padding: 10px; text-align: center; background: #f8fafc; border-radius: 8px;">Este docente no tiene secciones asignadas actualmente.</p>';
+            cont.innerHTML = '<p style="font-size: 0.85rem; color: #94a3b8; margin: 0; padding: 10px; text-align: center; background: var(--lay8-bg-subtle, #f8fafc); border-radius: 8px;">Este docente no tiene secciones asignadas actualmente.</p>';
         }
     } catch (e) {
-        cont.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error al cargar las secciones: ' + e.message + '</p>';
+        cont.innerHTML = '<p style="color: #ef4444; font-size: 0.85rem;">Error al cargar las secciones: ' + esc(e.message) + '</p>';
     }
 }
 
 let timerBusquedaSecciones = null;
 function buscarSeccionesDisponibles(q) {
+    const esc = window.Lay8UI.escapeHtml;
     clearTimeout(timerBusquedaSecciones);
     q = (q || '').trim();
     const resCont = document.getElementById('lista-secciones-busqueda');
@@ -604,14 +606,14 @@ function buscarSeccionesDisponibles(q) {
             const data = await adminFetchJson((window.BASE_URL || '/') + 'api/admin/buscar-secciones?q=' + encodeURIComponent(q));
             if (data.secciones && data.secciones.length > 0) {
                 resCont.innerHTML = data.secciones.map(s => {
-                    const docenteActual = s.prof_nombre ? `${s.prof_nombre} ${s.prof_apellido}` : '<span style="color:#059669; font-weight:600;">Disponible (Sin docente)</span>';
+                    const docenteActual = s.prof_nombre ? `${esc(s.prof_nombre)} ${esc(s.prof_apellido || '')}` : '<span style="color:#059669; font-weight:600;">Disponible (Sin docente)</span>';
                     return `
                         <div class="item-seccion-busqueda">
                             <div>
-                                <strong>${s.materia}</strong> (${s.codigo_materia} - Secc. ${s.codigo_seccion})
+                                <strong>${esc(s.materia)}</strong> (${esc(s.codigo_materia)} - Secc. ${esc(s.codigo_seccion)})
                                 <div style="font-size: 0.76rem; color: #64748b;">Docente actual: <em>${docenteActual}</em></div>
                             </div>
-                            <button type="button" class="btn-accion-admin btn-aprobar" style="padding: 5px 12px; font-size: 0.8rem;" onclick="asignarSeccion(${s.id})">
+                            <button type="button" class="btn-accion-admin btn-aprobar" style="padding: 5px 12px; font-size: 0.8rem;" onclick="asignarSeccion(${parseInt(s.id, 10)})">
                                 <i class="bx bx-plus"></i> Asignar
                             </button>
                         </div>
@@ -621,7 +623,7 @@ function buscarSeccionesDisponibles(q) {
                 resCont.innerHTML = '<p style="font-size: 0.82rem; color: #94a3b8; margin: 0;">No se encontraron secciones con ese criterio.</p>';
             }
         } catch (e) {
-            resCont.innerHTML = '<p style="color: #ef4444; font-size: 0.82rem;">Error al buscar secciones: ' + e.message + '</p>';
+            resCont.innerHTML = '<p style="color: #ef4444; font-size: 0.82rem;">Error al buscar secciones: ' + esc(e.message) + '</p>';
         }
     }, 280);
 }

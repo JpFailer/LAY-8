@@ -95,7 +95,8 @@
                     <?php
                         $estadoHoy = $sec['estado_hoy'];
                         $esOnline = ($estadoHoy && $estadoHoy['modalidad'] === 'online');
-                        $enlaceVirtual = ($estadoHoy && !empty($estadoHoy['enlace_virtual'])) ? $estadoHoy['enlace_virtual'] : null;
+                        $rawEnlaceVirtual = ($estadoHoy && !empty($estadoHoy['enlace_virtual'])) ? trim((string) $estadoHoy['enlace_virtual']) : null;
+                        $enlaceVirtual = ($rawEnlaceVirtual && preg_match('#^https?://#i', $rawEnlaceVirtual)) ? $rawEnlaceVirtual : null;
                         
                         // Extraer aulas asociadas a esta materia
                         $aulasAsignadas = [];
@@ -251,7 +252,7 @@
                         <tr class="fila-separador-turno">
                             <td colspan="7">
                                 <i class="bx <?= $turno === 'Mañana' ? 'bx-sun' : ($turno === 'Tarde' ? 'bx-brightness-half' : 'bx-moon') ?>"></i>
-                                TURNO <?= strtoupper($turno) ?>
+                                TURNO <?= esc(mb_strtoupper($turno, 'UTF-8')) ?>
                             </td>
                         </tr>
                         <?php foreach ($bloques as $b): ?>
@@ -559,10 +560,8 @@
     </div>
 </div>
 
-<?= $this->section('scripts') ?>
-<script src="<?= asset_url('js/aulas.js') ?>"></script>
 <?= $this->endSection() ?>
 
-
-
+<?= $this->section('scripts') ?>
+<script src="<?= asset_url('js/aulas.js') ?>"></script>
 <?= $this->endSection() ?>

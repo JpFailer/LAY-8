@@ -772,10 +772,80 @@ body.dark-mode .combobox-empty {
 .aulas-ext-lista-box {
     max-height: 340px;
     overflow-y: auto;
-    border: 1px solid rgba(226, 232, 240, 0.15);
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 8px;
-    background: rgba(15, 23, 42, 0.3);
+    background: #f8fafc;
+}
+
+.aulas-ext-item-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    gap: 10px;
+}
+
+.aulas-ext-item-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aulas-ext-item-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.aulas-ext-item-secc {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    background: #e2e8f0;
+    color: #334155;
+    border-radius: 4px;
+}
+
+.aulas-ext-item-carrera {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+body.dark-mode .aulas-ext-lista-box {
+    border-color: rgba(226, 232, 240, 0.15);
+    background: rgba(15, 23, 42, 0.45);
+}
+
+body.dark-mode .aulas-ext-item-card {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(226, 232, 240, 0.1);
+}
+
+body.dark-mode .aulas-ext-item-title {
+    color: #f8fafc;
+}
+
+body.dark-mode .aulas-ext-item-meta {
+    color: #94a3b8;
+}
+
+body.dark-mode .aulas-ext-item-secc {
+    background: rgba(226, 232, 240, 0.12);
+    color: #cbd5e1;
+}
+
+body.dark-mode .aulas-ext-item-carrera {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
 }
 
 .aulas-ext-empty-hint {

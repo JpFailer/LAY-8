@@ -54,13 +54,13 @@
 
     <?php if(session()->getFlashdata('error')): ?>
       <div class="error-msg">
-        <?= session()->getFlashdata('error') ?>
+        <?= esc(session()->getFlashdata('error')) ?>
       </div>
     <?php endif;?>
 
     <?php if(session()->getFlashdata('mensaje')): ?>
       <div class="success-msg" style="background-color: #d1e7dd; color: #0f5132; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;">
-        <?= session()->getFlashdata('mensaje') ?>
+        <?= esc(session()->getFlashdata('mensaje')) ?>
       </div>
     <?php endif;?>
 

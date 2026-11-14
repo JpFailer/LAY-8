@@ -118,6 +118,13 @@ class ProfesorController extends BaseController
         $seccionId        = (int) $this->request->getPost('seccion_id');
         $modalidad        = $this->request->getPost('modalidad');
         $enlaceVirtual    = trim((string) $this->request->getPost('enlace_virtual')) ?: null;
+
+        if ($enlaceVirtual !== null && (!preg_match('#^https?://#i', $enlaceVirtual) || filter_var($enlaceVirtual, FILTER_VALIDATE_URL) === false)) {
+            return $this->response->setStatusCode(422)->setJSON([
+                'success' => false,
+                'error'   => 'El enlace de la sala virtual debe comenzar con http:// o https://.'
+            ]);
+        }
         $estadoRapido     = strip_tags(trim((string) $this->request->getPost('estado_rapido')));
         $mensajeAdicional = strip_tags(trim((string) $this->request->getPost('mensaje_adicional'))) ?: null;
 

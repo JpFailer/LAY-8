@@ -345,7 +345,8 @@ def procesar_pdf(pdf_path):
         if resultado["cedula"] and resultado["estudiante"]:
             ced_tail = re.sub(r'\D', '', resultado["cedula"])[-3:]
             # Obtener inicial del primer apellido
-            primer_apellido = resultado["estudiante"].strip().split()[0]
+            partes_apellido = resultado["estudiante"].strip().split()
+            primer_apellido = partes_apellido[0] if partes_apellido else ''
             apellido_norm = normalizar(primer_apellido)
             apellido_inicial = apellido_norm[0].upper() if apellido_norm else ''
 

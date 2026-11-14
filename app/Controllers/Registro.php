@@ -74,10 +74,11 @@ class Registro extends BaseController
         // Preservación de documento PDF cargado en caso de fallos posteriores en el paso 2
         $archivoTempInscripcion = $this->request->getFile('planilla_inscripcion');
         if ($archivoTempInscripcion && $archivoTempInscripcion->isValid() && !$archivoTempInscripcion->hasMoved()) {
-            if ($archivoTempInscripcion->getClientMimeType() === 'application/pdf') {
+            $extTemp = strtolower((string) $archivoTempInscripcion->getExtension());
+            if ($archivoTempInscripcion->getMimeType() === 'application/pdf' && $extTemp === 'pdf' && $archivoTempInscripcion->getSize() <= (10 * 1024 * 1024)) {
                 $carpetaTemp = WRITEPATH . 'uploads/temp_registro';
                 if (!is_dir($carpetaTemp)) {
-                    mkdir($carpetaTemp, 0777, true);
+                    mkdir($carpetaTemp, 0775, true);
                 }
                 if (session()->has('temp_registro_pdf')) {
                     $prev = session()->get('temp_registro_pdf');
@@ -85,7 +86,7 @@ class Registro extends BaseController
                         @unlink($prev);
                     }
                 }
-                $nombreTemp = 'temp_' . md5(session_id() . time()) . '.pdf';
+                $nombreTemp = $archivoTempInscripcion->getRandomName();
                 $archivoTempInscripcion->move($carpetaTemp, $nombreTemp);
                 session()->set('temp_registro_pdf', $carpetaTemp . DIRECTORY_SEPARATOR . $nombreTemp);
                 session()->set('temp_registro_pdf_nombre', $archivoTempInscripcion->getClientName());
@@ -131,10 +132,15 @@ class Registro extends BaseController
         if ($esProfesor && !$esAdmin) {
             $archivo = $this->request->getFile('carnet');
             if ($archivo && $archivo->isValid() && !$archivo->hasMoved()) {
-                if (in_array($archivo->getMimeType(), ['image/jpeg', 'image/png', 'application/pdf'])) {
+                $extCarnet = strtolower((string) $archivo->getExtension());
+                if (
+                    in_array($archivo->getMimeType(), ['image/jpeg', 'image/png', 'application/pdf'], true)
+                    && in_array($extCarnet, ['jpg', 'jpeg', 'png', 'pdf'], true)
+                    && $archivo->getSize() <= (5 * 1024 * 1024)
+                ) {
                     $carpetaCarnets = ROOTPATH . 'public/uploads/carnets';
                     if (!is_dir($carpetaCarnets)) {
-                        mkdir($carpetaCarnets, 0777, true);
+                        mkdir($carpetaCarnets, 0775, true);
                     }
                     $nombre_nuevo = $archivo->getRandomName();
                     $archivo->move($carpetaCarnets, $nombre_nuevo);
@@ -142,7 +148,7 @@ class Registro extends BaseController
                     $datos['estado_verificacion'] = 'pendiente';
                     $datos['rol'] = 'profesor';
                 } else {
-                    return redirect()->back()->withInput()->with('error', 'Formato de carnet inválido. Solo se admiten JPG, PNG o PDF.');
+                    return redirect()->back()->withInput()->with('error', 'Formato o tamaño de carnet inválido. Solo se admiten JPG, PNG o PDF de hasta 5 MB.');
                 }
             } else {
                 return redirect()->back()->withInput()->with('error', 'Como docente, debes adjuntar obligatoriamente el carnet o constancia institucional para revisión.');
@@ -155,10 +161,11 @@ class Registro extends BaseController
             } else {
                 $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
                 if ($archivoInscripcion && $archivoInscripcion->isValid() && !$archivoInscripcion->hasMoved()) {
-                    if ($archivoInscripcion->getClientMimeType() === 'application/pdf') {
+                    $extInscripcion = strtolower((string) $archivoInscripcion->getExtension());
+                    if ($archivoInscripcion->getMimeType() === 'application/pdf' && $extInscripcion === 'pdf' && $archivoInscripcion->getSize() <= (10 * 1024 * 1024)) {
                         $rutaArchivoVerificar = $archivoInscripcion->getTempName();
                     } else {
-                        return redirect()->back()->withInput()->with('error', 'El comprobante debe ser exclusivamente un archivo PDF original emitido por el sistema campus.umc.edu.ve.');
+                        return redirect()->back()->withInput()->with('error', 'El comprobante debe ser exclusivamente un archivo PDF válido (máx. 10 MB) emitido por campus.umc.edu.ve.');
                     }
                 }
             }

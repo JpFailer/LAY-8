@@ -647,28 +647,38 @@ class AdminController extends BaseController
      */
     public function eliminarArchivoHuerfano()
     {
-        $rutaRelativa = (string) $this->request->getPost('ruta_relativa');
+        $rutaRelativa = str_replace('\\', '/', (string) $this->request->getPost('ruta_relativa'));
+        $rutaRelativa = ltrim($rutaRelativa, '/');
 
-        // 🛡️ Blindaje contra Path Traversal (evitar ../ o ..\)
-        $rutaRelativa = str_replace(['../', '..\\', './', '.\\'], '', $rutaRelativa);
-
-        if (!str_starts_with($rutaRelativa, 'uploads/biblioteca/')) {
+        // 🛡️ Blindaje estricto contra Path Traversal y bytes nulos
+        if (
+            $rutaRelativa === ''
+            || str_contains($rutaRelativa, "\0")
+            || str_contains($rutaRelativa, '..')
+            || !str_starts_with($rutaRelativa, 'uploads/biblioteca/')
+        ) {
             return $this->response->setStatusCode(400)->setJSON([
                 'success' => false,
                 'error'   => 'Ruta inválida: Solo se permite manipular archivos dentro de uploads/biblioteca/.'
             ]);
         }
 
-        $rutaAbsoluta = WRITEPATH . $rutaRelativa;
+        $basePermitidaReal = realpath(WRITEPATH . 'uploads/biblioteca');
+        $rutaAbsolutaReal  = realpath(WRITEPATH . $rutaRelativa);
 
-        if (!file_exists($rutaAbsoluta) || is_dir($rutaAbsoluta)) {
+        if (
+            $basePermitidaReal === false
+            || $rutaAbsolutaReal === false
+            || !str_starts_with($rutaAbsolutaReal, $basePermitidaReal . DIRECTORY_SEPARATOR)
+            || !is_file($rutaAbsolutaReal)
+        ) {
             return $this->response->setStatusCode(404)->setJSON([
                 'success' => false,
                 'error'   => 'El archivo no existe en el servidor.'
             ]);
         }
 
-        $eliminado = @unlink($rutaAbsoluta);
+        $eliminado = @unlink($rutaAbsolutaReal);
 
         $this->auditoriaModel->registrar(
             $this->adminId,
@@ -788,10 +798,10 @@ class AdminController extends BaseController
         $usuariosDestino = $builder->get()->getResultArray();
         $notifModel = new NotificacionModel();
         $ahora = date('Y-m-d H:i:s');
-        $totalEnviados = 0;
+        $loteNotificaciones = [];
 
         foreach ($usuariosDestino as $u) {
-            $notifModel->insert([
+            $loteNotificaciones[] = [
                 'estudiante_id'  => (int) $u['id'],
                 'profesor_id'    => null,
                 'seccion_id'     => null,
@@ -802,8 +812,14 @@ class AdminController extends BaseController
                 'enlace_virtual' => null,
                 'leido'          => 0,
                 'created_at'     => $ahora,
-            ]);
-            $totalEnviados++;
+            ];
+        }
+
+        $totalEnviados = count($loteNotificaciones);
+        if ($totalEnviados > 0) {
+            foreach (array_chunk($loteNotificaciones, 500) as $bloque) {
+                $notifModel->insertBatch($bloque);
+            }
         }
 
         $this->auditoriaModel->registrar(
@@ -878,7 +894,9 @@ class AdminController extends BaseController
     public function obtenerSeccionesDocente(int $profesorId)
     {
         $db = \Config\Database::connect();
-        $profesor = $this->usuarioModel->find($profesorId);
+        $profesor = $this->usuarioModel
+            ->select('id, primer_nombre, apellidos, nombre_usuario, correo, rol, estado_verificacion, estado_cuenta')
+            ->find($profesorId);
         if (!$profesor) {
             return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
         }
@@ -945,7 +963,9 @@ class AdminController extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['success' => false, 'error' => 'Docente no encontrado.']);
         }
 
-        if ($profesor['rol'] === 'profesor' && ($profesor['estado_verificacion'] ?? '') !== 'aprobado') {
+        $esAdminDest = in_array($profesor['rol'] ?? '', ['administrador', 'admin'], true);
+        $esDocenteAprobado = (($profesor['rol'] ?? '') === 'profesor' && ($profesor['estado_verificacion'] ?? '') === 'aprobado');
+        if (!$esAdminDest && !$esDocenteAprobado) {
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'error' => 'Solo se pueden asignar secciones a docentes previamente aprobados.']);
         }
 

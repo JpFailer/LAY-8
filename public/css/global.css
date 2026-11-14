@@ -1796,7 +1796,7 @@ body.dark-mode .badge-carrera-general { background: #4c1d9533; color: #c4b5fd; b
     height: 100vh;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(4px);
-    z-index: 99999;
+    z-index: 1000005;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2062,7 +2062,7 @@ body.dark-mode .peso-badge {
 
 body.dark-mode .btn-descargar {
     background-color: #2563eb;
-    color: #fff
+    color: #fff;
 }
 
 body.dark-mode .btn-descargar:hover {
