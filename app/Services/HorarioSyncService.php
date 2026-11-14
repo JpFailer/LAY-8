@@ -298,12 +298,15 @@ class HorarioSyncService
                 continue;
             }
             $codMateria = trim((string) ($b['codigo_materia'] ?? ''));
-            $dia        = trim((string) ($b['dia'] ?? ''));
-            $horaInicio = trim((string) ($b['hora_inicio'] ?? ''));
-            $horaFin    = trim((string) ($b['hora_fin'] ?? ''));
-            if ($codMateria === '' || $codMateria === 'HUERFANO' || $dia === '' || $horaInicio === '' || $horaFin === '') {
+            $diaCanon   = HorarioNormalizer::normalizarDia((string) ($b['dia'] ?? ''));
+            $horaInicio = HorarioNormalizer::normalizarHora((string) ($b['hora_inicio'] ?? ''));
+            $horaFin    = HorarioNormalizer::normalizarHora((string) ($b['hora_fin'] ?? ''));
+            if ($codMateria === '' || $codMateria === 'HUERFANO' || $diaCanon === null || $horaInicio === null || $horaFin === null) {
                 continue;
             }
+            $b['dia']         = $diaCanon;
+            $b['hora_inicio'] = $horaInicio;
+            $b['hora_fin']    = $horaFin;
             $validos[] = $b;
         }
         return $validos;
@@ -366,13 +369,27 @@ class HorarioSyncService
 
         $materiasCache = [];
         foreach ($materiaModel->select('id, codigo_materia, nombre')->findAll() as $m) {
-            $materiasCache[strtoupper(trim((string) $m['codigo_materia']))] = $m;
+            $codRaw   = strtoupper(trim((string) $m['codigo_materia']));
+            $codCanon = HorarioNormalizer::codigoMateriaCanonico($codRaw);
+            $materiasCache[$codRaw] = $m;
+            if (!isset($materiasCache[$codCanon])) {
+                $materiasCache[$codCanon] = $m;
+            }
         }
 
+        // Clave compuesta con carrera para evitar colisiones entre carreras con mismo código/sección (ej. CAL-114 Secc. A)
         $seccionesCache = [];
         foreach ($seccionModel->select('id, materia_id, codigo_seccion, periodo_academico, carrera')->findAll() as $s) {
-            $clave = (int) $s['materia_id'] . '|' . trim((string) $s['codigo_seccion']) . '|' . trim((string) $s['periodo_academico']);
-            $seccionesCache[$clave] = $s;
+            $secRaw   = strtoupper(trim((string) $s['codigo_seccion']));
+            $secCanon = HorarioNormalizer::normalizarSeccionCanonica($secRaw);
+            $perFam   = HorarioNormalizer::familiaPeriodo((string) $s['periodo_academico']);
+            $carSec   = strtoupper(trim((string) ($s['carrera'] ?? '')));
+            $clave    = (int) $s['materia_id'] . '|' . $secCanon . '|' . $perFam . '|' . ($carSec !== '' ? $carSec : 'SIN_CARRERA');
+
+            // Preferir filas cuyo codigo_seccion ya coincide con la forma canónica (A vs SVC-A)
+            if (!isset($seccionesCache[$clave]) || $secRaw === $secCanon) {
+                $seccionesCache[$clave] = $s;
+            }
         }
 
         $loteClases = [];
@@ -387,12 +404,14 @@ class HorarioSyncService
         }
 
         foreach ($bloquesValidos as $b) {
-            $codMateria    = strtoupper(trim((string) $b['codigo_materia']));
-            $carreraBloque = trim((string) ($b['carrera'] ?? ($carrera ?: 'ING-INF')));
+            $codMateria    = HorarioNormalizer::codigoMateriaCanonico((string) $b['codigo_materia']);
+            $carreraBloque = strtoupper(trim((string) ($b['carrera'] ?? ($carrera ?: 'ING-INF'))));
             $nomMateria    = trim((string) ($b['nombre_materia'] ?? ''));
             $semestre      = (int) ($b['semestre'] ?? 1);
             $seccionCod    = trim((string) ($b['seccion'] ?? 'A'));
+            $seccionCanon  = HorarioNormalizer::normalizarSeccionCanonica($seccionCod);
             $periodo       = trim((string) ($b['periodo'] ?? '2026-I'));
+            $periodoFam    = HorarioNormalizer::familiaPeriodo($periodo);
             $aula          = trim((string) ($b['aula'] ?? 'Por Asignar'));
             $dia           = trim((string) $b['dia']);
             $horaInicio    = trim((string) $b['hora_inicio']);
@@ -418,12 +437,19 @@ class HorarioSyncService
                 }
             }
 
-            $claveSeccion = $materiaId . '|' . $seccionCod . '|' . $periodo;
+            $claveSeccion = $materiaId . '|' . $seccionCanon . '|' . $periodoFam . '|' . $carreraBloque;
+            $claveLegacy  = $materiaId . '|' . $seccionCanon . '|' . $periodoFam . '|SIN_CARRERA';
+
+            if (!isset($seccionesCache[$claveSeccion]) && isset($seccionesCache[$claveLegacy])) {
+                $seccionesCache[$claveSeccion] = $seccionesCache[$claveLegacy];
+                unset($seccionesCache[$claveLegacy]);
+            }
+
             if (!isset($seccionesCache[$claveSeccion])) {
                 $seccionId = (int) $seccionModel->insert([
                     'materia_id'        => $materiaId,
-                    'codigo_seccion'    => $seccionCod,
-                    'periodo_academico' => $periodo,
+                    'codigo_seccion'    => mb_substr($seccionCod, 0, 10, 'UTF-8'),
+                    'periodo_academico' => mb_substr($periodo, 0, 20, 'UTF-8'),
                     'carrera'           => $carreraBloque,
                     'profesor_id'       => null,
                 ]);
@@ -436,9 +462,19 @@ class HorarioSyncService
                 ];
             } else {
                 $seccionId = (int) $seccionesCache[$claveSeccion]['id'];
-                if (empty($seccionesCache[$claveSeccion]['carrera']) || $seccionesCache[$claveSeccion]['carrera'] !== $carreraBloque) {
-                    $seccionModel->update($seccionId, ['carrera' => $carreraBloque]);
+                $datosUpd  = [];
+                if (empty($seccionesCache[$claveSeccion]['carrera'])) {
+                    $datosUpd['carrera'] = $carreraBloque;
                     $seccionesCache[$claveSeccion]['carrera'] = $carreraBloque;
+                }
+                if (str_starts_with(strtoupper((string) $seccionesCache[$claveSeccion]['codigo_seccion']), 'SVC-') && $seccionCod !== '') {
+                    $datosUpd['codigo_seccion']    = mb_substr($seccionCod, 0, 10, 'UTF-8');
+                    $datosUpd['periodo_academico'] = mb_substr($periodo, 0, 20, 'UTF-8');
+                    $seccionesCache[$claveSeccion]['codigo_seccion']    = $seccionCod;
+                    $seccionesCache[$claveSeccion]['periodo_academico'] = $periodo;
+                }
+                if ($datosUpd !== []) {
+                    $seccionModel->update($seccionId, $datosUpd);
                 }
             }
 

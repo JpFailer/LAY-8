@@ -37,6 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function recargarVistaHorario() {
+    try {
+        const target = new URL(BASE_URL + 'aulas?tab=horario', window.location.origin);
+        target.searchParams.set('tab', 'horario');
+        window.location.href = target.toString();
+    } catch (e) {
+        window.location.href = BASE_URL + 'aulas?tab=horario';
+    }
+}
+
 async function eliminarBloqueHorario(id, btnElem) {
     const ok = await window.Lay8UI.confirm('¿Deseas eliminar este bloque de clase de tu horario?', {
         title: 'Ocultar bloque de horario',
@@ -45,57 +55,81 @@ async function eliminarBloqueHorario(id, btnElem) {
     });
     if (!ok) return;
 
-    const card = btnElem ? btnElem.closest('.bloque-clase-card') : document.getElementById('bloque-card-' + id);
-    if (card) card.style.opacity = '0.35';
+    const cards = Array.from(document.querySelectorAll('.bloque-clase-card[data-bloque-id="' + id + '"]'));
+    if (cards.length === 0 && btnElem) {
+        const single = btnElem.closest('.bloque-clase-card');
+        if (single) cards.push(single);
+    }
+    cards.forEach(c => { c.style.opacity = '0.35'; });
 
     try {
         await window.Lay8UI.apiFetch(BASE_URL + 'aulas/eliminar-bloque/' + id, { method: 'POST' });
-        if (card) {
+        cards.forEach(card => {
             card.style.transition = 'all 0.25s ease';
-            card.style.transform = 'scale(0.8)';
+            card.style.transform = 'scale(0.85)';
             card.style.opacity = '0';
-            setTimeout(() => card.remove(), 250);
-        }
-        const badge = document.querySelector('#tabbtn-horario .badge-conteo');
-        if (badge) {
-            const act = parseInt(badge.textContent || '0', 10);
-            if (act > 0) badge.textContent = act - 1;
-        }
+        });
+        setTimeout(() => {
+            cards.forEach(c => c.remove());
+            const badge = document.querySelector('#tabbtn-horario .badge-conteo');
+            if (badge) {
+                const act = parseInt(badge.textContent || '0', 10);
+                badge.textContent = Math.max(0, act - 1);
+            }
+            const avisoVacio = document.getElementById('aviso-horario-vacio');
+            if (avisoVacio && document.querySelectorAll('.bloque-clase-card').length === 0) {
+                avisoVacio.style.display = 'flex';
+            }
+        }, 250);
         mostrarToastAulas('Bloque eliminado correctamente.', 'exito');
     } catch (e) {
-        if (card) card.style.opacity = '1';
+        cards.forEach(c => { c.style.opacity = '1'; });
         mostrarToastAulas(e.message || 'No se pudo eliminar el bloque.', 'error');
     }
 }
 
-async function confirmarLimpiarHorario() {
+async function confirmarLimpiarHorario(btnElem) {
     const ok = await window.Lay8UI.confirm(
-        '¿Estás seguro de que deseas limpiar tu horario?\n\nSe ocultarán los bloques asignados en tu vista semanal (puedes restaurarlos luego con "Restaurar Horario Oficial").',
+        '¿Estás seguro de que deseas limpiar tu horario?\n\nSe vaciarán todos los bloques asignados en tu horario semanal (puedes restaurarlos luego con "Restaurar Horario Oficial").',
         { title: 'Limpiar horario', confirmText: 'Limpiar horario', danger: true }
     );
     if (!ok) return;
 
+    const btn = btnElem || document.getElementById('btn-limpiar-horario');
+    if (btn) btn.disabled = true;
+
     try {
         const data = await window.Lay8UI.apiFetch(BASE_URL + 'aulas/limpiar-horario', { method: 'POST' });
+        document.querySelectorAll('.bloque-clase-card').forEach(card => card.remove());
+        const badge = document.querySelector('#tabbtn-horario .badge-conteo');
+        if (badge) badge.textContent = '0';
+        const avisoVacio = document.getElementById('aviso-horario-vacio');
+        if (avisoVacio) avisoVacio.style.display = 'flex';
+
         mostrarToastAulas(data.mensaje || 'Horario limpiado exitosamente.', 'exito');
-        setTimeout(() => { window.location.href = BASE_URL + 'aulas?tab=horario'; }, 750);
+        setTimeout(recargarVistaHorario, 600);
     } catch (e) {
+        if (btn) btn.disabled = false;
         mostrarToastAulas(e.message || 'No se pudo limpiar el horario.', 'error');
     }
 }
 
-async function confirmarRestaurarHorario() {
+async function confirmarRestaurarHorario(btnElem) {
     const ok = await window.Lay8UI.confirm('¿Deseas restaurar todos los bloques oficiales asignados por la universidad?', {
         title: 'Restaurar horario oficial',
         confirmText: 'Restaurar'
     });
     if (!ok) return;
 
+    const btn = btnElem || document.getElementById('btn-restaurar-horario');
+    if (btn) btn.disabled = true;
+
     try {
         const res = await window.Lay8UI.apiFetch(BASE_URL + 'aulas/restaurar-horario', { method: 'POST' });
         mostrarToastAulas(res.mensaje || 'Horario oficial restaurado.', 'exito');
-        setTimeout(() => { window.location.href = BASE_URL + 'aulas?tab=horario'; }, 750);
+        setTimeout(recargarVistaHorario, 600);
     } catch (e) {
+        if (btn) btn.disabled = false;
         mostrarToastAulas(e.message || 'No se pudo restaurar.', 'error');
     }
 }

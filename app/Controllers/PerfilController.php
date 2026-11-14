@@ -110,17 +110,20 @@ class PerfilController extends BaseController
         $datosActualizar = [];
         $mensajeExtra = '';
 
-        // Si el usuario está cambiando a una carrera distinta a la que tenía
-        if (in_array($carreraSolicitada, $carrerasValidas, true) && $carreraSolicitada !== $carreraPrevia) {
-            // sistema de confirmacion de clave antidayanas (requiere credencial antes de solicitar rol docente)
+        $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
+        $tienePdfAdjunto = ($archivoInscripcion && $archivoInscripcion->isValid() && !$archivoInscripcion->hasMoved());
+        $cambiandoCarrera = (in_array($carreraSolicitada, $carrerasValidas, true) && $carreraSolicitada !== $carreraPrevia);
+
+        // Permitir certificar cambio de carrera o actualizar materias desde Registro de Inscripción PDF
+        if ($cambiandoCarrera || $tienePdfAdjunto) {
+            // sistema de confirmacion de clave antidayanas (requiere credencial antes de cambiar carrera o inscripción)
             $passwordConfirm = (string) $this->request->getPost('confirmar_contrasena');
             if (empty($passwordConfirm) || !password_verify($passwordConfirm, $usuarioActual['contrasena'])) {
-                return redirect()->back()->with('error', 'Seguridad: Para cambiar tu carrera debes ingresar tu contraseña actual correctamente.');
+                return redirect()->back()->with('error', 'Seguridad: Para actualizar tu carrera o registro de inscripción debes ingresar tu contraseña actual correctamente.');
             }
 
-            // sistema de comprobacion documental antidayanas (solo pdf oficial de constancia docente)
-            $archivoInscripcion = $this->request->getFile('planilla_inscripcion');
-            if (!$archivoInscripcion || !$archivoInscripcion->isValid() || $archivoInscripcion->hasMoved()) {
+            // sistema de comprobacion documental antidayanas (solo pdf oficial de inscripción)
+            if (!$tienePdfAdjunto) {
                 return redirect()->back()->with('error', 'Seguridad: Para certificar un cambio de carrera es obligatorio adjuntar tu Registro de Inscripción emitido por campus.umc.edu.ve en PDF.');
             }
 
@@ -128,9 +131,11 @@ class PerfilController extends BaseController
                 return redirect()->back()->with('error', 'El comprobante debe ser un archivo PDF oficial de la UMC.');
             }
 
+            $carreraEsperadaDoc = in_array($carreraSolicitada, $carrerasValidas, true) ? $carreraSolicitada : $carreraPrevia;
+
             // sistema de analisis anti-fraude antidayanas
             $verificador = new VerificadorInscripcionService();
-            $analisis = $verificador->verificar($archivoInscripcion->getTempName(), $carreraSolicitada);
+            $analisis = $verificador->verificar($archivoInscripcion->getTempName(), $carreraEsperadaDoc);
 
             if (!$analisis['es_valido']) {
                 return redirect()->back()->with('error', 'Certificación denegada: ' . ($analisis['motivo_invalidez'] ?? 'El documento no superó los controles de seguridad institucionales.'));
@@ -147,8 +152,14 @@ class PerfilController extends BaseController
             session()->set('carrera', $analisis['carrera_codigo']);
 
             // Asignación automática de las materias a las aulas
-            $aulasInscritas = $verificador->inscribirEstudianteEnMaterias($idUsuario, $analisis['materias'], $analisis['periodo']);
-            $mensajeExtra = " Carrera certificada como {$analisis['carrera_nombre']}. Se vincularon automáticamente {$aulasInscritas} nuevas aulas a tu perfil.";
+            $aulasInscritas = $verificador->inscribirEstudianteEnMaterias(
+                $idUsuario,
+                $analisis['materias'],
+                $analisis['periodo'],
+                true,
+                $analisis['carrera_codigo']
+            );
+            $mensajeExtra = " Carrera certificada como {$analisis['carrera_nombre']}. Se vincularon {$aulasInscritas} materias de tu registro de inscripción.";
         }
 
         // Subida opcional de nueva foto de perfil (Soporte recorte 1:1 o archivo estándar)

@@ -86,10 +86,8 @@ class AulasController extends BaseController
      */
     public function eliminarBloqueManual(int $id)
     {
-        $usuarioId   = (int) session()->get('usuario_id');
-        $rol         = session()->get('rol') ?? 'estudiante';
-        $estadoVerif = session()->get('estado_verificacion') ?? 'no_aplica';
-        $esAjax      = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+        $usuarioId = (int) session()->get('usuario_id');
+        $esAjax    = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
 
         if (!$usuarioId) {
             if ($esAjax) {
@@ -109,18 +107,23 @@ class AulasController extends BaseController
 
         $db = \Config\Database::connect();
 
-        // Solo administradores o docentes verificados pueden eliminar bloques oficiales directamente
-        if (in_array($rol, ['administrador', 'admin'], true) || ($rol === 'profesor' && $estadoVerif === 'aprobado')) {
-            $claseModel->delete($id);
-        } elseif (!empty($bloque['estudiante_id']) && (int)$bloque['estudiante_id'] === $usuarioId) {
+        // Solo borrar físicamente cuando es un bloque personal del propio usuario;
+        // los bloques oficiales se ocultan en su horario personal sin destruir el catálogo global.
+        if (!empty($bloque['estudiante_id']) && (int) $bloque['estudiante_id'] === $usuarioId) {
             $claseModel->delete($id);
         } else {
-            // Es un bloque oficial de sección: se excluye del horario personal de este estudiante sin romper a los demás
-            $db->table('estudiante_bloques_excluidos')->ignore(true)->insert([
-                'estudiante_id' => $usuarioId,
-                'clase_id'      => $id,
-                'created_at'    => date('Y-m-d H:i:s')
-            ]);
+            $yaExcluido = $db->table('estudiante_bloques_excluidos')
+                ->where('estudiante_id', $usuarioId)
+                ->where('clase_id', $id)
+                ->countAllResults();
+
+            if ($yaExcluido === 0) {
+                $db->table('estudiante_bloques_excluidos')->insert([
+                    'estudiante_id' => $usuarioId,
+                    'clase_id'      => $id,
+                    'created_at'    => date('Y-m-d H:i:s'),
+                ]);
+            }
         }
 
         if ($esAjax) {
@@ -149,47 +152,49 @@ class AulasController extends BaseController
         }
 
         $db = \Config\Database::connect();
+        $idsOficiales = (new HorarioAulasService())->obtenerIdsBloquesOficialesDeUsuario($usuarioId);
 
-        // 1. Eliminar bloques creados manualmente por el estudiante
+        $db->transStart();
+
+        // 1. Eliminar bloques personales creados por el usuario
         $db->table('clases_programadas')
             ->where('estudiante_id', $usuarioId)
             ->delete();
 
-        // 2. Excluir todos los bloques oficiales de las secciones del estudiante para dejar la grilla totalmente vacía
-        $inscripcionModel = new \App\Models\InscripcionModel();
-        $seccionesInscritas = $inscripcionModel->obtenerSeccionesDeEstudiante($usuarioId);
-        $seccionesIds = !empty($seccionesInscritas) ? array_column($seccionesInscritas, 'id') : [];
-
-        if (!empty($seccionesIds)) {
-            $bloquesOficiales = $db->table('clases_programadas')
-                ->select('id')
-                ->whereIn('seccion_id', $seccionesIds)
-                ->where('estudiante_id', null)
+        // 2. Excluir todos los bloques oficiales efectivos del usuario sin duplicar exclusiones previas
+        if ($idsOficiales !== []) {
+            $excluidosActuales = $db->table('estudiante_bloques_excluidos')
+                ->select('clase_id')
+                ->where('estudiante_id', $usuarioId)
                 ->get()
                 ->getResultArray();
+            $yaExcluidos = array_map('intval', array_column($excluidosActuales, 'clase_id'));
+            $faltantes   = array_values(array_diff($idsOficiales, $yaExcluidos));
 
-            if (!empty($bloquesOficiales)) {
+            if ($faltantes !== []) {
                 $ahora = date('Y-m-d H:i:s');
                 $filasExcluir = [];
-                foreach ($bloquesOficiales as $bo) {
+                foreach ($faltantes as $claseId) {
                     $filasExcluir[] = [
                         'estudiante_id' => $usuarioId,
-                        'clase_id'      => (int) $bo['id'],
+                        'clase_id'      => $claseId,
                         'created_at'    => $ahora,
                     ];
                 }
-                $db->table('estudiante_bloques_excluidos')->ignore(true)->insertBatch($filasExcluir);
+                $db->table('estudiante_bloques_excluidos')->insertBatch($filasExcluir, null, 250);
             }
         }
+
+        $db->transComplete();
 
         if ($esAjax) {
             return $this->response->setJSON([
                 'success' => true,
-                'mensaje' => '¡Tu horario semanal ha sido limpiado por completo! Ahora puedes armarlo desde cero.'
+                'mensaje' => '¡Tu horario semanal ha sido limpiado por completo!'
             ]);
         }
 
-        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', '¡Tu horario semanal ha sido limpiado por completo! Ahora puedes armarlo desde cero con tus materias y horas reales.');
+        return redirect()->to(base_url('aulas?tab=horario'))->with('mensaje', '¡Tu horario semanal ha sido limpiado por completo!');
     }
 
     /**

@@ -179,8 +179,8 @@
                                 <ul class="lista-mini-horarios">
                                     <?php foreach ($sec['horarios'] as $h): ?>
                                         <li>
-                                            <b><?= esc($h['dia_semana']) ?></b>: 
-                                            <?= date('H:i', strtotime($h['hora_inicio'])) ?> - <?= date('H:i', strtotime($h['hora_fin'])) ?> 
+                                            <b><?= esc($h['dia_canon'] ?? $h['dia_semana']) ?></b>:
+                                            <?= esc(\App\Services\HorarioNormalizer::formatearHoraCorta((string) $h['hora_inicio'])) ?> - <?= esc(\App\Services\HorarioNormalizer::formatearHoraCorta((string) $h['hora_fin'])) ?>
                                             <span class="aula-mini-tag">(<?= esc($h['aula']) ?>)</span>
                                         </li>
                                     <?php endforeach; ?>
@@ -223,13 +223,36 @@
                 <button type="button" class="btn-imprimir-horario" onclick="window.print()">
                     <i class="bx bx-printer"></i> Imprimir Horario
                 </button>
-                <button type="button" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario()" title="Restaurar horario oficial asignado por la universidad">
+                <button type="button" id="btn-restaurar-horario" class="btn-imprimir-horario" onclick="confirmarRestaurarHorario(this)" title="Restaurar horario oficial asignado por la universidad">
                     <i class="bx bx-refresh aulas-ico-refresh"></i> Restaurar Horario Oficial
                 </button>
-                <button type="button" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario()" title="Borrar todos los bloques de mi horario para empezar de nuevo">
+                <button type="button" id="btn-limpiar-horario" class="btn-imprimir-horario btn-limpiar-horario-action" onclick="confirmarLimpiarHorario(this)" title="Vaciar todos los bloques de mi horario semanal">
                     <i class="bx bx-trash aulas-ico-trash"></i> Limpiar Mi Horario
                 </button>
             </div>
+        </div>
+
+        <div id="aviso-horario-vacio" class="aviso-horario-vacio" style="display: <?= empty($horarioSemanal) ? 'flex' : 'none' ?>;">
+            <div class="aviso-horario-vacio-texto">
+                <i class="bx bx-calendar-x"></i>
+                <div>
+                    <strong>Tu horario semanal está vacío.</strong>
+                    <span>
+                        <?php if (!empty($tieneBloquesExcluidos)): ?>
+                            Ocultaste o limpiaste tus bloques de horario. Presiona <b>Restaurar Horario Oficial</b> para volver a cargar las materias de tu inscripción.
+                        <?php elseif ((int) $totalMaterias > 0): ?>
+                            Aún no hay bloques horarios asignados para las secciones de tus materias inscritas.
+                        <?php else: ?>
+                            Registra o actualiza tus materias inscritas para visualizar automáticamente tu horario semanal.
+                        <?php endif; ?>
+                    </span>
+                </div>
+            </div>
+            <?php if (!empty($tieneBloquesExcluidos)): ?>
+                <button type="button" class="btn-subir-cta" onclick="confirmarRestaurarHorario(this)">
+                    <i class="bx bx-refresh"></i> Restaurar Horario Oficial
+                </button>
+            <?php endif; ?>
         </div>
 
         <div class="contenedor-tabla-horario">
@@ -243,37 +266,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($bloquesOficiales as $turno => $bloques): ?>
+                    <?php foreach (($turnosHorarios ?? []) as $turno => $filasTurno): ?>
+                        <?php
+                            $iconoTurno = match ($turno) {
+                                'Mañana'   => 'bx-sun',
+                                'Mediodía' => 'bx-sun',
+                                'Tarde'    => 'bx-brightness-half',
+                                default    => 'bx-moon',
+                            };
+                        ?>
                         <tr class="fila-separador-turno">
-                            <td colspan="7">
-                                <i class="bx <?= $turno === 'Mañana' ? 'bx-sun' : ($turno === 'Tarde' ? 'bx-brightness-half' : 'bx-moon') ?>"></i>
+                            <td colspan="<?= count($diasSemana) + 1 ?>">
+                                <i class="bx <?= $iconoTurno ?>"></i>
                                 TURNO <?= esc(mb_strtoupper($turno, 'UTF-8')) ?>
                             </td>
                         </tr>
-                        <?php foreach ($bloques as $b): ?>
+                        <?php foreach ($filasTurno as $fila): ?>
                             <tr>
                                 <td class="celda-hora-bloque">
-                                    <b><?= esc($b['etiqueta']) ?></b>
+                                    <b><?= esc($fila['etiqueta']) ?></b>
                                 </td>
                                 <?php foreach ($diasSemana as $dia): ?>
                                     <td class="celda-clase-horario">
-                                        <?php
-                                            // Buscar si hay clase programada en este día e intervalo
-                                            $clasesEncontradas = [];
-                                            if (!empty($grillaHorarios[$dia])) {
-                                                foreach ($grillaHorarios[$dia] as $c) {
-                                                    // Chequeo si la clase solapa o coincide con este bloque
-                                                    if ($c['hora_inicio'] <= $b['inicio'] && $c['hora_fin'] >= $b['fin']) {
-                                                        $clasesEncontradas[] = $c;
-                                                    }
-                                                }
-                                            }
-                                        ?>
+                                        <?php $clasesEncontradas = $fila['celdas'][$dia] ?? []; ?>
                                         <?php if (!empty($clasesEncontradas)): ?>
                                             <?php foreach ($clasesEncontradas as $item): ?>
-                                                <div class="bloque-clase-card" id="bloque-card-<?= (int)$item['id'] ?>">
+                                                <div class="bloque-clase-card<?= !empty($item['es_continuacion']) ? ' bloque-continuacion' : '' ?>"
+                                                     id="bloque-card-<?= (int)$item['id'] ?>-<?= esc($fila['clave']) ?>"
+                                                     data-bloque-id="<?= (int)$item['id'] ?>">
                                                     <div class="bloque-codigo"><?= esc($item['codigo']) ?> (<?= esc($item['seccion']) ?>)</div>
                                                     <div class="bloque-materia"><?= esc($item['materia']) ?></div>
+                                                    <div class="bloque-horario-intervalo">
+                                                        <i class="bx bx-time-five"></i> <?= esc($item['intervalo']) ?>
+                                                    </div>
                                                     <div class="bloque-aula">
                                                         <a href="<?= base_url('mapa?aula=' . urlencode($item['aula'])) ?>" title="Ver aula en el plano del campus">
                                                             <i class="bx bx-map-pin"></i> <?= esc($item['aula']) ?>

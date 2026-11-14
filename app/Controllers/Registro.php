@@ -224,7 +224,13 @@ class Registro extends BaseController
         $aulasMensaje = '';
         if (!$esProfesor && $nuevoUsuarioId && !empty($materiasInscribir)) {
             $verificador = new VerificadorInscripcionService();
-            $aulasInscritas = $verificador->inscribirEstudianteEnMaterias((int)$nuevoUsuarioId, $materiasInscribir, $periodoInscribir);
+            $aulasInscritas = $verificador->inscribirEstudianteEnMaterias(
+                (int) $nuevoUsuarioId,
+                $materiasInscribir,
+                $periodoInscribir,
+                true,
+                $datos['carrera'] ?? null
+            );
             $aulasMensaje = " Tu carrera ({$carreraCertificadaNombre}) fue certificada y se asignaron {$aulasInscritas} aulas automáticamente a tu cuenta.";
         }
 

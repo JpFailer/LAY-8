@@ -68,27 +68,21 @@ class Home extends BaseController
                           ORDER BY cp.hora_inicio ASC";
             $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId])->getResultArray();
         } elseif ($userRol !== 'profesor') {
-            $sqlClases = "SELECT cp.*, m.nombre as materia_nombre, m.codigo_materia, s.codigo_seccion
-                          FROM clases_programadas cp
-                          JOIN secciones s ON s.id = cp.seccion_id
-                          JOIN materias m ON m.id = s.materia_id
-                          WHERE cp.dia_semana = ?
-                            AND (
-                                (cp.seccion_id IN (SELECT seccion_id FROM inscripciones WHERE estudiante_id = ?) AND cp.estudiante_id IS NULL)
-                                OR cp.estudiante_id = ?
-                            )
-                            AND NOT EXISTS (
-                                SELECT 1 FROM estudiante_bloques_excluidos ebe
-                                WHERE ebe.estudiante_id = ? AND ebe.clase_id = cp.id
-                            )
-                          ORDER BY cp.hora_inicio ASC";
-            $clasesHoy = $db->query($sqlClases, [$diaSemana, $usuarioId, $usuarioId, $usuarioId])->getResultArray();
+            $clasesHoy = (new \App\Services\HorarioAulasService())
+                ->obtenerClasesDelDiaEstudiante($usuarioId, $diaSemana, $horaActual);
+        } else {
+            $clasesHoy = [];
         }
 
         foreach ($clasesHoy as &$clase) {
-            $clase['en_curso'] = ($horaActual >= $clase['hora_inicio'] && $horaActual <= $clase['hora_fin']);
-            $clase['hora_inicio_formato'] = substr($clase['hora_inicio'], 0, 5);
-            $clase['hora_fin_formato']    = substr($clase['hora_fin'], 0, 5);
+            if (!isset($clase['en_curso'])) {
+                $ahoraMin = \App\Services\HorarioNormalizer::aMinutos($horaActual) ?? -1;
+                $iniMin   = \App\Services\HorarioNormalizer::aMinutos((string) ($clase['hora_inicio'] ?? '')) ?? -1;
+                $finMin   = \App\Services\HorarioNormalizer::aMinutos((string) ($clase['hora_fin'] ?? '')) ?? -1;
+                $clase['en_curso'] = ($ahoraMin >= 0 && $iniMin >= 0 && $finMin >= $iniMin && $ahoraMin >= $iniMin && $ahoraMin <= $finMin);
+            }
+            $clase['hora_inicio_formato'] = \App\Services\HorarioNormalizer::formatearHoraCorta((string) $clase['hora_inicio']);
+            $clase['hora_fin_formato']    = \App\Services\HorarioNormalizer::formatearHoraCorta((string) $clase['hora_fin']);
         }
         unset($clase);
 

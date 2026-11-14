@@ -863,4 +863,303 @@ final class Lay8DomainTest extends CIUnitTestCase
         $ctrl->eliminarActividad((int) $act['id']);
         $this->assertSame(0, $this->db->table('actividades_clase')->where('id', $act['id'])->countAllResults());
     }
+
+    /**
+     * Audita el pipeline completo: HorarioSyncService (aislamiento multicarrera) ->
+     * VerificadorInscripcionService (códigos/secciones/menciones/períodos) -> HorarioAulasService (puente SVC).
+     */
+    public function testPipelineMulticarreraInscripcionSyncYAulas(): void
+    {
+        $sync = new HorarioSyncService();
+
+        $bloquesInf = [
+            [
+                'codigo_materia' => 'CAL-114',
+                'nombre_materia' => 'Cálculo I',
+                'semestre'       => 1,
+                'seccion'        => 'A',
+                'periodo'        => '2026-I',
+                'carrera'        => 'ING-INF',
+                'aula'           => 'Aula 1',
+                'dia'            => 'Lunes',
+                'hora_inicio'    => '07:15:00',
+                'hora_fin'       => '08:45:00',
+            ],
+        ];
+        $bloquesMar = [
+            [
+                'codigo_materia' => 'CAL-114',
+                'nombre_materia' => 'Cálculo I',
+                'semestre'       => 1,
+                'seccion'        => 'A',
+                'periodo'        => '2026-I',
+                'carrera'        => 'ING-MAR',
+                'aula'           => 'Aula 9',
+                'dia'            => 'Martes',
+                'hora_inicio'    => '09:30:00',
+                'hora_fin'       => '11:00:00',
+            ],
+            [
+                'codigo_materia' => 'LAF-312',
+                'nombre_materia' => 'Legislación Marítima',
+                'semestre'       => 3,
+                'seccion'        => 'E',
+                'periodo'        => '2026-I',
+                'carrera'        => 'ING-MAR',
+                'aula'           => 'Aula M-3',
+                'dia'            => 'Miércoles',
+                'hora_inicio'    => '14:15:00',
+                'hora_fin'       => '15:45:00',
+            ],
+        ];
+
+        $this->assertSame(1, $sync->insertarBloquesEstructurados($bloquesInf, 'ING-INF', true));
+        $this->assertSame(2, $sync->insertarBloquesEstructurados($bloquesMar, 'ING-MAR', true));
+
+        // Deben existir secciones separadas para CAL-114 sección A en cada carrera sin sobrescribirse
+        $materiaCal = $this->db->table('materias')->where('codigo_materia', 'CAL-114')->get()->getRowArray();
+        $this->assertNotNull($materiaCal);
+        $secsCal = $this->db->table('secciones')->where('materia_id', (int) $materiaCal['id'])->get()->getResultArray();
+        $this->assertCount(2, $secsCal);
+
+        $this->db->table('usuarios')->insertBatch([
+            ['id' => 201, 'primer_nombre' => 'Ana', 'apellidos' => 'Mar', 'nombre_usuario' => 'ana201', 'rol' => 'estudiante', 'carrera' => 'ING-MAR', 'estado_verificacion' => 'aprobado'],
+            ['id' => 202, 'primer_nombre' => 'Luis', 'apellidos' => 'Inf', 'nombre_usuario' => 'luis202', 'rol' => 'estudiante', 'carrera' => 'ING-INF', 'estado_verificacion' => 'aprobado'],
+        ]);
+
+        $verificador = new \App\Services\VerificadorInscripcionService();
+
+        // Estudiante de ING-MAR inscrito con código sin guion, SVC-A y período 2026-01
+        $insMar = $verificador->inscribirEstudianteEnMaterias(201, [
+            ['codigo' => 'CAL114', 'nombre' => 'Cálculo I', 'seccion' => 'SVC-A', 'creditos' => 4, 'semestre' => 1],
+        ], '2026-01', true, 'ING-MAR');
+        $this->assertSame(1, $insMar);
+
+        // Estudiante de ING-INF inscrito con CAL114 (su carrera), LAF312 con mención SVC-E-IM (ING-MAR),
+        // y una materia PRE-999 cuyo horario oficial se importa después de inscribirse
+        $insInf = $verificador->inscribirEstudianteEnMaterias(202, [
+            ['codigo' => 'CAL114', 'nombre' => 'Cálculo I', 'seccion' => 'SVC-A', 'creditos' => 4, 'semestre' => 1],
+            ['codigo' => 'LAF312', 'nombre' => 'Legislación Marítima', 'seccion' => 'SVC-E-IM', 'creditos' => 2, 'semestre' => 3],
+            ['codigo' => 'PRE999', 'nombre' => 'Materia Posterior', 'seccion' => 'SVC-B', 'creditos' => 3, 'semestre' => 5],
+        ], '2026-01', true, 'ING-INF');
+        $this->assertSame(3, $insInf);
+
+        // Importación tardía de PRE-999 después que el alumno se inscribió con SVC-B / 2026-01
+        $this->assertSame(1, $sync->insertarBloquesEstructurados([
+            [
+                'codigo_materia' => 'PRE-999',
+                'nombre_materia' => 'Materia Posterior',
+                'semestre'       => 5,
+                'seccion'        => 'B',
+                'periodo'        => '2026-I',
+                'carrera'        => 'ING-INF',
+                'aula'           => 'Lab 4',
+                'dia'            => 'Jueves',
+                'hora_inicio'    => '10:15:00',
+                'hora_fin'       => '11:45:00',
+            ],
+        ], 'ING-INF', false));
+
+        $aulasSvc = new \App\Services\HorarioAulasService();
+        $bloquesOficiales = (new \ReflectionClass(\App\Controllers\AulasController::class))->getDefaultProperties()['bloquesOficiales'];
+
+        $vistaMar = $aulasSvc->obtenerDatosVistaAulas(201, $bloquesOficiales);
+        $this->assertCount(1, $vistaMar['horarioSemanal']);
+        $this->assertSame('Martes', $vistaMar['horarioSemanal'][0]['dia_canon']);
+        $this->assertSame('Aula 9', $vistaMar['horarioSemanal'][0]['aula']);
+        $this->assertSame('09:30 - 11:00', $vistaMar['grillaHorarios']['Martes'][0]['intervalo']);
+
+        $vistaInf = $aulasSvc->obtenerDatosVistaAulas(202, $bloquesOficiales);
+        $this->assertCount(3, $vistaInf['horarioSemanal']);
+        $aulasPorCodigo = [];
+        foreach ($vistaInf['horarioSemanal'] as $b) {
+            $aulasPorCodigo[$b['codigo_materia']] = $b['aula'] . '|' . $b['dia_canon'] . '|' . $b['hora_inicio_norm'];
+        }
+        $this->assertSame('Aula 1|Lunes|07:15:00', $aulasPorCodigo['CAL-114']);
+        $this->assertSame('Aula M-3|Miercoles|14:15:00', $aulasPorCodigo['LAF-312']);
+        $this->assertSame('Lab 4|Jueves|10:15:00', $aulasPorCodigo['PRE-999']);
+    }
+
+    /**
+     * Verifica solapamiento exacto por minutos en la grilla, cruces de mediodía,
+     * franjas atípicas en Otros Horarios, normalización de días y Domingo condicional.
+     */
+    public function testHorarioAulasServiceHorasExactasGrillaSolapamientosYDomingo(): void
+    {
+        $this->db->table('usuarios')->insert([
+            'id'                  => 203,
+            'primer_nombre'       => 'Carlos',
+            'apellidos'           => 'Ruiz',
+            'nombre_usuario'      => 'carlos203',
+            'rol'                 => 'estudiante',
+            'carrera'             => 'ING-MAR',
+            'estado_verificacion' => 'aprobado',
+        ]);
+        $this->db->table('materias')->insertBatch([
+            ['id' => 61, 'codigo_materia' => 'MAT-101', 'nombre' => 'Matemática I'],
+            ['id' => 62, 'codigo_materia' => 'FIS-101', 'nombre' => 'Física I'],
+            ['id' => 63, 'codigo_materia' => 'QUI-101', 'nombre' => 'Química I'],
+            ['id' => 64, 'codigo_materia' => 'TALL-01', 'nombre' => 'Taller Continuo'],
+            ['id' => 65, 'codigo_materia' => 'SEM-01', 'nombre' => 'Seminario Nocturno'],
+            ['id' => 66, 'codigo_materia' => 'PRA-01', 'nombre' => 'Práctica Dominical'],
+        ]);
+        $this->db->table('secciones')->insertBatch([
+            ['id' => 601, 'materia_id' => 61, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+            ['id' => 602, 'materia_id' => 62, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+            ['id' => 603, 'materia_id' => 63, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+            ['id' => 604, 'materia_id' => 64, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+            ['id' => 605, 'materia_id' => 65, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+            ['id' => 606, 'materia_id' => 66, 'codigo_seccion' => 'A', 'carrera' => 'ING-MAR'],
+        ]);
+        $this->db->table('inscripciones')->insertBatch([
+            ['estudiante_id' => 203, 'seccion_id' => 601],
+            ['estudiante_id' => 203, 'seccion_id' => 602],
+            ['estudiante_id' => 203, 'seccion_id' => 603],
+            ['estudiante_id' => 203, 'seccion_id' => 604],
+            ['estudiante_id' => 203, 'seccion_id' => 605],
+            ['estudiante_id' => 203, 'seccion_id' => 606],
+        ]);
+        $this->db->table('clases_programadas')->insertBatch([
+            ['id' => 701, 'seccion_id' => 601, 'estudiante_id' => null, 'aula' => 'Aula 10', 'carrera' => 'ING-MAR', 'dia_semana' => 'Lunes', 'hora_inicio' => '09:30:00', 'hora_fin' => '11:45:00'],
+            ['id' => 702, 'seccion_id' => 602, 'estudiante_id' => null, 'aula' => 'Aula 11', 'carrera' => 'ING-MAR', 'dia_semana' => 'Martes', 'hora_inicio' => '8:00', 'hora_fin' => '9:30'],
+            ['id' => 703, 'seccion_id' => 603, 'estudiante_id' => null, 'aula' => 'Lab Q', 'carrera' => 'ING-MAR', 'dia_semana' => 'Miércoles', 'hora_inicio' => '07:30:00', 'hora_fin' => '09:00:00'],
+            ['id' => 704, 'seccion_id' => 604, 'estudiante_id' => null, 'aula' => 'Taller 1', 'carrera' => 'ING-MAR', 'dia_semana' => 'Jueves', 'hora_inicio' => '08:45:00', 'hora_fin' => '13:30:00'],
+            ['id' => 705, 'seccion_id' => 605, 'estudiante_id' => null, 'aula' => 'Zoom', 'carrera' => 'ING-MAR', 'dia_semana' => 'Viernes', 'hora_inicio' => '22:45:00', 'hora_fin' => '23:30:00'],
+            ['id' => 706, 'seccion_id' => 606, 'estudiante_id' => null, 'aula' => 'Muelle', 'carrera' => 'ING-MAR', 'dia_semana' => 'Domingo', 'hora_inicio' => '13:30:00', 'hora_fin' => '15:00:00'],
+        ]);
+
+        $bloquesOficiales = (new \ReflectionClass(\App\Controllers\AulasController::class))->getDefaultProperties()['bloquesOficiales'];
+        $aulasSvc = new \App\Services\HorarioAulasService();
+        $datos = $aulasSvc->obtenerDatosVistaAulas(203, $bloquesOficiales);
+
+        $this->assertCount(6, $datos['horarioSemanal']);
+        $this->assertContains('Domingo', $datos['diasSemana']);
+        $this->assertArrayHasKey('Mediodía', $datos['turnosHorarios']);
+        $this->assertArrayHasKey('Otros Horarios', $datos['turnosHorarios']);
+
+        // Bloque multi-franja de Lunes 09:30 - 11:45: primera aparición es_continuacion=false, siguientes true
+        $manana = $datos['turnosHorarios']['Mañana'];
+        $this->assertSame(701, $manana[3]['celdas']['Lunes'][0]['id']);
+        $this->assertFalse($manana[3]['celdas']['Lunes'][0]['es_continuacion']);
+        $this->assertSame('09:30 - 11:45', $manana[3]['celdas']['Lunes'][0]['intervalo']);
+        $this->assertSame(701, $manana[4]['celdas']['Lunes'][0]['id']);
+        $this->assertTrue($manana[4]['celdas']['Lunes'][0]['es_continuacion']);
+        $this->assertSame(701, $manana[5]['celdas']['Lunes'][0]['id']);
+        $this->assertTrue($manana[5]['celdas']['Lunes'][0]['es_continuacion']);
+
+        // Hora sin cero inicial en Martes ('8:00' - '9:30') y parcialmente solapada en Miércoles ('07:30' - '09:00')
+        $this->assertSame(702, $manana[1]['celdas']['Martes'][0]['id']);
+        $this->assertSame('08:00 - 09:30', $manana[1]['celdas']['Martes'][0]['intervalo']);
+        $this->assertSame(703, $manana[0]['celdas']['Miercoles'][0]['id']);
+        $this->assertSame(703, $manana[2]['celdas']['Miercoles'][0]['id']);
+
+        // Bloque que cruza mediodía (08:45 - 13:30) aparece en Mediodía y Tarde 12:45-13:30
+        $mediodia = $datos['turnosHorarios']['Mediodía'];
+        $this->assertSame(704, $mediodia[0]['celdas']['Jueves'][0]['id']);
+        $this->assertTrue($mediodia[0]['celdas']['Jueves'][0]['es_continuacion']);
+        $this->assertSame(704, $datos['turnosHorarios']['Tarde'][0]['celdas']['Jueves'][0]['id']);
+
+        // Horario nocturno atípico (22:45 - 23:30) cae en Otros Horarios con su etiqueta real
+        $otros = $datos['turnosHorarios']['Otros Horarios'];
+        $this->assertSame('22:45 - 23:30', $otros[0]['etiqueta']);
+        $this->assertSame(705, $otros[0]['celdas']['Viernes'][0]['id']);
+
+        // Jornada diaria para Dashboard ("Mi Jornada de Hoy") con día acentuado y detección de en_curso
+        $hoyActiva = $aulasSvc->obtenerClasesDelDiaEstudiante(203, 'Miércoles', '08:15:00');
+        $this->assertCount(1, $hoyActiva);
+        $this->assertSame('07:30', $hoyActiva[0]['hora_inicio_formato']);
+        $this->assertSame('09:00', $hoyActiva[0]['hora_fin_formato']);
+        $this->assertTrue($hoyActiva[0]['en_curso']);
+
+        $hoyFuera = $aulasSvc->obtenerClasesDelDiaEstudiante(203, 'Miércoles', '10:00:00');
+        $this->assertFalse($hoyFuera[0]['en_curso']);
+    }
+
+    /**
+     * Prueba el ciclo completo de remover bloque individual (inclusive siendo admin),
+     * limpiar todo el horario (incluyendo bloques personales y secciones equivalentes)
+     * y restaurar todos los bloques oficiales sin pérdida de datos globales.
+     */
+    public function testAulasControllerCicloCompletoLimpiarYRestaurarPorRol(): void
+    {
+        $this->db->table('usuarios')->insert([
+            'id'                  => 301,
+            'primer_nombre'       => 'Admin',
+            'apellidos'           => 'Tester',
+            'nombre_usuario'      => 'adm301',
+            'rol'                 => 'admin',
+            'carrera'             => 'ING-INF',
+            'estado_verificacion' => 'aprobado',
+        ]);
+        $this->db->table('materias')->insertBatch([
+            ['id' => 71, 'codigo_materia' => 'INF-201', 'nombre' => 'Estructuras de Datos'],
+            ['id' => 72, 'codigo_materia' => 'ING-202', 'nombre' => 'Inglés Técnico'],
+        ]);
+        $this->db->table('secciones')->insertBatch([
+            ['id' => 701, 'materia_id' => 71, 'codigo_seccion' => 'A', 'periodo_academico' => '2026-I', 'carrera' => 'ING-INF'],
+            ['id' => 702, 'materia_id' => 72, 'codigo_seccion' => 'SVC-B', 'periodo_academico' => '2026-01', 'carrera' => 'ING-INF'],
+            ['id' => 703, 'materia_id' => 72, 'codigo_seccion' => 'B', 'periodo_academico' => '2026-I', 'carrera' => 'ING-INF'],
+        ]);
+        $this->db->table('inscripciones')->insertBatch([
+            ['estudiante_id' => 301, 'seccion_id' => 701],
+            ['estudiante_id' => 301, 'seccion_id' => 702],
+        ]);
+        $this->db->table('clases_programadas')->insertBatch([
+            ['id' => 801, 'seccion_id' => 701, 'estudiante_id' => null, 'aula' => 'Aula 3', 'carrera' => 'ING-INF', 'dia_semana' => 'Lunes', 'hora_inicio' => '08:00:00', 'hora_fin' => '10:15:00'],
+            ['id' => 802, 'seccion_id' => 703, 'estudiante_id' => null, 'aula' => 'Aula 7', 'carrera' => 'ING-INF', 'dia_semana' => 'Domingo', 'hora_inicio' => '14:15:00', 'hora_fin' => '15:45:00'],
+            ['id' => 803, 'seccion_id' => 701, 'estudiante_id' => 301, 'aula' => 'Sala P', 'carrera' => 'ING-INF', 'dia_semana' => 'Lunes', 'hora_inicio' => '16:30:00', 'hora_fin' => '17:15:00'],
+        ]);
+
+        session()->set([
+            'usuario_id'          => 301,
+            'rol'                 => 'admin',
+            'estado_verificacion' => 'aprobado',
+            'carrera'             => 'ING-INF',
+        ]);
+
+        $req = \Config\Services::incomingrequest();
+        $req->setHeader('X-Requested-With', 'XMLHttpRequest');
+        $ctrl = new \App\Controllers\AulasController();
+        $ctrl->initController($req, \Config\Services::response(), \Config\Services::logger());
+
+        $aulasSvc = new \App\Services\HorarioAulasService();
+        $bloquesOficiales = (new \ReflectionClass(\App\Controllers\AulasController::class))->getDefaultProperties()['bloquesOficiales'];
+
+        // A. Eliminar un bloque oficial individualmente siendo admin NO debe borrar el catálogo global
+        $respOne = $ctrl->eliminarBloqueManual(801);
+        $this->assertSame(200, $respOne->getStatusCode());
+        $this->assertSame(200, $ctrl->eliminarBloqueManual(801)->getStatusCode()); // idempotente
+        $this->assertSame(1, $this->db->table('clases_programadas')->where('id', 801)->countAllResults());
+        $this->assertSame(1, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 301)->where('clase_id', 801)->countAllResults());
+
+        $vistaParcial = $aulasSvc->obtenerDatosVistaAulas(301, $bloquesOficiales);
+        $this->assertCount(2, $vistaParcial['horarioSemanal']); // 802 + personal 803
+        $this->assertTrue($vistaParcial['tieneBloquesExcluidos']);
+
+        // B. Limpiar por completo vacía bloques oficiales (inclusive puente SVC-B->B ya excluido parcialmente) y elimina personales
+        $respClean = $ctrl->limpiarHorarioPersonal();
+        $this->assertSame(200, $respClean->getStatusCode());
+        $this->assertSame(0, $this->db->table('clases_programadas')->where('id', 803)->countAllResults());
+        $this->assertSame(1, $this->db->table('clases_programadas')->where('id', 801)->countAllResults());
+        $this->assertSame(1, $this->db->table('clases_programadas')->where('id', 802)->countAllResults());
+        $this->assertSame(2, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 301)->countAllResults());
+
+        $vistaLimpia = $aulasSvc->obtenerDatosVistaAulas(301, $bloquesOficiales);
+        $this->assertCount(0, $vistaLimpia['horarioSemanal']);
+        $this->assertSame(2, $vistaLimpia['totalBloquesOficiales']);
+        $this->assertTrue($vistaLimpia['tieneBloquesExcluidos']);
+        $this->assertNotContains('Domingo', $vistaLimpia['diasSemana']);
+        $this->assertCount(0, $aulasSvc->obtenerClasesDelDiaEstudiante(301, 'Lunes', '08:30:00'));
+
+        // C. Restaurar devuelve el 100% del horario oficial en la grilla y en "Mi Jornada de Hoy"
+        $respRestore = $ctrl->restaurarHorarioOficial();
+        $this->assertSame(200, $respRestore->getStatusCode());
+        $this->assertSame(0, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 301)->countAllResults());
+
+        $vistaRestaurada = $aulasSvc->obtenerDatosVistaAulas(301, $bloquesOficiales);
+        $this->assertCount(2, $vistaRestaurada['horarioSemanal']);
+        $this->assertFalse($vistaRestaurada['tieneBloquesExcluidos']);
+        $this->assertContains('Domingo', $vistaRestaurada['diasSemana']);
+        $this->assertCount(1, $aulasSvc->obtenerClasesDelDiaEstudiante(301, 'Lunes', '08:30:00'));
+    }
 }

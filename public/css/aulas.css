@@ -924,3 +924,77 @@ body.dark-mode .aulas-entrega-resumen-titulo {
 body.dark-mode .aulas-entrega-resumen-materia {
     color: #93c5fd;
 }
+
+.bloque-horario-intervalo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    background: rgba(37, 99, 235, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+}
+
+.bloque-clase-card.bloque-continuacion {
+    border-left-style: dashed;
+    opacity: 0.94;
+}
+
+.aviso-horario-vacio {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    color: #334155;
+}
+
+.aviso-horario-vacio-texto {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aviso-horario-vacio-texto i {
+    font-size: 1.7rem;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.aviso-horario-vacio-texto strong {
+    display: block;
+    font-size: 0.92rem;
+    color: #0f172a;
+}
+
+.aviso-horario-vacio-texto span {
+    font-size: 0.82rem;
+    color: #64748b;
+}
+
+body.dark-mode .bloque-horario-intervalo {
+    background: rgba(96, 165, 250, 0.18);
+    color: #bfdbfe;
+}
+
+body.dark-mode .aviso-horario-vacio {
+    background: #0f172a;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+body.dark-mode .aviso-horario-vacio-texto strong {
+    color: #f8fafc;
+}
+
+body.dark-mode .aviso-horario-vacio-texto span {
+    color: #94a3b8;
+}

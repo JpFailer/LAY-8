@@ -729,75 +729,65 @@ class VerificadorInscripcionService
 
 
         foreach ($materias as $index => $mat) {
-            $codigoMateria = trim($mat['codigo']);
-            $nombreMateria = trim($mat['nombre']);
-            $seccionCodigo = !empty($mat['seccion']) ? trim($mat['seccion']) : 'SVC-A';
+            $codigoMateria = trim((string) ($mat['codigo'] ?? ''));
+            if ($codigoMateria === '') {
+                continue;
+            }
+            $nombreMateria = trim((string) ($mat['nombre'] ?? ''));
+            $seccionCodigo = !empty($mat['seccion']) ? trim((string) $mat['seccion']) : 'SVC-A';
             $creditos      = (int) ($mat['creditos'] ?? 3);
             $semestre      = (int) ($mat['semestre'] ?? 1);
-            $carreraFinal  = $carrera ?? ($mat['carrera'] ?? (session('carrera') ?: 'ING-INF'));
+            $carreraFinal  = strtoupper(trim((string) ($carrera ?: ($mat['carrera'] ?? (session('carrera') ?: 'ING-INF')))));
 
-            // 1. Variantes de código (ej. 'CAL-604' y 'CAL604') para sincronizar con el Horario CGD-001
-            $codigoConGuion = preg_replace('/^([A-Z]{3})-?(\d{3})$/i', '$1-$2', $codigoMateria);
-            $codigoSinGuion = str_replace(['-', ' '], '', $codigoMateria);
-            $codigosBuscar   = array_unique([$codigoMateria, $codigoConGuion, $codigoSinGuion]);
+            // 1. Variantes de código (ej. 'CAL604', 'CAL-604', 'PAMC603', 'MAA_114') para sincronizar con el Horario CGD-001
+            $codigoCanon   = HorarioNormalizer::codigoMateriaCanonico($codigoMateria);
+            $codigosBuscar = HorarioNormalizer::variantesCodigoMateria($codigoMateria);
 
             $materiaExistente = $materiaModel->whereIn('codigo_materia', $codigosBuscar)->first();
             if (!$materiaExistente) {
                 $materiaId = $materiaModel->insert([
-                    'codigo_materia'    => $codigoConGuion,
-                    'nombre'            => $nombreMateria,
+                    'codigo_materia'    => $codigoCanon,
+                    'nombre'            => $nombreMateria ?: 'Materia Desconocida',
                     'unidades_credito'  => $creditos,
                     'semestre_trayecto' => $semestre
                 ], true);
             } else {
                 $materiaId = $materiaExistente['id'];
-                if (!empty($nombreMateria) && strlen($nombreMateria) > strlen($materiaExistente['nombre'])) {
-                    $materiaModel->update($materiaId, ['nombre' => $nombreMateria]);
+                $updMateria = [];
+                if (!empty($nombreMateria) && strlen($nombreMateria) > strlen((string) $materiaExistente['nombre'])) {
+                    $updMateria['nombre'] = $nombreMateria;
+                }
+                if ((int) ($materiaExistente['unidades_credito'] ?? 0) === 0 && $creditos > 0) {
+                    $updMateria['unidades_credito'] = $creditos;
+                }
+                if ($updMateria !== []) {
+                    $materiaModel->update($materiaId, $updMateria);
                 }
             }
 
             if (!$materiaId) continue;
 
-            // 2. Normalización de Sección y Período para enlazar con las clases oficiales del mapa
-            $letraSeccion = $seccionCodigo;
-            if (preg_match('/^SVC-([A-Z])(?:-.*)?$/i', $seccionCodigo, $mSec)) {
-                $letraSeccion = strtoupper($mSec[1]);
-            }
-            $seccionesBuscar = array_unique([$seccionCodigo, $letraSeccion]);
-
-            $periodosBuscar = [$periodo];
-            if (preg_match('/^(\d{4})-01$/', $periodo, $mPer)) {
-                $periodosBuscar[] = $mPer[1] . '-I';
-                $periodosBuscar[] = $mPer[1] . '-1';
-            } elseif (preg_match('/^(\d{4})-02$/', $periodo, $mPer)) {
-                $periodosBuscar[] = $mPer[1] . '-II';
-                $periodosBuscar[] = $mPer[1] . '-2';
-            } elseif (preg_match('/^(\d{4})-I$/i', $periodo, $mPer)) {
-                $periodosBuscar[] = $mPer[1] . '-01';
-            }
-
-            $seccionExistente = $seccionModel->where('materia_id', $materiaId)
-                                             ->whereIn('codigo_seccion', $seccionesBuscar)
-                                             ->whereIn('periodo_academico', $periodosBuscar)
-                                             ->first();
-
-            if (!$seccionExistente) {
-                $seccionExistente = $seccionModel->where('materia_id', $materiaId)
-                                                 ->whereIn('codigo_seccion', $seccionesBuscar)
-                                                 ->first();
-            }
+            // 2. Resolución precisa de sección por carrera, sección y período académico
+            $seccionExistente = $this->resolverSeccionParaMateria(
+                $seccionModel,
+                $db,
+                (int) $materiaId,
+                $seccionCodigo,
+                $periodo,
+                $carreraFinal
+            );
 
             if (!$seccionExistente) {
                 $seccionId = $seccionModel->insert([
                     'materia_id'        => $materiaId,
                     'profesor_id'       => null,
-                    'codigo_seccion'    => $seccionCodigo,
-                    'periodo_academico' => $periodo,
+                    'codigo_seccion'    => mb_substr($seccionCodigo, 0, 10, 'UTF-8'),
+                    'periodo_academico' => mb_substr($periodo, 0, 20, 'UTF-8'),
                     'carrera'           => $carreraFinal
                 ], true);
             } else {
                 $seccionId = $seccionExistente['id'];
-                if (empty($seccionExistente['carrera']) && !empty($carreraFinal)) {
+                if (empty($seccionExistente['carrera']) && $carreraFinal !== '') {
                     $seccionModel->update($seccionId, ['carrera' => $carreraFinal]);
                 }
             }
@@ -820,5 +810,90 @@ class VerificadorInscripcionService
         }
 
         return $inscripcionesRealizadas;
+    }
+
+    /**
+     * Resuelve la sección más compatible respetando carrera, mención/sufijo, período y presencia de bloques horarios.
+     */
+    private function resolverSeccionParaMateria(
+        SeccionModel $seccionModel,
+        $db,
+        int $materiaId,
+        string $seccionCodigo,
+        string $periodo,
+        string $carreraFinal
+    ): ?array {
+        $candidatas = $seccionModel->where('materia_id', $materiaId)->findAll();
+        if (empty($candidatas)) {
+            return null;
+        }
+
+        $tiers          = HorarioNormalizer::variantesSeccionTiers($seccionCodigo);
+        $periodosBuscar = HorarioNormalizer::variantesPeriodo($periodo);
+        $periodoFam     = HorarioNormalizer::familiaPeriodo($periodo);
+        $carreraMencion = HorarioNormalizer::inferirCarreraPorSeccion($seccionCodigo);
+
+        $secIds = array_map(static fn (array $s): int => (int) $s['id'], $candidatas);
+        $clasesConteo = [];
+        $rowsClases = $db->table('clases_programadas')
+            ->select('seccion_id, COUNT(*) as total')
+            ->whereIn('seccion_id', $secIds)
+            ->where('estudiante_id', null)
+            ->groupBy('seccion_id')
+            ->get()
+            ->getResultArray();
+        foreach ($rowsClases as $rc) {
+            $clasesConteo[(int) $rc['seccion_id']] = (int) $rc['total'];
+        }
+
+        $mejor      = null;
+        $mejorScore = null;
+
+        foreach ($candidatas as $s) {
+            $secCodRaw = strtoupper(trim((string) ($s['codigo_seccion'] ?? '')));
+            $secCanon  = HorarioNormalizer::normalizarSeccionCanonica($secCodRaw);
+
+            $tierScore = 0;
+            if (in_array($secCodRaw, $tiers['exactas'], true) || in_array($secCanon, $tiers['exactas'], true)) {
+                $tierScore = 2;
+            } elseif (in_array($secCodRaw, $tiers['base'], true) || in_array($secCanon, $tiers['base'], true)) {
+                $tierScore = 1;
+            }
+
+            if ($tierScore === 0) {
+                continue;
+            }
+
+            $carSec = strtoupper(trim((string) ($s['carrera'] ?? '')));
+            if ($carSec === $carreraFinal) {
+                $careerScore = 4;
+            } elseif ($carreraMencion !== null && $carSec === $carreraMencion) {
+                $careerScore = 3;
+            } elseif ($carSec === '') {
+                $careerScore = 2;
+            } else {
+                // No mezclar secciones homónimas de otras carreras salvo mención explícita
+                continue;
+            }
+
+            $sId         = (int) $s['id'];
+            $clasesScore = !empty($clasesConteo[$sId]) ? 1 : 0;
+
+            $perRaw = strtoupper(trim((string) ($s['periodo_academico'] ?? '')));
+            $periodoScore = 0;
+            if (in_array($perRaw, $periodosBuscar, true)) {
+                $periodoScore = 2;
+            } elseif ($perRaw !== '' && HorarioNormalizer::familiaPeriodo($perRaw) === $periodoFam) {
+                $periodoScore = 1;
+            }
+
+            $score = [$careerScore, $tierScore, $clasesScore, $periodoScore, $sId];
+            if ($mejorScore === null || $score > $mejorScore) {
+                $mejorScore = $score;
+                $mejor      = $s;
+            }
+        }
+
+        return $mejor;
     }
 }

@@ -728,16 +728,16 @@
 
             </div>
 
-            <!-- Certificación Oficial UMC para Cambio de Carrera -->
+            <!-- Certificación Oficial UMC para Cambio de Carrera o Actualización de Inscripción -->
             <div class="editar-seguridad-box">
               <label class="form-label-editar label-seguridad">
-                <i class="bx bx-shield-quarter"></i> Certificación UMC para Cambio de Carrera
+                <i class="bx bx-shield-quarter"></i> Registro de Inscripción y Certificación UMC
               </label>
               <p class="form-sublabel-editar">
-                Si cambias de carrera, adjunta tu <strong>Registro de Inscripción oficial (PDF)</strong> emitido por <code>campus.umc.edu.ve</code>:
+                Para cambiar de carrera o actualizar tus materias inscritas desde tu <strong>Registro de Inscripción oficial (PDF)</strong> de <code>campus.umc.edu.ve</code>:
               </p>
               <input type="file" name="planilla_inscripcion" accept=".pdf" class="input-global input-file-adaptable input-file-certificacion" style="margin-bottom: 12px;">
-              <label class="form-label-editar label-pass-seguridad"><i class="bx bx-lock-alt"></i> Contraseña actual (solo para confirmar cambios de carrera):</label>
+              <label class="form-label-editar label-pass-seguridad"><i class="bx bx-lock-alt"></i> Contraseña actual (requerida al cambiar carrera o subir planilla):</label>
               <input type="password" name="confirmar_contrasena" id="input-pass-perfil" class="input-global input-pass-perfil" placeholder="Tu contraseña actual">
             </div>
 
