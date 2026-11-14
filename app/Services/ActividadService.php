@@ -144,10 +144,18 @@ class ActividadService
         $descripcion  = strip_tags(trim((string) ($datos['descripcion'] ?? '')));
         $tipo         = trim((string) ($datos['tipo'] ?? 'tarea'));
         $fechaEntrega = str_replace('T', ' ', trim((string) ($datos['fecha_entrega'] ?? '')));
-        $ponderacion  = isset($datos['ponderacion']) && $datos['ponderacion'] !== '' ? (float) $datos['ponderacion'] : 0.0;
+        $ponderacionRaw = $datos['ponderacion'] ?? '';
+        if ($ponderacionRaw !== '' && (!is_numeric($ponderacionRaw) || (float) $ponderacionRaw < 0 || (float) $ponderacionRaw > 100)) {
+            return ['ok' => false, 'status' => 400, 'error' => 'La ponderación debe ser un número entre 0 y 100%.'];
+        }
+        $ponderacion  = $ponderacionRaw !== '' ? (float) $ponderacionRaw : 0.0;
 
         if ($titulo === '' || $fechaEntrega === '' || $seccionId <= 0) {
             return ['ok' => false, 'status' => 400, 'error' => 'Por favor ingresa el título, la materia y la fecha de entrega de la actividad.'];
+        }
+
+        if (strtotime($fechaEntrega) === false) {
+            return ['ok' => false, 'status' => 400, 'error' => 'La fecha y hora de entrega no tiene un formato válido.'];
         }
 
         if (!in_array($tipo, self::TIPOS_VALIDOS, true)) {
@@ -197,23 +205,30 @@ class ActividadService
 
         if ($esPersonal === 0 && $esModoDocente) {
             $alumnos = (new InscripcionModel())->obtenerEstudiantesDeSeccion($seccionId);
-            $notifModel = new NotificacionModel();
-            $materiaNombre = $seccionInfo['materia'] ?? 'tu asignatura';
-            $ahora = date('Y-m-d H:i:s');
+            if (!empty($alumnos)) {
+                $notifModel = new NotificacionModel();
+                $materiaNombre = $seccionInfo['materia'] ?? 'tu asignatura';
+                $ahora = date('Y-m-d H:i:s');
+                $loteNotificaciones = [];
 
-            foreach ($alumnos as $al) {
-                $notifModel->insert([
-                    'estudiante_id'  => (int) $al['estudiante_id'],
-                    'profesor_id'    => $usuarioId,
-                    'seccion_id'     => $seccionId,
-                    'tipo'           => 'tarea_pendiente',
-                    'titulo'         => "Nueva {$tipo}: {$titulo} ({$materiaNombre})",
-                    'mensaje'        => $descripcion ?: "El profesor ha agendado una nueva actividad para entregar antes del {$fechaEntrega}.",
-                    'modalidad'      => 'presencial',
-                    'enlace_accion'  => 'aulas?tab=actividades',
-                    'leido'          => 0,
-                    'created_at'     => $ahora,
-                ]);
+                foreach ($alumnos as $al) {
+                    $loteNotificaciones[] = [
+                        'estudiante_id'  => (int) $al['estudiante_id'],
+                        'profesor_id'    => $usuarioId,
+                        'seccion_id'     => $seccionId,
+                        'tipo'           => 'tarea_pendiente',
+                        'titulo'         => "Nueva {$tipo}: {$titulo} ({$materiaNombre})",
+                        'mensaje'        => $descripcion ?: "El profesor ha agendado una nueva actividad para entregar antes del {$fechaEntrega}.",
+                        'modalidad'      => 'presencial',
+                        'enlace_accion'  => 'aulas?tab=actividades',
+                        'leido'          => 0,
+                        'created_at'     => $ahora,
+                    ];
+                }
+
+                foreach (array_chunk($loteNotificaciones, 500) as $bloque) {
+                    $notifModel->insertBatch($bloque);
+                }
             }
         }
 

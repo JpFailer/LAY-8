@@ -297,9 +297,33 @@ class AulasController extends BaseController
             return redirect()->to('/login')->with('error', 'Sesión expirada.');
         }
 
+        $u = \Config\Database::connect()
+            ->table('usuarios')
+            ->select('rol, estado_verificacion')
+            ->where('id', $usuarioId)
+            ->get()
+            ->getRowArray();
+
+        $rol         = (string) ($u['rol'] ?? session()->get('rol') ?? 'estudiante');
+        $estadoVerif = (string) ($u['estado_verificacion'] ?? session()->get('estado_verificacion') ?? 'no_aplica');
+
+        if ($u) {
+            session()->set([
+                'rol'                 => $rol,
+                'estado_verificacion' => $estadoVerif,
+            ]);
+        }
+
+        $esAutorizado = in_array($rol, ['administrador', 'admin'], true)
+            || ($rol === 'profesor' && $estadoVerif === 'aprobado');
+
+        if (!$esAutorizado) {
+            return redirect()->back()->with('error', 'Solo los docentes verificados o administradores pueden crear actividades.');
+        }
+
         $res = (new ActividadService())->crearActividadEnSeccion(
             $usuarioId,
-            (string) (session()->get('rol') ?? 'estudiante'),
+            $rol,
             [
                 'seccion_id'    => $this->request->getPost('seccion_id'),
                 'titulo'        => $this->request->getPost('titulo'),
@@ -308,7 +332,7 @@ class AulasController extends BaseController
                 'fecha_entrega' => $this->request->getPost('fecha_entrega'),
                 'ponderacion'   => $this->request->getPost('ponderacion'),
             ],
-            false
+            true
         );
 
         if (!$res['ok']) {
@@ -356,7 +380,8 @@ class AulasController extends BaseController
         }
 
         // sistema de autorizacion estricta antidayanas (solo el creador o un admin puede eliminar la actividad)
-        if ((int)$actividad['creado_por'] !== $usuarioId && session()->get('rol') !== 'administrador') {
+        $rol = (string) (session()->get('rol') ?? '');
+        if ((int)$actividad['creado_por'] !== $usuarioId && !in_array($rol, ['administrador', 'admin'], true)) {
             return redirect()->back()->with('error', 'Solo quien creó esta actividad puede eliminarla.');
         }
 

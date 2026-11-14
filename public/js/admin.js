@@ -5,14 +5,15 @@ const BASE_URL = window.BASE_URL || '/';
 // logica de pestañas y modales del admin
 
 function mostrarTabAdmin(tabId) {
+    const paneActiva = document.getElementById('tab-' + tabId);
+    const btnActivo  = document.getElementById('tabbtn-' + tabId);
+    if (!paneActiva || !btnActivo) return;
+
     document.querySelectorAll('.admin-tab-pane').forEach(pane => pane.classList.remove('activa'));
     document.querySelectorAll('.tab-btn-admin').forEach(btn => btn.classList.remove('activa'));
 
-    const paneActiva = document.getElementById('tab-' + tabId);
-    const btnActivo  = document.getElementById('tabbtn-' + tabId);
-
-    if (paneActiva) paneActiva.classList.add('activa');
-    if (btnActivo) btnActivo.classList.add('activa');
+    paneActiva.classList.add('activa');
+    btnActivo.classList.add('activa');
 
     try {
         const url = new URL(window.location);

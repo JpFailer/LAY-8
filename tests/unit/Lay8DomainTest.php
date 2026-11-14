@@ -635,4 +635,74 @@ final class Lay8DomainTest extends CIUnitTestCase
         $this->assertSame(200, $respClean->getStatusCode());
         $this->assertSame(1, $this->db->table('estudiante_bloques_excluidos')->where('estudiante_id', 99)->where('clase_id', 50)->countAllResults());
     }
+
+    public function testAulasControllerCrearYEliminarActividadRbacYValidaciones(): void
+    {
+        $this->db->table('usuarios')->insertBatch([
+            ['id' => 11, 'primer_nombre' => 'Est', 'apellidos' => 'Uno', 'nombre_usuario' => 'est11', 'rol' => 'estudiante', 'estado_verificacion' => 'aprobado'],
+            ['id' => 12, 'primer_nombre' => 'Prof', 'apellidos' => 'Pend', 'nombre_usuario' => 'prof12', 'rol' => 'profesor', 'estado_verificacion' => 'pendiente'],
+            ['id' => 13, 'primer_nombre' => 'Admin', 'apellidos' => 'Short', 'nombre_usuario' => 'adm13', 'rol' => 'admin', 'estado_verificacion' => 'aprobado'],
+        ]);
+        $this->db->table('materias')->insert(['id' => 2, 'codigo_materia' => 'PRG-101', 'nombre' => 'Programación I']);
+        $this->db->table('secciones')->insert(['id' => 8, 'materia_id' => 2, 'codigo_seccion' => 'A']);
+        $this->db->table('inscripciones')->insert(['estudiante_id' => 11, 'seccion_id' => 8]);
+
+        // 1. Validación de fecha inválida y ponderación fuera de rango en ActividadService
+        $svc = new ActividadService();
+        $badFecha = $svc->crearActividadEnSeccion(13, 'admin', [
+            'seccion_id'    => 8,
+            'titulo'        => 'Eval Fecha Mala',
+            'tipo'          => 'parcial',
+            'fecha_entrega' => 'no-es-fecha',
+            'ponderacion'   => 20,
+        ], true);
+        $this->assertFalse($badFecha['ok']);
+        $this->assertSame(400, $badFecha['status']);
+
+        $badPond = $svc->crearActividadEnSeccion(13, 'admin', [
+            'seccion_id'    => 8,
+            'titulo'        => 'Eval Ponderacion Mala',
+            'tipo'          => 'parcial',
+            'fecha_entrega' => '2026-12-01 10:00:00',
+            'ponderacion'   => 150,
+        ], true);
+        $this->assertFalse($badPond['ok']);
+        $this->assertSame(400, $badPond['status']);
+
+        // 2. Un estudiante NO debe poder crear actividades vía POST /aulas/crear-actividad
+        $postPayload = [
+            'seccion_id'    => '8',
+            'titulo'        => 'Actividad Inyectada',
+            'descripcion'   => 'Prueba',
+            'tipo'          => 'tarea',
+            'fecha_entrega' => '2026-12-01T10:00',
+            'ponderacion'   => '10',
+        ];
+        $req = \Config\Services::incomingrequest(null, false);
+        $req->setGlobal('post', $postPayload);
+
+        session()->set(['usuario_id' => 11, 'rol' => 'estudiante', 'estado_verificacion' => 'aprobado']);
+        $ctrl = new \App\Controllers\AulasController();
+        $ctrl->initController($req, \Config\Services::response(), \Config\Services::logger());
+        $ctrl->crearActividad();
+        $this->assertSame(0, $this->db->table('actividades_clase')->countAllResults());
+
+        // 3. Un docente pendiente NO debe poder crear actividades vía POST /aulas/crear-actividad
+        session()->set(['usuario_id' => 12, 'rol' => 'profesor', 'estado_verificacion' => 'pendiente']);
+        $ctrl->crearActividad();
+        $this->assertSame(0, $this->db->table('actividades_clase')->countAllResults());
+
+        // 4. Un admin creando desde /aulas/crear-actividad debe crear tarea oficial (es_personal = 0) y notificar por lote
+        session()->set(['usuario_id' => 13, 'rol' => 'admin', 'estado_verificacion' => 'aprobado']);
+        $ctrl->crearActividad();
+        $act = $this->db->table('actividades_clase')->get()->getRowArray();
+        $this->assertNotNull($act);
+        $this->assertSame(0, (int) $act['es_personal']);
+        $this->assertSame(1, $this->db->table('notificaciones')->where('estudiante_id', 11)->countAllResults());
+
+        // 5. Eliminar actividad debe aceptar rol 'admin' (además de 'administrador') aunque no sea creador
+        $this->db->table('actividades_clase')->where('id', $act['id'])->update(['creado_por' => 999]);
+        $ctrl->eliminarActividad((int) $act['id']);
+        $this->assertSame(0, $this->db->table('actividades_clase')->where('id', $act['id'])->countAllResults());
+    }
 }

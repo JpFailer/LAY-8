@@ -262,7 +262,7 @@ function filtrarGridMaterias(query) {
         if (sinResultados) {
             sinResultados.style.display = 'block';
             if (txtTermino) {
-                txtTermino.innerHTML = `No hay materias que coincidan con "<b>${rawQuery.replace(/</g, '&lt;')}</b>". Prueba buscando sin código o con otra palabra clave.`;
+                txtTermino.innerHTML = `No hay materias que coincidan con "<b>${window.Lay8UI.escapeHtml(rawQuery)}</b>". Prueba buscando sin código o con otra palabra clave.`;
             }
         }
     } else {

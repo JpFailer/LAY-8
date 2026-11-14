@@ -5,6 +5,12 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<?php
+    $rolUsuarioAulas = session('rol') ?? 'estudiante';
+    $estadoVerifAulas = session('estado_verificacion') ?? 'no_aplica';
+    $puedeGestionarActividades = in_array($rolUsuarioAulas, ['admin', 'administrador'], true)
+        || ($rolUsuarioAulas === 'profesor' && $estadoVerifAulas === 'aprobado');
+?>
 <div class="biblioteca-dashboard-contenedor aulas-contenedor">
 
     <!-- header aulas -->
@@ -193,7 +199,7 @@
                             <span class="total-actividades-badge">
                                 <i class="bx bx-task"></i> <?= (int)$sec['total_actividades'] ?> actividad(es)
                             </span>
-                            <?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
+                            <?php if ($puedeGestionarActividades): ?>
                                 <div class="aulas-footer-acciones">
                                     <button type="button" class="btn-agregar-tarea-mini" onclick="abrirModalNuevaActividad(<?= (int)$sec['id'] ?>, '<?= esc($sec['materia'], 'js') ?>')">
                                         <i class="bx bx-plus"></i> Tarea
@@ -404,7 +410,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="acciones-columna">
-                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array(session('rol'), ['admin', 'administrador', 'profesor'], true)): ?>
+                            <?php if ((int)$act['creado_por'] === (int)session('usuario_id') || in_array($rolUsuarioAulas, ['admin', 'administrador'], true)): ?>
                                 <form method="post" action="<?= base_url('aulas/eliminar-actividad/' . $act['id']) ?>" onsubmit="return Lay8UI.confirmSubmit(event, '¿Deseas eliminar esta actividad del cronograma?', { title: 'Eliminar actividad', confirmText: 'Eliminar', danger: true })">
                                     <?= csrf_field() ?>
                                     <button type="submit" class="btn-eliminar-actividad" title="Eliminar actividad">
@@ -427,7 +433,7 @@
 
 </div>
 
-<?php if (in_array(session('rol'), ['profesor', 'admin', 'administrador'], true)): ?>
+<?php if ($puedeGestionarActividades): ?>
 <!-- Modal para Crear Nueva Actividad o Tarea -->
 <div id="modalNuevaActividad" class="modal-info-aula" style="display:none;" onclick="if(event.target === this) cerrarModalNuevaActividad()">
     <div class="modal-contenido-aula modal-actividad-ancho">
